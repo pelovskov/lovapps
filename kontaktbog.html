@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#B00000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kontaktbog">
+<title>Kontaktbog · Røde Kors Roskilde</title>
+
+<!-- Dublin Core -->
+<meta name="dc.title" content="Kontaktbog · Røde Kors Roskilde">
+<meta name="dc.type" content="Dataset">
+<meta name="dc.format" content="text/html">
+<meta name="dc.language" content="da">
+<meta name="dc.publisher" content="Røde Kors Roskilde">
+<meta name="dc.rights" content="Intern brug. Indeholder personoplysninger — må ikke lægges offentligt tilgængeligt.">
+
+<style>
+  :root{
+    --rk-red:#B00000;
+    --rk-red-dark:#7A0000;
+    --rk-red-soft:#FBE9E9;
+    --ink:#17181A;
+    --ink-2:#5A5F66;
+    --ink-3:#8A9099;
+    --line:#E2E5E9;
+    --surface:#FFFFFF;
+    --bg:#F1F3F5;
+    --blue:#00548F;
+    --green:#1B6B3A;
+    --radius:14px;
+    --tap:48px;
+    --pad: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:17px;
+    line-height:1.4;
+    -webkit-text-size-adjust:100%;
+    padding-bottom:calc(90px + var(--pad));
+  }
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer;border:none;background:none}
+  a{color:var(--blue)}
+  :focus-visible{outline:3px solid #0B5FFF;outline-offset:2px;border-radius:6px}
+
+  /* ---------- Top ---------- */
+  header{
+    position:sticky;top:0;z-index:30;
+    background:var(--rk-red);
+    color:#fff;
+    padding:14px 14px 10px;
+    box-shadow:0 2px 10px rgba(0,0,0,.12);
+  }
+  .brand{display:flex;align-items:center;gap:10px}
+  .mark{
+    width:30px;height:30px;background:#fff;border-radius:6px;flex:0 0 auto;position:relative;
+  }
+  .mark::before,.mark::after{content:"";position:absolute;background:var(--rk-red)}
+  .mark::before{left:12px;top:5px;width:6px;height:20px}
+  .mark::after{left:5px;top:12px;width:20px;height:6px}
+  h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px}
+  .sub{margin:0;font-size:13px;opacity:.85;font-weight:500}
+
+  .searchwrap{position:relative;margin-top:12px}
+  #search{
+    width:100%;height:var(--tap);
+    border:none;border-radius:12px;
+    padding:0 44px 0 44px;
+    background:#fff;color:var(--ink);
+    font-size:17px;
+  }
+  #search::placeholder{color:var(--ink-3)}
+  .searchicon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-3);font-size:18px}
+  #clearSearch{
+    position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    width:38px;height:38px;border-radius:19px;color:var(--ink-3);font-size:20px;display:none;
+  }
+  #clearSearch.show{display:block}
+
+  /* ---------- Filtre ---------- */
+  .filters{background:var(--surface);border-bottom:1px solid var(--line);padding:10px 0 8px}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:0 14px 2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:0 0 auto;min-height:38px;padding:0 14px;border-radius:19px;
+    border:1.5px solid var(--line);background:#fff;color:var(--ink-2);
+    font-size:15px;font-weight:600;white-space:nowrap;
+  }
+  .chip[aria-pressed="true"]{background:var(--rk-red);border-color:var(--rk-red);color:#fff}
+  .row2{display:flex;gap:8px;padding:8px 14px 0;align-items:center}
+  select.pick{
+    flex:1 1 auto;height:42px;border:1.5px solid var(--line);border-radius:10px;
+    background:#fff;padding:0 10px;font-size:15px;font-weight:600;color:var(--ink-2);
+    min-width:0;
+  }
+  .viewtoggle{display:flex;flex:0 0 auto;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;height:42px}
+  .viewtoggle button{padding:0 12px;font-size:14px;font-weight:700;color:var(--ink-2);background:#fff}
+  .viewtoggle button[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+  .statusbar{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:8px 14px 0;font-size:14px;color:var(--ink-2);font-weight:600;
+  }
+  .linkbtn{color:var(--blue);font-weight:700;font-size:14px;padding:6px 0}
+
+  /* ---------- Liste ---------- */
+  main{padding:0 0 20px}
+  .letter{
+    position:sticky;top:0;z-index:5;
+    background:var(--bg);
+    padding:14px 16px 4px;
+    font-size:13px;font-weight:800;letter-spacing:1.5px;color:var(--rk-red);
+  }
+  .list{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .person{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 12px 10px 14px;
+    border-bottom:1px solid var(--line);
+    width:100%;text-align:left;background:var(--surface);
+  }
+  .person:last-child{border-bottom:none}
+  .person:active{background:#F6F7F8}
+  .avatar{
+    flex:0 0 auto;width:44px;height:44px;border-radius:22px;
+    background:var(--rk-red-soft);color:var(--rk-red-dark);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:15px;letter-spacing:.5px;
+  }
+  .avatar.bestyrelse{background:var(--rk-red);color:#fff}
+  .pmain{flex:1 1 auto;min-width:0}
+  .pname{font-size:17px;font-weight:700;line-height:1.25}
+  .pmeta{font-size:13.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .quick{display:flex;gap:6px;flex:0 0 auto}
+  .icobtn{
+    width:44px;height:44px;border-radius:22px;border:1.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:19px;background:#fff;
+  }
+  .icobtn.call{border-color:#CBE3D3;color:var(--green)}
+  .icobtn.mail{border-color:#CBDCEA;color:var(--blue)}
+  .icobtn[aria-disabled="true"]{opacity:.3}
+
+  /* ---------- Kortvisning ---------- */
+  .cards{display:grid;grid-template-columns:1fr;gap:12px;padding:12px 14px}
+  @media (min-width:600px){.cards{grid-template-columns:1fr 1fr}}
+  @media (min-width:960px){.cards{grid-template-columns:1fr 1fr 1fr}
+    body{font-size:17px} .wrap{max-width:1100px;margin:0 auto}}
+  .card{
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--line);padding:14px;
+    box-shadow:0 1px 2px rgba(20,20,20,.04);
+  }
+  .cardtop{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+  .cardtop .avatar{width:48px;height:48px;border-radius:24px;font-size:16px}
+  .cardname{font-size:18px;font-weight:700;line-height:1.2}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+  .tag{
+    font-size:12.5px;font-weight:700;padding:4px 9px;border-radius:12px;
+    background:#EFF1F3;color:var(--ink-2);
+  }
+  .tag.role{background:var(--rk-red-soft);color:var(--rk-red-dark)}
+  .cardbtns{display:flex;gap:8px}
+  .btn{
+    flex:1 1 0;min-height:46px;border-radius:11px;font-weight:700;font-size:15px;
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    border:1.5px solid var(--line);background:#fff;color:var(--ink);
+  }
+  .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+  .btn.secondary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.ghost{background:#fff;color:var(--ink-2)}
+  .btn[aria-disabled="true"]{opacity:.35}
+
+  .empty{padding:50px 24px;text-align:center;color:var(--ink-2)}
+  .empty strong{display:block;font-size:18px;color:var(--ink);margin-bottom:6px}
+
+  /* ---------- Detaljeark ---------- */
+  .backdrop{
+    position:fixed;inset:0;background:rgba(10,10,12,.45);z-index:40;
+    opacity:0;pointer-events:none;transition:opacity .18s ease;
+  }
+  .backdrop.open{opacity:1;pointer-events:auto}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    background:var(--surface);
+    border-radius:20px 20px 0 0;
+    max-height:88vh;overflow-y:auto;
+    transform:translateY(100%);transition:transform .22s cubic-bezier(.2,.8,.3,1);
+    padding-bottom:calc(20px + var(--pad));
+    box-shadow:0 -6px 30px rgba(0,0,0,.2);
+  }
+  .sheet.open{transform:translateY(0)}
+  @media (min-width:700px){
+    .sheet{left:50%;right:auto;bottom:auto;top:50%;width:520px;max-width:92vw;border-radius:18px;
+      transform:translate(-50%,-45%) scale(.97);opacity:0;transition:opacity .18s ease, transform .18s ease}
+    .sheet.open{transform:translate(-50%,-50%) scale(1);opacity:1}
+  }
+  .grabber{width:44px;height:5px;border-radius:3px;background:var(--line);margin:10px auto 4px}
+  .sheethead{padding:8px 20px 0;display:flex;gap:14px;align-items:center}
+  .sheethead .avatar{width:56px;height:56px;border-radius:28px;font-size:19px}
+  .sheetname{font-size:22px;font-weight:800;line-height:1.15}
+  .sheetbody{padding:14px 20px 0}
+  .field{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 0;border-top:1px solid var(--line);
+  }
+  .field .lbl{font-size:12.5px;font-weight:800;letter-spacing:.8px;color:var(--ink-3);text-transform:uppercase}
+  .field .val{font-size:17px;font-weight:600;word-break:break-word}
+  .field .grow{flex:1 1 auto;min-width:0}
+  .actions{display:flex;flex-wrap:wrap;gap:10px;padding:16px 20px 6px}
+  .actions .btn{flex:1 1 44%}
+  .closebtn{
+    position:absolute;right:12px;top:12px;width:40px;height:40px;border-radius:20px;
+    background:#EFF1F3;color:var(--ink-2);font-size:20px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  /* ---------- Bund ---------- */
+  footer{padding:24px 16px calc(24px + var(--pad));text-align:center;color:var(--ink-3);font-size:13px;line-height:1.6}
+  footer .note{max-width:520px;margin:0 auto 10px}
+  #updateBtn{color:var(--ink-3);font-size:13px;text-decoration:underline;padding:8px}
+  #updatePanel{display:none;max-width:520px;margin:10px auto 0;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:14px;text-align:left;color:var(--ink-2);font-size:14px}
+  #updatePanel.show{display:block}
+  #updatePanel input[type=file]{margin-top:8px;font-size:14px;width:100%}
+
+  .toast{
+    position:fixed;left:50%;bottom:calc(24px + var(--pad));transform:translate(-50%,20px);
+    background:var(--ink);color:#fff;padding:12px 18px;border-radius:24px;
+    font-size:15px;font-weight:600;z-index:60;opacity:0;pointer-events:none;transition:.2s;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <div>
+        <h1>Kontaktbog</h1>
+        <p class="sub">Røde Kors Roskilde</p>
+      </div>
+    </div>
+    <div class="searchwrap">
+      <span class="searchicon" aria-hidden="true">🔍</span>
+      <label for="search" class="visually-hidden" style="position:absolute;left:-9999px">Søg efter navn, mail, telefon eller aktivitet</label>
+      <input id="search" type="search" inputmode="search" autocomplete="off" placeholder="Søg navn, aktivitet, telefon…">
+      <button id="clearSearch" aria-label="Ryd søgning">✕</button>
+    </div>
+  </div>
+</header>
+
+<div class="filters">
+  <div class="wrap">
+    <div class="chips" id="roleChips" role="group" aria-label="Filtrér på rolle"></div>
+    <div class="row2">
+      <select class="pick" id="activityPick" aria-label="Filtrér på aktivitet"></select>
+      <select class="pick" id="sortPick" aria-label="Sortering" style="flex:0 0 auto;width:120px">
+        <option value="first">A–Å fornavn</option>
+        <option value="last">A–Å efternavn</option>
+      </select>
+      <div class="viewtoggle" role="group" aria-label="Visning">
+        <button id="viewList" aria-pressed="true">Liste</button>
+        <button id="viewCards" aria-pressed="false">Kort</button>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span id="count">—</span>
+      <button class="linkbtn" id="copyMails">Kopiér mailadresser</button>
+    </div>
+  </div>
+</div>
+
+<main id="results" class="wrap" aria-live="polite"></main>
+
+<footer>
+  <div class="note">
+    Kontaktbogen er en <strong>skrivebeskyttet</strong> udgave. Rettelser laves i <code>kontakter.html</code> på OneDrive.
+  </div>
+  <div class="note">Indeholder personoplysninger — kun til internt brug i afdelingen.</div>
+  <div id="dataStamp"></div>
+  <button id="updateBtn">Opdatér kontaktbogen med nye data</button>
+  <div id="updatePanel">
+    <strong>Sådan opdaterer du</strong>
+    <p style="margin:6px 0">Vælg den nyeste <code>kontakter.html</code> herunder. Kontaktbogen henter personerne ud og gemmer en ny fil, som du lægger på OneDrive i stedet for den gamle.</p>
+    <input type="file" id="fileInput" accept=".html,text/html">
+  </div>
+</footer>
+
+<div class="backdrop" id="backdrop"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetName" tabindex="-1">
+  <div class="grabber" aria-hidden="true"></div>
+  <button class="closebtn" id="closeSheet" aria-label="Luk">✕</button>
+  <div class="sheethead">
+    <div class="avatar" id="sheetAvatar" aria-hidden="true"></div>
+    <div><div class="sheetname" id="sheetName"></div><div id="sheetRoles" style="color:var(--ink-2);font-size:14px;font-weight:600"></div></div>
+  </div>
+  <div class="actions" id="sheetActions"></div>
+  <div class="sheetbody" id="sheetBody"></div>
+</section>
+
+<div class="toast" id="toast" role="status"></div>
+
+<!-- HER GEMMES DATA — samme format som kontakter.html -->
+<script id="app-data">
+var appData = [
+  {
+    "navn": "Poul Erik Løvskov",
+    "mail1": "poulov@rodekors.dk",
+    "mail2": "pel@lovskov.com",
+    "telefon": "36202609",
+    "roller": [
+      "Aktivitetsleder",
+      "Frivillig"
+    ],
+    "aktiviteter": [
+      "Mandefællesskaberne",
+      "Kommunikation"
+    ],
+    "id": 1787072620205
+  },
+  {
+    "navn": "Claus Bang Hansen",
+    "mail1": "claban@rodekors.dk",
+    "mail2": "",
+    "telefon": "40320643",
+    "roller": [
+      "Bestyrelse"
+    ],
+    "aktiviteter": [],
+    "id": 1787072880471
+  },
+  {
+    "navn": "Jørgen Verner Nielsen",
+    "mail1": "jornie@rodekors.dk",
+    "mail2": "",
+    "telefon": "22477282",
+    "roller": [
+      "Bestyrelse",
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Kommunikation",
+      "Førstehjælp",
+      "Julehjælp",
+      "Røde Kors indsamlingen"
+    ],
+    "id": 1787145005141
+  },
+  {
+    "navn": "Svend Erik Larsen",
+    "mail1": "svelar@rodekors.dk",
+    "mail2": "",
+    "telefon": "24472034",
+    "roller": [
+      "Bestyrelse"
+    ],
+    "aktiviteter": [
+      "Økonomi"
+    ],
+    "id": 1787145076956
+  },
+  {
+    "navn": "Guri Madsen",
+    "mail1": "guri.madsen@gmail.com",
+    "mail2": "",
+    "telefon": "30709384",
+    "roller": [
+      "Bestyrelse"
+    ],
+    "aktiviteter": [],
+    "id": 1787145125506
+  },
+  {
+    "navn": "Jan N Ohmeyer",
+    "mail1": "janohm@rodekors.dk",
+    "mail2": "",
+    "telefon": "21770382",
+    "roller": [
+      "Bestyrelse",
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Samaritter"
+    ],
+    "id": 1787145179809
+  },
+  {
+    "navn": "Marianne Henriksen",
+    "mail1": "mhestauning@gmail.com",
+    "mail2": "",
+    "telefon": "60541761",
+    "roller": [
+      "Bestyrelse",
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Q - net",
+      "Røde Kors Ro's Have"
+    ],
+    "id": 1787145236680
+  },
+  {
+    "navn": "Jørgen Skou Larsen",
+    "mail1": "jsl@bondegaarden.dk",
+    "mail2": "",
+    "telefon": "40904697",
+    "roller": [
+      "Bestyrelse",
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Mandefællesskaberne"
+    ],
+    "id": 1787145291463
+  },
+  {
+    "navn": "Helle Ramlyng",
+    "mail1": "helram@rodekors.dk",
+    "mail2": "",
+    "telefon": "21636366",
+    "roller": [
+      "Bestyrelse",
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Røde Kors Ro's Have"
+    ],
+    "id": 1787145388549
+  },
+  {
+    "navn": "Tomas Bruunshuus Sørensen",
+    "mail1": "tomas.bruunshuus@rodekors.dk",
+    "mail2": "",
+    "telefon": "26846225",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Beredskab"
+    ],
+    "id": 1787145452868
+  },
+  {
+    "navn": "Lone Nordkamp",
+    "mail1": "lonnor@rodekors.dk",
+    "mail2": "",
+    "telefon": "22867625",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Besøgstjenesten",
+      "Fortæl for Livet"
+    ],
+    "id": 1787145538347
+  },
+  {
+    "navn": "Karina Christiansen",
+    "mail1": "karsen@rodekors.dk",
+    "mail2": "",
+    "telefon": "51646976",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Besøgstjenesten"
+    ],
+    "id": 1787145582395
+  },
+  {
+    "navn": "Lena Schmidt Nielsen",
+    "mail1": "lesnie@rodekors.dk",
+    "mail2": "",
+    "telefon": "60708515",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Familienetværket"
+    ],
+    "id": 1787145661527
+  },
+  {
+    "navn": "Ilse Larsen",
+    "mail1": "ejnar.ilse@gmail.com",
+    "mail2": "",
+    "telefon": "21658042",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Fortæl for Livet"
+    ],
+    "id": 1787145783085
+  },
+  {
+    "navn": "Nicole Malmros",
+    "mail1": "nicole.malmros@rodekors.dk",
+    "mail2": "",
+    "telefon": "24237696",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Førstehjælp"
+    ],
+    "id": 1787145837556
+  },
+  {
+    "navn": "Magali Poëy Lindskrog Carlsen",
+    "mail1": "magcar@rodekors.dk",
+    "mail2": "",
+    "telefon": "51155831",
+    "roller": [],
+    "aktiviteter": [
+      "Guidet Læsning"
+    ],
+    "id": 1787145919555
+  },
+  {
+    "navn": "Anette Nyvang Hansen",
+    "mail1": "anette.nyvang.hansen@gmail.com",
+    "mail2": "",
+    "telefon": "28291293",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Integration"
+    ],
+    "id": 1787145976578
+  },
+  {
+    "navn": "Marie Nyvang Hansen",
+    "mail1": "manyha@rodekors.dk",
+    "mail2": "",
+    "telefon": "91853628",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Integration"
+    ],
+    "id": 1787146032438
+  },
+  {
+    "navn": "Lars Rasmussen",
+    "mail1": "larras@rodekors.dk",
+    "mail2": "",
+    "telefon": "41748205",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Kommunikation"
+    ],
+    "id": 1787146155686
+  },
+  {
+    "navn": "Peter Ottesen",
+    "mail1": "petott@rodekors.dk",
+    "mail2": "",
+    "telefon": "29620120",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Mandefællesskaberne"
+    ],
+    "id": 1787146209398
+  },
+  {
+    "navn": "Per \"hønse\" Horndrup",
+    "mail1": "perhor@rodekors.dk",
+    "mail2": "",
+    "telefon": "26233964",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Mandefællesskaberne",
+      "Røde Kors MC'erne"
+    ],
+    "id": 1787146289052
+  },
+  {
+    "navn": "Inger Kristensen",
+    "mail1": "ingerulrik@mail.dk",
+    "mail2": "",
+    "telefon": "26271242",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Nørklere"
+    ],
+    "id": 1787146333806
+  },
+  {
+    "navn": "Marianne Andersen",
+    "mail1": "kildhus@gmail.com",
+    "mail2": "",
+    "telefon": "30691619",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Nørklere"
+    ],
+    "id": 1787146369733
+  },
+  {
+    "navn": "Dorthe Møller Søndergaard",
+    "mail1": "dorson@rodekors.dk",
+    "mail2": "",
+    "telefon": "22436638",
+    "roller": [
+      "Bestyrelse",
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Patientstøtter"
+    ],
+    "id": 1787146451013
+  },
+  {
+    "navn": "Anne Charlotte Olsen",
+    "mail1": "anncha@rodekors.dk",
+    "mail2": "",
+    "telefon": "31122100",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Q - net"
+    ],
+    "id": 1787146507989
+  },
+  {
+    "navn": "Lene Højer Andersen",
+    "mail1": "lenhoj@rodekors.dk",
+    "mail2": "",
+    "telefon": "42763927",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Rekrutering"
+    ],
+    "id": 1787146588722
+  },
+  {
+    "navn": "Brian Olsen",
+    "mail1": "brianolsen@youseepost.dk",
+    "mail2": "",
+    "telefon": "93809539",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Røde Kors Ro's Have"
+    ],
+    "id": 1787146691420
+  },
+  {
+    "navn": "Begitte Johansen",
+    "mail1": "gammeroed@pc.dk",
+    "mail2": "",
+    "telefon": "21803901",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Røde Kors Ro's Have"
+    ],
+    "id": 1787146753489
+  },
+  {
+    "navn": "Connie S. Harpsøe",
+    "mail1": "costha@outlook.dk",
+    "mail2": "",
+    "telefon": "21267707",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Røde Kors Ro's Have"
+    ],
+    "id": 1787146825304
+  },
+  {
+    "navn": "Mona Anita Ibsen",
+    "mail1": "mona.ibsen@gmail.com",
+    "mail2": "",
+    "telefon": "25396896",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Røde Kors Ro's Have"
+    ],
+    "id": 1787146878152
+  },
+  {
+    "navn": "John Hansen",
+    "mail1": "johnhansen2605@gmail.com",
+    "mail2": "",
+    "telefon": "",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Røde Kors Ro's Have"
+    ],
+    "id": 1787146952856
+  },
+  {
+    "navn": "Susanne Hedegaard",
+    "mail1": "suh.hedegaard@hotmail.com",
+    "mail2": "",
+    "telefon": "",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Røde Kors Ro's Have"
+    ],
+    "id": 1787146991017
+  },
+  {
+    "navn": "Jan Pedersen Pedersen",
+    "mail1": "janpedersen123@gmail.com",
+    "mail2": "",
+    "telefon": "31135109",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Røde Kors Ro's Have"
+    ],
+    "id": 1787147032674
+  },
+  {
+    "navn": "Stine Ramlyng",
+    "mail1": "stiram@rodekors.dk",
+    "mail2": "",
+    "telefon": "31135109",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Røde Kors Ro's Have"
+    ],
+    "id": 1787147075159
+  },
+  {
+    "navn": "Morten Hvedsteen Steen",
+    "mail1": "morste@rodekors.dk",
+    "mail2": "",
+    "telefon": "31874604",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Røde Kors MC'erne"
+    ],
+    "id": 1787147147399
+  },
+  {
+    "navn": "Ninna Hørbye",
+    "mail1": "nhoerbye@gmail.com",
+    "mail2": "",
+    "telefon": "29413260",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Samaritter"
+    ],
+    "id": 1787147228253
+  },
+  {
+    "navn": "Kristoffer Knutzon",
+    "mail1": "kriknu@rodekors.dk",
+    "mail2": "",
+    "telefon": "",
+    "roller": [],
+    "aktiviteter": [
+      "Samaritter"
+    ],
+    "id": 1787147274116
+  },
+  {
+    "navn": "Michael Søndergaard",
+    "mail1": "micson@rodekors.dk",
+    "mail2": "",
+    "telefon": "20200664",
+    "roller": [],
+    "aktiviteter": [
+      "Samværdighed"
+    ],
+    "id": 1787147320547
+  },
+  {
+    "navn": "Maja Pedersen",
+    "mail1": "makjpe@outlook.com",
+    "mail2": "",
+    "telefon": "31524093",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Samværdighed"
+    ],
+    "id": 1787147357363
+  },
+  {
+    "navn": "Hanne Andersen",
+    "mail1": "hanne.andersen@webspeed.dk",
+    "mail2": "",
+    "telefon": "25541201",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Vågetjenesten"
+    ],
+    "id": 1787147430131
+  },
+  {
+    "navn": "Marianne Kargaard",
+    "mail1": "mariannekargaard@hotmail.com",
+    "mail2": "",
+    "telefon": "26840955",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Vågetjenesten"
+    ],
+    "id": 1787147474490
+  },
+  {
+    "navn": "Henrik Heede",
+    "mail1": "henhee@rodekors.dk",
+    "mail2": "",
+    "telefon": "51594831",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Økonomi"
+    ],
+    "id": 1787147517730
+  },
+  {
+    "navn": "Maj Benedikte Toxværd Laursen",
+    "mail1": "roskilde@urkmail.dk",
+    "mail2": "",
+    "telefon": "53525337",
+    "roller": [
+      "Aktivitetsleder"
+    ],
+    "aktiviteter": [
+      "Ungdommens Røde Kors"
+    ],
+    "id": 1787147581578
+  }
+];
+var dataDato = "2026-08-19";
+</script>
+
+<script id="app-logic">
+(function(){
+  "use strict";
+
+  var ROLLER = ["Bestyrelse","Aktivitetsleder","Frivillig","Andet"];
+  var state = { q:"", roles:[], activity:"", sort:"first", view:"list", current:null };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var results = $("results");
+
+  /* ---------- hjælpere ---------- */
+  function collator(){ return new Intl.Collator("da",{sensitivity:"base"}); }
+  function norm(s){ return (s||"").toString().toLowerCase(); }
+  function digits(t){ return (t||"").replace(/[^\d+]/g,""); }
+  function prettyPhone(t){
+    var d = digits(t);
+    if(d.length===8) return d.replace(/(\d\d)(\d\d)(\d\d)(\d\d)/,"$1 $2 $3 $4");
+    return t||"";
+  }
+  function initials(navn){
+    var p = (navn||"").trim().split(/\s+/).filter(Boolean);
+    if(!p.length) return "?";
+    if(p.length===1) return p[0].substr(0,2).toUpperCase();
+    return (p[0][0]+p[p.length-1][0]).toUpperCase();
+  }
+  function lastName(navn){
+    var p = (navn||"").trim().split(/\s+/);
+    return p.length>1 ? p[p.length-1] : (p[0]||"");
+  }
+  function esc(s){
+    return (s==null?"":String(s)).replace(/[&<>"']/g,function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function toast(msg){
+    var t=$("toast"); t.textContent=msg; t.classList.add("show");
+    clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove("show");},2200);
+  }
+  function copyText(text,msg){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){toast(msg);},fallback);
+    } else fallback();
+    function fallback(){
+      var ta=document.createElement("textarea");
+      ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand("copy"); toast(msg); }catch(e){ toast("Kunne ikke kopiere"); }
+      document.body.removeChild(ta);
+    }
+  }
+
+  /* ---------- filtrering ---------- */
+  function filtered(){
+    var c = collator();
+    var q = norm(state.q).trim();
+    var out = appData.filter(function(p){
+      if(state.roles.length){
+        var hit=false;
+        for(var i=0;i<state.roles.length;i++){
+          if((p.roller||[]).indexOf(state.roles[i])>-1){hit=true;break;}
+        }
+        if(!hit) return false;
+      }
+      if(state.activity && (p.aktiviteter||[]).indexOf(state.activity)===-1) return false;
+      if(q){
+        var hay = norm(p.navn)+" "+norm(p.mail1)+" "+norm(p.mail2)+" "+digits(p.telefon)+" "+
+                  norm((p.roller||[]).join(" "))+" "+norm((p.aktiviteter||[]).join(" "));
+        var words = q.split(/\s+/);
+        for(var w=0;w<words.length;w++){ if(hay.indexOf(words[w])===-1) return false; }
+      }
+      return true;
+    });
+    out.sort(function(a,b){
+      return state.sort==="last"
+        ? c.compare(lastName(a.navn),lastName(b.navn)) || c.compare(a.navn,b.navn)
+        : c.compare(a.navn||"",b.navn||"");
+    });
+    return out;
+  }
+
+  /* ---------- optegning ---------- */
+  function avatarHTML(p,cls){
+    var board = (p.roller||[]).indexOf("Bestyrelse")>-1 ? " bestyrelse":"";
+    return '<div class="avatar'+board+(cls||"")+'" aria-hidden="true">'+esc(initials(p.navn))+'</div>';
+  }
+  function metaLine(p){
+    var parts = (p.aktiviteter||[]).slice();
+    if(!parts.length) parts = (p.roller||[]).slice();
+    return parts.join(" · ");
+  }
+
+  function renderList(rows){
+    var c = collator(), html="", currentLetter=null, open=false;
+    rows.forEach(function(p,idx){
+      var key = state.sort==="last" ? lastName(p.navn) : (p.navn||"");
+      var L = (key.charAt(0)||"#").toUpperCase();
+      if(L!==currentLetter){
+        if(open) html+='</div>';
+        currentLetter=L;
+        html+='<div class="letter">'+esc(L)+'</div><div class="list">';
+        open=true;
+      }
+      var tel=digits(p.telefon), mail=p.mail1||p.mail2||"";
+      html+=''
+        + '<div class="person">'
+        +   '<button class="pmain" data-open="'+idx+'" style="display:flex;align-items:center;gap:12px;flex:1 1 auto;min-width:0;background:none;padding:0;text-align:left">'
+        +     avatarHTML(p)
+        +     '<span style="min-width:0"><span class="pname" style="display:block">'+esc(p.navn)+'</span>'
+        +     '<span class="pmeta" style="display:block">'+esc(metaLine(p))+'</span></span>'
+        +   '</button>'
+        +   '<span class="quick">'
+        +     (tel ? '<a class="icobtn call" href="tel:'+esc(tel)+'" aria-label="Ring til '+esc(p.navn)+'">📞</a>'
+                   : '<span class="icobtn call" aria-disabled="true" aria-hidden="true">📞</span>')
+        +     (mail ? '<a class="icobtn mail" href="mailto:'+esc(mail)+'" aria-label="Skriv til '+esc(p.navn)+'">✉️</a>'
+                    : '<span class="icobtn mail" aria-disabled="true" aria-hidden="true">✉️</span>')
+        +   '</span>'
+        + '</div>';
+    });
+    if(open) html+='</div>';
+    return html;
+  }
+
+  function renderCards(rows){
+    var html='<div class="cards">';
+    rows.forEach(function(p,idx){
+      var tel=digits(p.telefon), mail=p.mail1||p.mail2||"";
+      html+=''
+        + '<article class="card">'
+        +   '<button class="cardtop" data-open="'+idx+'" style="width:100%;text-align:left;padding:0;background:none">'
+        +     avatarHTML(p)
+        +     '<span><span class="cardname" style="display:block">'+esc(p.navn)+'</span>'
+        +     '<span style="color:var(--ink-2);font-size:14px">'+esc(prettyPhone(p.telefon)||mail)+'</span></span>'
+        +   '</button>'
+        +   '<div class="tags">'
+        +     (p.roller||[]).map(function(r){return '<span class="tag role">'+esc(r)+'</span>';}).join("")
+        +     (p.aktiviteter||[]).map(function(a){return '<span class="tag">'+esc(a)+'</span>';}).join("")
+        +   '</div>'
+        +   '<div class="cardbtns">'
+        +     (tel ? '<a class="btn primary" href="tel:'+esc(tel)+'">📞 Ring</a>'
+                   : '<span class="btn primary" aria-disabled="true">📞 Ring</span>')
+        +     (mail ? '<a class="btn secondary" href="mailto:'+esc(mail)+'">✉️ Mail</a>'
+                    : '<span class="btn secondary" aria-disabled="true">✉️ Mail</span>')
+        +   '</div>'
+        + '</article>';
+    });
+    return html+'</div>';
+  }
+
+  var visible = [];
+  function render(){
+    visible = filtered();
+    $("count").textContent = visible.length===appData.length
+      ? appData.length+" personer"
+      : visible.length+" af "+appData.length+" personer";
+    if(!visible.length){
+      results.innerHTML='<div class="empty"><strong>Ingen personer matcher</strong>Prøv et kortere søgeord, eller nulstil filtrene øverst.</div>';
+      return;
+    }
+    results.innerHTML = state.view==="list" ? renderList(visible) : renderCards(visible);
+  }
+
+  /* ---------- detaljeark ---------- */
+  function vcard(p){
+    var ln = lastName(p.navn), fn = (p.navn||"").replace(new RegExp("\\s*"+ln+"$"),"");
+    var lines = ["BEGIN:VCARD","VERSION:3.0",
+      "N:"+ln+";"+fn+";;;","FN:"+(p.navn||""),
+      "ORG:Røde Kors Roskilde"+((p.aktiviteter||[]).length?";"+p.aktiviteter.join(", "):"")];
+    if(p.telefon) lines.push("TEL;TYPE=CELL:"+digits(p.telefon));
+    if(p.mail1) lines.push("EMAIL;TYPE=INTERNET,WORK:"+p.mail1);
+    if(p.mail2) lines.push("EMAIL;TYPE=INTERNET,HOME:"+p.mail2);
+    if((p.roller||[]).length) lines.push("NOTE:"+p.roller.join(", "));
+    lines.push("END:VCARD");
+    return lines.join("\r\n");
+  }
+  function saveVcard(p){
+    var blob = new Blob([vcard(p)],{type:"text/vcard;charset=utf-8"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (p.navn||"kontakt").replace(/[^\wæøåÆØÅ ]/g,"")+".vcf";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+  }
+
+  function openSheet(p){
+    state.current = p;
+    $("sheetAvatar").className = "avatar"+((p.roller||[]).indexOf("Bestyrelse")>-1?" bestyrelse":"");
+    $("sheetAvatar").textContent = initials(p.navn);
+    $("sheetName").textContent = p.navn||"";
+    $("sheetRoles").textContent = (p.roller||[]).join(" · ");
+
+    var tel=digits(p.telefon), mail=p.mail1||p.mail2||"";
+    var acts='';
+    $("sheetActions").innerHTML =
+        (tel ? '<a class="btn primary" href="tel:'+esc(tel)+'">📞 Ring op</a>' : '')
+      + (tel ? '<a class="btn ghost" href="sms:'+esc(tel)+'">💬 Send SMS</a>' : '')
+      + (mail ? '<a class="btn secondary" href="mailto:'+esc(mail)+'">✉️ Skriv mail</a>' : '')
+      + '<button class="btn ghost" id="vcfBtn">👤 Gem i telefonens kontakter</button>';
+
+    var body='';
+    if(p.telefon) body+='<div class="field"><span class="grow"><span class="lbl">Telefon</span><br><span class="val">'+esc(prettyPhone(p.telefon))+'</span></span><button class="icobtn" data-copy="'+esc(digits(p.telefon))+'" aria-label="Kopiér telefonnummer">⧉</button></div>';
+    if(p.mail1) body+='<div class="field"><span class="grow"><span class="lbl">Mail</span><br><span class="val">'+esc(p.mail1)+'</span></span><button class="icobtn" data-copy="'+esc(p.mail1)+'" aria-label="Kopiér mailadresse">⧉</button></div>';
+    if(p.mail2) body+='<div class="field"><span class="grow"><span class="lbl">Mail 2</span><br><span class="val">'+esc(p.mail2)+'</span></span><button class="icobtn" data-copy="'+esc(p.mail2)+'" aria-label="Kopiér mailadresse 2">⧉</button></div>';
+    if((p.aktiviteter||[]).length){
+      acts = p.aktiviteter.map(function(a){return '<span class="tag">'+esc(a)+'</span>';}).join("");
+      body+='<div class="field" style="display:block"><span class="lbl">Aktiviteter</span><div class="tags" style="margin:8px 0 0">'+acts+'</div></div>';
+    }
+    $("sheetBody").innerHTML = body;
+
+    $("backdrop").classList.add("open");
+    $("sheet").classList.add("open");
+    document.body.style.overflow="hidden";
+    $("sheet").focus();
+  }
+  function closeSheet(){
+    $("backdrop").classList.remove("open");
+    $("sheet").classList.remove("open");
+    document.body.style.overflow="";
+    state.current=null;
+  }
+
+  /* ---------- opsætning af filtre ---------- */
+  function buildFilters(){
+    var chips = $("roleChips");
+    chips.innerHTML = ROLLER.map(function(r){
+      return '<button class="chip" data-role="'+esc(r)+'" aria-pressed="false">'+esc(r)+'</button>';
+    }).join("");
+
+    var set = {};
+    appData.forEach(function(p){ (p.aktiviteter||[]).forEach(function(a){ if(a) set[a]=(set[a]||0)+1; }); });
+    var list = Object.keys(set).sort(collator().compare);
+    $("activityPick").innerHTML = '<option value="">Alle aktiviteter</option>' +
+      list.map(function(a){return '<option value="'+esc(a)+'">'+esc(a)+' ('+set[a]+')</option>';}).join("");
+  }
+
+  /* ---------- hændelser ---------- */
+  $("search").addEventListener("input",function(){
+    state.q=this.value;
+    $("clearSearch").classList.toggle("show", !!this.value);
+    render();
+  });
+  $("clearSearch").addEventListener("click",function(){
+    $("search").value=""; state.q=""; this.classList.remove("show"); $("search").focus(); render();
+  });
+  $("roleChips").addEventListener("click",function(e){
+    var b=e.target.closest("[data-role]"); if(!b) return;
+    var r=b.getAttribute("data-role"), i=state.roles.indexOf(r);
+    if(i>-1) state.roles.splice(i,1); else state.roles.push(r);
+    b.setAttribute("aria-pressed", i>-1?"false":"true");
+    render();
+  });
+  $("activityPick").addEventListener("change",function(){ state.activity=this.value; render(); });
+  $("sortPick").addEventListener("change",function(){ state.sort=this.value; render(); });
+  $("viewList").addEventListener("click",function(){ setView("list"); });
+  $("viewCards").addEventListener("click",function(){ setView("cards"); });
+  function setView(v){
+    state.view=v;
+    $("viewList").setAttribute("aria-pressed", v==="list");
+    $("viewCards").setAttribute("aria-pressed", v==="cards");
+    render();
+  }
+  results.addEventListener("click",function(e){
+    var b=e.target.closest("[data-open]"); if(!b) return;
+    openSheet(visible[parseInt(b.getAttribute("data-open"),10)]);
+  });
+  $("sheetBody").addEventListener("click",function(e){
+    var b=e.target.closest("[data-copy]"); if(!b) return;
+    copyText(b.getAttribute("data-copy"),"Kopieret");
+  });
+  $("sheetActions").addEventListener("click",function(e){
+    if(e.target.closest("#vcfBtn") && state.current) saveVcard(state.current);
+  });
+  $("closeSheet").addEventListener("click",closeSheet);
+  $("backdrop").addEventListener("click",closeSheet);
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
+
+  $("copyMails").addEventListener("click",function(){
+    var mails=[];
+    filtered().forEach(function(p){ if(p.mail1) mails.push(p.mail1); });
+    if(!mails.length){ toast("Ingen mailadresser i listen"); return; }
+    copyText(mails.join("; "), mails.length+" mailadresser kopieret");
+  });
+
+  /* ---------- opdatering fra kontakter.html ---------- */
+  $("updateBtn").addEventListener("click",function(){
+    $("updatePanel").classList.toggle("show");
+  });
+  $("fileInput").addEventListener("change",function(e){
+    var f=e.target.files && e.target.files[0]; if(!f) return;
+    var r=new FileReader();
+    r.onload=function(){
+      var m=/var\s+appData\s*=\s*(\[[\s\S]*?\]);/.exec(r.result);
+      if(!m){ toast("Fandt ingen data i filen"); return; }
+      var data;
+      try{ data=JSON.parse(m[1]); }catch(err){ toast("Data kunne ikke læses"); return; }
+      if(!data.length){ toast("Filen indeholder ingen personer"); return; }
+      buildNewFile(data);
+    };
+    r.readAsText(f,"utf-8");
+    e.target.value="";
+  });
+
+  function buildNewFile(data){
+    var clone = document.documentElement.cloneNode(true);
+    clone.querySelector("#results").innerHTML="";
+    clone.querySelector("#roleChips").innerHTML="";
+    clone.querySelector("#activityPick").innerHTML="";
+    clone.querySelector("#sheetBody").innerHTML="";
+    clone.querySelector("#sheetActions").innerHTML="";
+    clone.querySelector("#sheetName").textContent="";
+    clone.querySelector("#sheetRoles").textContent="";
+    clone.querySelector("#sheetAvatar").textContent="";
+    clone.querySelector("#count").textContent="—";
+    clone.querySelector("#search").setAttribute("value","");
+    clone.querySelector("#updatePanel").classList.remove("show");
+    clone.querySelector("#sheet").classList.remove("open");
+    clone.querySelector("#backdrop").classList.remove("open");
+    clone.querySelector("#dataStamp").textContent="";
+    clone.querySelector("#app-data").textContent =
+      "\nvar appData = " + JSON.stringify(data,null,2) + ";\nvar dataDato = \"" + new Date().toISOString().slice(0,10) + "\";\n";
+
+    var html = "<!DOCTYPE html>\n" + clone.outerHTML;
+    var blob = new Blob([html],{type:"text/html;charset=utf-8"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="kontaktbog.html";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+    toast("Ny kontaktbog gemt med "+data.length+" personer");
+  }
+
+  /* ---------- start ---------- */
+  buildFilters();
+  render();
+  if(typeof dataDato!=="undefined" && dataDato) $("dataStamp").textContent="Data opdateret "+dataDato;
+})();
+</script>
+</body>
+</html>

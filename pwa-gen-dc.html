@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PWA - Bygger DC</title>
+<style>
+  :root{
+    --paper: #EDE7D8;
+    --paper-dim: #E2DBC8;
+    --ink: #211E19;
+    --rust: #9A4630;
+    --moss: #47543C;
+    --hint: #5F5A4B;
+    --card: #1B1A16;
+    --card-text: #F2ECDD;
+    --line: #cbc2a8;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+  .topbar{
+    padding:22px 28px 18px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .topbar h1{
+    font-family:var(--serif);
+    font-size:25px;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  .topbar span{
+    font-size:14.5px;
+    color:var(--hint);
+    letter-spacing:0.3px;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns: 1fr 380px;
+    gap:0;
+    align-items:start;
+  }
+  @media (max-width: 860px){
+    .layout{ grid-template-columns: 1fr; }
+  }
+  .form-pane{
+    padding:28px;
+    max-width:640px;
+  }
+  .field{
+    margin-bottom:20px;
+  }
+  .field label{
+    display:block;
+    font-size:13.5px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--moss);
+    font-weight:600;
+    margin-bottom:7px;
+  }
+  .field .hint code{
+    background:#e5dfcd; padding:1px 5px; border-radius:3px; font-size:13px;
+  }
+  .field .hint{
+    font-size:13.5px;
+    line-height:1.55;
+    color:var(--hint);
+    margin-top:6px;
+    font-weight:400;
+    text-transform:none;
+    letter-spacing:0;
+  }
+  input[type=text], textarea{
+    width:100%;
+    padding:11px 13px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:3px;
+    font-family:var(--sans);
+    font-size:15.5px;
+    color:var(--ink);
+  }
+  textarea{ min-height:150px; resize:vertical; line-height:1.6;}
+  input[type=text]:focus, textarea:focus{
+    outline:2px solid var(--rust);
+    outline-offset:1px;
+  }
+  .filebox{
+    border:1px dashed var(--line);
+    border-radius:3px;
+    padding:14px;
+    background:#f7f3e7;
+    font-size:14.5px;
+  }
+  .filebox input{ font-size:14px; }
+  .filebox .status{
+    margin-top:9px;
+    font-size:13.5px;
+    color:var(--moss);
+    font-weight:600;
+  }
+  .filebox .status.pending{ color:#7A6522; }
+  .row2{ display:flex; gap:16px; }
+  .row2 > div{ flex:1; }
+
+  .theme-picker{ display:flex; gap:12px; flex-wrap:wrap; }
+  .theme-option{
+    flex:1; min-width:140px;
+    position:relative;
+    border:2px solid var(--line);
+    border-radius:8px;
+    padding:12px 12px 11px;
+    cursor:pointer;
+    background:#fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .theme-option:hover{ border-color:#a89f89; }
+  .theme-option input{
+    position:absolute;
+    top:11px; right:11px;
+    width:19px; height:19px;
+    margin:0;
+    accent-color:var(--rust);
+    cursor:pointer;
+  }
+  .theme-option .swatches{
+    display:flex; gap:6px; margin-bottom:10px;
+  }
+  .theme-option .swatch{
+    width:28px; height:28px;
+    border-radius:50%;
+    border:1px solid rgba(0,0,0,0.12);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35);
+  }
+  .theme-option .tname{
+    font-size:14.5px; font-weight:600; color:var(--ink); padding-right:22px;
+  }
+  .theme-option.selected{
+    border-color:var(--theme-accent, var(--rust));
+    box-shadow: 0 0 0 2px var(--theme-accent, var(--rust)) inset, 0 2px 8px rgba(30,25,15,0.08);
+  }
+  .generate-btn{
+    width:100%;
+    padding:17px;
+    background:var(--rust);
+    color:#fdf8ee;
+    border:none;
+    border-radius:4px;
+    font-size:17px;
+    font-weight:700;
+    letter-spacing:0.02em;
+    cursor:pointer;
+    margin-top:8px;
+  }
+  .generate-btn:disabled{
+    background:#c9beac;
+    cursor:not-allowed;
+  }
+  .generate-btn:hover:not(:disabled){ background:#82392a; }
+  .msg{
+    margin-top:12px;
+    font-size:14.5px;
+    line-height:1.55;
+    padding:10px 12px;
+    border-radius:3px;
+    display:none;
+  }
+  .msg.ok{ display:block; background:#e7ecdf; color:#3f4a34; }
+  .msg.err{ display:block; background:#f4ded9; color:#7d2c1a; }
+
+  /* Dublin Core-panel */
+  details.dc{
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#f7f3e7;
+    padding:14px 16px;
+    margin-bottom:20px;
+  }
+  details.dc summary{
+    cursor:pointer;
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--moss);
+    font-weight:600;
+    padding:2px 0;
+  }
+  details.dc summary::marker{ color:var(--rust); }
+  details.dc[open] summary{ margin-bottom:12px; }
+  details.dc .panel-sub{
+    font-size:13.5px;
+    color:var(--hint);
+    margin:0 0 16px;
+    line-height:1.55;
+  }
+  .field-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:0 16px;
+  }
+  .field-grid .field{ margin-bottom:16px; }
+  .field-grid label{ text-transform:none; letter-spacing:0; font-size:14px; }
+  .field-grid label .hint{
+    display:block; font-size:13px; color:var(--hint);
+    font-weight:400; margin-top:3px; line-height:1.5;
+  }
+  select{
+    width:100%;
+    padding:11px 13px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:3px;
+    font-family:var(--sans);
+    font-size:15.5px;
+    color:var(--ink);
+  }
+  select:focus{ outline:2px solid var(--rust); outline-offset:1px; }
+  .meta-btn{
+    width:100%;
+    padding:12px;
+    background:transparent;
+    color:var(--moss);
+    border:1px solid var(--line);
+    border-radius:4px;
+    font-size:14.5px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:10px;
+  }
+  .meta-btn:hover{ background:#f2ecdd; }
+
+  /* Liste over knapper til filerne */
+  .linkrow{
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#f7f3e7;
+    padding:13px 14px 4px;
+    margin-bottom:12px;
+  }
+  .linkrow-top{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:9px;
+  }
+  .linkrow-nr{
+    font-size:13px; text-transform:uppercase; letter-spacing:0.09em;
+    color:var(--moss); font-weight:700;
+  }
+  .linkrow-tools{ display:flex; gap:5px; }
+  .tool{
+    font-family:var(--sans); font-size:14px; line-height:1;
+    padding:6px 9px; background:#fff; color:var(--ink);
+    border:1px solid var(--line); border-radius:3px; cursor:pointer;
+  }
+  .tool:hover:not(:disabled){ background:#efe9d8; }
+  .tool:disabled{ opacity:0.35; cursor:default; }
+  .tool.del{ color:#7d2c1a; }
+  .linkrow .field{ margin-bottom:12px; }
+  .add-btn{
+    width:100%; padding:12px;
+    background:#fff; color:var(--moss);
+    border:1px dashed var(--line); border-radius:4px;
+    font-size:14.5px; font-weight:600; cursor:pointer;
+  }
+  .add-btn:hover{ background:#f7f3e7; }
+
+  .filelist{
+    font-size:13.5px; color:var(--hint); line-height:1.7;
+    margin:14px 0 0; padding:0; list-style:none;
+  }
+  .filelist code{
+    background:#e5dfcd; padding:1px 5px; border-radius:3px; color:var(--ink);
+  }
+
+  /* preview pane */
+  .preview-pane{
+    background:var(--paper-dim);
+    border-left:1px solid var(--line);
+    padding:28px 22px;
+    position:sticky;
+    top:0;
+    min-height:100vh;
+  }
+  .preview-pane .label{
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--hint);
+    margin-bottom:14px;
+    font-weight:600;
+  }
+  .phone-frame{
+    background:#fbf8ef;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+    box-shadow: 0 8px 24px rgba(30,25,15,0.10);
+  }
+  #previewFrame{
+    width:100%;
+    height:600px;
+    border:none;
+    border-radius:6px;
+    background:#fbf8ef;
+  }
+  #iconCanvas{ display:none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>PWA · Bygger</h1>
+  <span>Saml dine html-filer til en app til hjemmeskærmen · kører lokalt, ingen server · version 1</span>
+</div>
+
+<div class="layout">
+  <div class="form-pane">
+
+    <div class="field">
+      <label for="loadApp">Indlæs eksisterende app (valgfri)</label>
+      <div class="filebox">
+        <input type="file" id="loadApp" accept=".html,text/html">
+        <div class="status pending" id="loadStatus">Ingen fil valgt</div>
+      </div>
+      <div class="hint">Vælg den <code>index.html</code>, som denne udgave af værktøjet har lavet, for at hente den ind i formularen og redigere den videre. Alt kommer med: tekst, forsidebillede, knapper, tema og Dublin Core-felter. Har du selv sat en tællerkode ind nederst i filen, følger den også med over i den nye udgave.</div>
+    </div>
+
+    <div class="field">
+      <label>Tema</label>
+      <div class="theme-picker" id="themePicker">
+        <label class="theme-option selected" data-theme="original" style="--theme-accent:#9A4630">
+          <input type="radio" name="theme" value="original" checked>
+          <div class="swatches">
+            <span class="swatch" style="background:#9A4630"></span>
+            <span class="swatch" style="background:#EDE7D8"></span>
+          </div>
+          <div class="tname">Oprindeligt</div>
+        </label>
+        <label class="theme-option" data-theme="rodekors" style="--theme-accent:#E30A0B">
+          <input type="radio" name="theme" value="rodekors">
+          <div class="swatches">
+            <span class="swatch" style="background:#E30A0B"></span>
+            <span class="swatch" style="background:#FFFFFF"></span>
+          </div>
+          <div class="tname">Røde Kors</div>
+        </label>
+        <label class="theme-option" data-theme="lokalhistorisk2" style="--theme-accent:#9E2453">
+          <input type="radio" name="theme" value="lokalhistorisk2">
+          <div class="swatches">
+            <span class="swatch" style="background:#9E2453"></span>
+            <span class="swatch" style="background:#FAF9F5"></span>
+          </div>
+          <div class="tname">Lokalhistorisk (bordeaux)</div>
+        </label>
+      </div>
+      <div class="hint">Vælg farvetema for forsiden. Vælg samme tema som i dine afspillere, så hænger appen sammen.</div>
+    </div>
+
+    <div class="field">
+      <label for="eyebrow">Mærkat (valgfri)</label>
+      <input type="text" id="eyebrow" placeholder="fx SYD FOR BANEN, BYVANDRING 2026">
+      <div class="hint">Vises som lille label øverst. Lad stå tom for at udelade.</div>
+    </div>
+
+    <div class="field">
+      <label for="title">Titel</label>
+      <input type="text" id="title" placeholder="fx Lydfortællinger fra Roskilde">
+      <div class="hint">Vises øverst på forsiden og bruges som appens navn på telefonen.</div>
+    </div>
+
+    <div class="field">
+      <label for="shortName">Kort navn (valgfri)</label>
+      <input type="text" id="shortName" maxlength="20" placeholder="fx Lydhistorier">
+      <div class="hint">Står under ikonet på hjemmeskærmen. Højst ca. 12 tegn. Tomt felt bruger de første ord af titlen.</div>
+    </div>
+
+    <div class="field">
+      <label for="location">Sted (valgfri)</label>
+      <input type="text" id="location" placeholder="fx Roskilde">
+      <div class="hint">Vises som en lille stedlinje under titlen.</div>
+    </div>
+
+    <div class="field">
+      <label for="image">Forsidebillede (valgfri)</label>
+      <div class="filebox">
+        <input type="file" id="image" accept="image/*">
+        <div class="status pending" id="imageStatus">Intet billede valgt endnu</div>
+      </div>
+      <div class="hint">Billedet skaleres ned og komprimeres automatisk (maks. 1100px bredde, JPEG). Det bruges også som appens ikon, medmindre du vælger noget andet nedenfor.</div>
+    </div>
+
+    <div class="field">
+      <label for="imageUrl">Webadresse til delingsbillede (valgfri)</label>
+      <input type="text" id="imageUrl" placeholder="https://.../forside.jpg">
+      <div class="hint">Bruges kun til at vise et billede når linket deles på fx Facebook. Skal være det <em>samme</em> billede uploadet som en selvstændig billedfil med sin egen webadresse — det indlejrede billede i selve filen kan ikke læses af Facebook.</div>
+    </div>
+
+    <div class="field">
+      <label for="descLabel">Overskrift på beskrivelsen (valgfri)</label>
+      <input type="text" id="descLabel" placeholder="Om denne app">
+      <div class="hint">Vises lukket med en pil ved siden af. Klik folder beskrivelsen ud. Tomt felt bruger "Om denne app".</div>
+    </div>
+
+    <div class="field">
+      <label for="description">Beskrivelse</label>
+      <textarea id="description" placeholder="Kort tekst om hvad appen indeholder, og hvordan man bruger den."></textarea>
+      <div class="hint">Du kan bruge Markdown:<br>
+        <code>**fed**</code> og <code>*kursiv*</code> · <code>## Stor overskrift</code> og <code>### Mindre overskrift</code> · <code>- </code> foran hver linje giver en punktliste · <code>[tekst](https://...)</code> giver et link · en linje med <code>---</code> giver en vandret streg.</div>
+    </div>
+
+    <div class="field">
+      <label>Knapper til filerne</label>
+      <div id="linkList"></div>
+      <button class="add-btn" id="addLinkBtn" type="button">+ Tilføj knap</button>
+      <div class="hint">Én knap pr. html-fil. Filnavnet skal være præcis som filen hedder i mappen — fx <code>julerier.html</code>. Filerne skal ligge i samme mappe som appens filer.</div>
+    </div>
+
+    <div class="field">
+      <label for="linkIcon">Symbol på knapperne</label>
+      <select id="linkIcon">
+        <option value="play">Afspil-trekant (lyd)</option>
+        <option value="arrow">Pil (billeder, tekst, blandet)</option>
+        <option value="none">Intet symbol</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="ctaText">Knap i bunden (valgfri)</label>
+      <div class="row2">
+        <div>
+          <input type="text" id="ctaText" placeholder="fx Tilbage til oversigten">
+        </div>
+        <div>
+          <input type="text" id="ctaUrl" placeholder="../index.html">
+        </div>
+      </div>
+      <div class="hint">Viser en knap i temafarven nederst på forsiden. Udfyld både knaptekst og adresse — ellers vises knappen ikke.</div>
+    </div>
+
+    <div class="field">
+      <label for="footerNote">Bundtekst (valgfri)</label>
+      <input type="text" id="footerNote" placeholder="fx Syd for Banen - Lokalhistorisk Forening">
+    </div>
+
+    <div class="field">
+      <label for="folderName">Mappenavn på serveren</label>
+      <input type="text" id="folderName" placeholder="fx lydfortaellinger">
+      <div class="hint">Bruges kun til at give appens cache et entydigt navn. Behøver ikke passe helt præcist, men to forskellige apps bør ikke have samme navn. Tomt felt bruger titlen.</div>
+    </div>
+
+    <details class="dc" id="dcDetails">
+      <summary>Dublin Core-metadata</summary>
+      <p class="panel-sub">Til arkivering. Alle felter er valgfrie — udfyld dem der giver mening. Felterne skrives både som <code>&lt;meta&gt;</code>-tags i filens hoved og som en oversigt, man kan folde ud nederst på forsiden.</p>
+
+      <div class="field-grid">
+        <div class="field">
+          <label for="dcTitle">Titel <span class="hint">dc.title — udfyldes automatisk fra titlen</span></label>
+          <input type="text" id="dcTitle">
+        </div>
+        <div class="field">
+          <label for="dcCreator">Ophav / skaber <span class="hint">dc.creator — den der har skabt eller samlet materialet</span></label>
+          <input type="text" id="dcCreator" placeholder="F.eks. Samlet af Anders Jensen">
+        </div>
+        <div class="field">
+          <label for="dcSubject">Emne / nøgleord <span class="hint">dc.subject — adskil med semikolon. Området sættes forrest automatisk</span></label>
+          <input type="text" id="dcSubject" placeholder="Byvandring; Nørregade; 1970erne">
+        </div>
+        <div class="field">
+          <label for="dcDescription">Beskrivelse <span class="hint">dc.description — udfyldes automatisk fra beskrivelsen</span></label>
+          <input type="text" id="dcDescription">
+        </div>
+        <div class="field">
+          <label for="dcPublisher">Udgiver / område <span class="hint">dc.publisher — styrer også præfiks på identifikator og første emneord</span></label>
+          <select id="dcPublisher">
+            <option value="">(ingen)</option>
+            <option value="Privat">Privat</option>
+            <option value="Syd for Banen — Lokalhistorisk Forening">Syd for Banen — Lokalhistorisk Forening</option>
+            <option value="Røde Kors Roskilde">Røde Kors Roskilde</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="dcContributor">Bidragyder <span class="hint">dc.contributor — den der har redigeret eller registreret</span></label>
+          <input type="text" id="dcContributor">
+        </div>
+        <div class="field">
+          <label for="dcDate">Dato <span class="hint">dc.date — helst ÅÅÅÅ-MM-DD, men fx "ca. 1955" er også i orden</span></label>
+          <input type="text" id="dcDate" placeholder="2026-08-31">
+        </div>
+        <div class="field">
+          <label for="dcType">Type <span class="hint">dc.type — DCMI-typeordforråd</span></label>
+          <select id="dcType">
+            <option value="Collection" selected>Collection (samling)</option>
+            <option value="InteractiveResource">InteractiveResource</option>
+            <option value="Sound">Sound (lyd)</option>
+            <option value="Text">Text (tekst)</option>
+            <option value="Image">Image (billede)</option>
+            <option value="Event">Event (begivenhed)</option>
+            <option value="">(ingen)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="dcFormat">Format <span class="hint">dc.format — filens tekniske format</span></label>
+          <input type="text" id="dcFormat" value="text/html">
+        </div>
+        <div class="field">
+          <label for="dcIdentifier">Identifikator <span class="hint">dc.identifier — arkivnummer eller lignende. Præfiks sættes automatisk</span></label>
+          <input type="text" id="dcIdentifier" placeholder="F.eks. app-byvandring-2026">
+        </div>
+        <div class="field">
+          <label for="dcSource">Kilde <span class="hint">dc.source — hvor materialet stammer fra</span></label>
+          <input type="text" id="dcSource">
+        </div>
+        <div class="field">
+          <label for="dcLanguage">Sprog <span class="hint">dc.language — sprogkode, fx da</span></label>
+          <input type="text" id="dcLanguage" value="da">
+        </div>
+        <div class="field">
+          <label for="dcRelation">Relation <span class="hint">dc.relation — beslægtet materiale</span></label>
+          <input type="text" id="dcRelation">
+        </div>
+        <div class="field">
+          <label for="dcCoverage">Dækning <span class="hint">dc.coverage — sted og/eller periode, udfyldes automatisk fra Sted</span></label>
+          <input type="text" id="dcCoverage" placeholder="Roskilde, Danmark; 1970-1980">
+        </div>
+        <div class="field">
+          <label for="dcRights">Rettigheder <span class="hint">dc.rights — ophavsret og vilkår for brug</span></label>
+          <input type="text" id="dcRights" placeholder="F.eks. Foreningen ejer rettighederne. Må ikke gengives uden tilladelse.">
+        </div>
+      </div>
+
+      <button class="meta-btn" id="metaJsonBtn" type="button">Gem metadata som separat JSON-fil</button>
+    </details>
+
+    <button class="generate-btn" id="generateBtn" disabled>Generér app (5 filer)</button>
+    <button class="meta-btn" id="indexBtn" type="button">Kun index.html</button>
+    <button class="meta-btn" id="swBtn" type="button">Kun manifest.json og sw.js</button>
+    <button class="meta-btn" id="iconBtn" type="button">Kun ikonerne</button>
+    <div class="msg" id="msgBox"></div>
+
+    <ul class="filelist">
+      <li><code>index.html</code> — forsiden med dine knapper</li>
+      <li><code>manifest.json</code> — navn, farve og ikon på hjemmeskærmen</li>
+      <li><code>sw.js</code> — får appen til at virke uden internet</li>
+      <li><code>icon-192.png</code> · <code>icon-512.png</code> — appens ikon</li>
+    </ul>
+
+  </div>
+
+  <div class="preview-pane">
+    <div class="label">Forhåndsvisning</div>
+    <div class="phone-frame">
+      <iframe id="previewFrame"></iframe>
+    </div>
+  </div>
+</div>
+
+<canvas id="iconCanvas"></canvas>
+
+<script>
+const state = {
+  eyebrow:'', title:'', shortName:'', location:'', description:'', descLabel:'',
+  imageDataUrl:null, imageUrl:'', theme:'original',
+  links:[], linkIcon:'play',
+  ctaText:'', ctaUrl:'', footerNote:'', folderName:'', taellerBlock:''
+};
+
+/* ---------- Dublin Core ---------- */
+
+const DC_FIELDS = ['title','creator','subject','description','publisher','contributor',
+  'date','type','format','identifier','source','language','relation','coverage','rights'];
+
+const DC_LABELS = {
+  title:'Titel', creator:'Ophav', subject:'Emne', description:'Beskrivelse',
+  publisher:'Udgiver', contributor:'Bidragyder', date:'Dato', type:'Type',
+  format:'Format', identifier:'Identifikator', source:'Kilde', language:'Sprog',
+  relation:'Relation', coverage:'Dækning', rights:'Rettigheder'
+};
+
+// Områdefelt: udgiver styrer id-præfiks og første emneord
+const OMRAADER = {
+  'Privat':'PRIV',
+  'Syd for Banen — Lokalhistorisk Forening':'SFB',
+  'Røde Kors Roskilde':'RKR'
+};
+
+function dcInputId(key){ return 'dc' + key.charAt(0).toUpperCase() + key.slice(1); }
+
+// Felter der spejler formularen ovenfor, indtil man selv skriver i dem.
+const dcTouched = { title:false, description:false, coverage:false };
+
+const THEMES = {
+  original: {
+    label:'Oprindeligt',
+    paper:'#EDE7D8', card:'#1B1A16', cardText:'#F2ECDD', cardBg:'#fbf8ef',
+    ink:'#211E19', rust:'#9A4630', moss:'#5C6B4F', line:'#d8d0ba',
+    footerColor:'#6B6455', muted:'#6B6455', footerStrong:'#4A463C',
+    rowHover:'#f2ecdd',
+    bodyText:'#3a362e', quoteText:'#5a5646', codeBg:'#efe9d8'
+  },
+  rodekors: {
+    label:'Røde Kors',
+    paper:'#FFFFFF', card:'#E30A0B', cardText:'#FFFFFF', cardBg:'#FFFFFF',
+    ink:'#1A1A1A', rust:'#E30A0B', moss:'#B00A0B', line:'#EAEAEA',
+    footerColor:'#5A5A5A', muted:'#5A5A5A', footerStrong:'#333333',
+    rowHover:'#FDF1F1',
+    bodyText:'#262626', quoteText:'#5a5a5a', codeBg:'#F4F4F4'
+  },
+  lokalhistorisk2: {
+    label:'Lokalhistorisk (bordeaux)',
+    paper:'#FAF9F5', card:'#9E2453', cardText:'#FAF9F5', cardBg:'#FFFFFF',
+    ink:'#2A1620', rust:'#9E2453', moss:'#7A1B40', line:'#EAE2E5',
+    footerColor:'#6B5560', muted:'#6B5560', footerStrong:'#3A2630',
+    rowHover:'#F9EFF3',
+    bodyText:'#332028', quoteText:'#5c3b48', codeBg:'#F3E9ED'
+  }
+};
+
+const $ = id => document.getElementById(id);
+
+function compressImage(file, maxDim, quality){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Kunne ikke læse billedfilen'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Kunne ikke afkode billedet'));
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else if (h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function escapeHtml(str){
+  return (str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function slugify(str, fallback){
+  const s = (str || '').toLowerCase()
+    .replace(/æ/g,'ae').replace(/ø/g,'oe').replace(/å/g,'aa')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return s || fallback;
+}
+
+function stripMdToPlain(md, maxLen){
+  let t = (md || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '$1')
+    .replace(/[#>*_`~-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (maxLen && t.length > maxLen) t = t.slice(0, maxLen - 1).trim() + '…';
+  return t;
+}
+
+function inlineMd(s){
+  return s
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/(^|[^_])_(.+?)_([^_]|$)/g, '$1<em>$2</em>$3')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+
+function mdToHtml(md){
+  if (!md) return '';
+  const escaped = escapeHtml(md);
+  const lines = escaped.split('\n');
+  let html = '', inUl = false, inOl = false, para = [];
+
+  function flushPara(){
+    if (para.length){ html += '<p>' + inlineMd(para.join('<br>')) + '</p>'; para = []; }
+  }
+  function closeLists(){
+    if (inUl){ html += '</ul>'; inUl = false; }
+    if (inOl){ html += '</ol>'; inOl = false; }
+  }
+
+  for (const line of lines){
+    if (/^\s*$/.test(line)){ flushPara(); closeLists(); continue; }
+    let m;
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)){
+      flushPara(); closeLists();
+      html += '<hr>';
+      continue;
+    }
+    if ((m = line.match(/^(#{1,4})\s+(.*)$/))){
+      flushPara(); closeLists();
+      const level = Math.min(Math.max(m[1].length, 2), 5);
+      html += `<h${level}>${inlineMd(m[2])}</h${level}>`;
+      continue;
+    }
+    if ((m = line.match(/^[-*]\s+(.*)$/))){
+      flushPara();
+      if (inOl){ html += '</ol>'; inOl = false; }
+      if (!inUl){ html += '<ul>'; inUl = true; }
+      html += `<li>${inlineMd(m[1])}</li>`;
+      continue;
+    }
+    if ((m = line.match(/^\d+\.\s+(.*)$/))){
+      flushPara();
+      if (inUl){ html += '</ul>'; inUl = false; }
+      if (!inOl){ html += '<ol>'; inOl = true; }
+      html += `<li>${inlineMd(m[1])}</li>`;
+      continue;
+    }
+    if ((m = line.match(/^>\s?(.*)$/))){
+      flushPara(); closeLists();
+      html += `<blockquote>${inlineMd(m[1])}</blockquote>`;
+      continue;
+    }
+    closeLists();
+    para.push(line);
+  }
+  flushPara(); closeLists();
+  return html;
+}
+
+function collectDublinCore(){
+  const dc = {};
+  DC_FIELDS.forEach(key => {
+    const el = $(dcInputId(key));
+    const val = el ? el.value.trim() : '';
+    if (val) dc[key] = val;
+  });
+  // Området sætter præfiks på identifikator og lægger sig forrest i emneord
+  const praefiks = OMRAADER[dc.publisher || ''];
+  if (praefiks){
+    if (dc.identifier && !dc.identifier.startsWith(praefiks + '-')){
+      dc.identifier = praefiks + '-' + dc.identifier;
+    }
+    const emner = (dc.subject || '').split(';').map(s => s.trim()).filter(Boolean);
+    if (emner[0] !== dc.publisher) emner.unshift(dc.publisher);
+    dc.subject = emner.join('; ');
+  }
+  return dc;
+}
+
+// Holder dc.title, dc.description og dc.coverage i sync med formularen,
+// så længe man ikke selv har skrevet noget i dem.
+function syncAutoDc(){
+  if (!dcTouched.title) $('dcTitle').value = state.title.trim();
+  if (!dcTouched.description) $('dcDescription').value = stripMdToPlain(state.description, 300);
+  if (!dcTouched.coverage) $('dcCoverage').value = state.location.trim();
+}
+
+function buildDcMetaTags(dc){
+  const lines = [];
+  DC_FIELDS.forEach(key => {
+    if (!dc[key]) return;
+    if (key === 'subject'){
+      dc[key].split(';').forEach(part => {
+        const v = part.trim();
+        if (v) lines.push(`<meta name="DC.subject" content="${escapeHtml(v)}">`);
+      });
+    } else {
+      lines.push(`<meta name="DC.${key}" content="${escapeHtml(dc[key])}">`);
+    }
+  });
+  if (!lines.length) return '';
+  return '<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">\n' + lines.join('\n');
+}
+
+function buildDcSection(dc){
+  const rows = DC_FIELDS
+    .filter(key => dc[key])
+    .map(key => `<div class="meta-row"><dt>${DC_LABELS[key]} <span class="dc-tag">dc.${key}</span></dt><dd>${escapeHtml(dc[key])}</dd></div>`);
+  if (!rows.length) return '';
+  return `<details class="meta">
+      <summary><span class="desc-label">Om denne fil</span><span class="chevron" aria-hidden="true">&#9662;</span></summary>
+      <dl class="meta-list">${rows.join('')}</dl>
+    </details>`;
+}
+
+/* ---------- Selve forsiden ---------- */
+
+function iconSvg(kind, farve){
+  if (kind === 'none') return '';
+  const path = (kind === 'arrow')
+    ? '<path d="M9 5l7 7-7 7" fill="none" stroke="' + farve + '" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
+    : '<path d="M8 5v14l11-7z" fill="' + farve + '"/>';
+  return `<span class="rowicon" aria-hidden="true"><svg viewBox="0 0 24 24">${path}</svg></span>`;
+}
+
+function buildIndexHTML(s, includeTaeller, forPreview){
+  const theme = THEMES[s.theme] || THEMES.original;
+  const eyebrowBlock = s.eyebrow ? `<div class="eyebrow">&#10084; ${escapeHtml(s.eyebrow)}</div>` : '';
+  const locationBlock = s.location ? `<div class="location">${escapeHtml(s.location)}</div>` : '';
+  const imageBlock = s.imageDataUrl ? `<div class="cover"><img src="${s.imageDataUrl}" alt=""></div>` : '';
+  const descLabel = (s.descLabel && s.descLabel.trim()) ? s.descLabel.trim() : 'Om denne app';
+  const descBlock = s.description ? `<details class="desc">
+      <summary><span class="desc-label">${escapeHtml(descLabel)}</span><span class="chevron" aria-hidden="true">&#9662;</span></summary>
+      <div class="desc-body">${mdToHtml(s.description)}</div>
+    </details>` : '';
+
+  const gyldigeLinks = s.links.filter(l => (l.file || '').trim());
+  const linkRows = gyldigeLinks.map(l => `
+        <li><a class="row" href="./${escapeHtml(l.file.trim())}">
+          ${iconSvg(s.linkIcon, theme.cardText)}
+          <span class="rowtext">
+            <span class="rowtitle">${escapeHtml((l.label || '').trim() || l.file.trim())}</span>
+            ${l.sub && l.sub.trim() ? `<span class="rowsub">${escapeHtml(l.sub.trim())}</span>` : ''}
+          </span>
+        </a></li>`).join('');
+  const linkBlock = linkRows
+    ? `<ul class="rows">${linkRows}
+      </ul>`
+    : `<p class="tom">Der er ingen knapper endnu. Tilføj mindst én fil i byggeren.</p>`;
+
+  const ctaBlock = (s.ctaText && s.ctaText.trim() && s.ctaUrl && s.ctaUrl.trim())
+    ? `<div class="cta-wrap"><a class="cta-btn" href="${escapeHtml(s.ctaUrl.trim())}">${escapeHtml(s.ctaText.trim())}</a></div>`
+    : '';
+
+  const pageTitle = s.title || 'App';
+  const dc = collectDublinCore();
+  const dcMeta = buildDcMetaTags(dc);
+  const dcBlock = buildDcSection(dc);
+  const pageLang = (dc.language || 'da').trim() || 'da';
+  const taellerBlock = (includeTaeller && s.taellerBlock) ? '\n' + s.taellerBlock + '\n' : '';
+
+  const sourceData = {
+    format: 'pwa-forside',
+    builderVersion: 1,
+    eyebrow: s.eyebrow || '', title: s.title || '', shortName: s.shortName || '',
+    location: s.location || '', description: s.description || '', descLabel: s.descLabel || '',
+    theme: s.theme || 'original', imageUrl: s.imageUrl || '',
+    links: gyldigeLinks, linkIcon: s.linkIcon || 'play',
+    ctaText: s.ctaText || '', ctaUrl: s.ctaUrl || '',
+    footerNote: s.footerNote || '', folderName: s.folderName || '',
+    dublinCore: dc
+  };
+
+  const ogDesc = stripMdToPlain(s.description, 200) || (s.location ? `${pageTitle} · ${s.location}` : pageTitle);
+  const ogImageTags = s.imageUrl ? `<meta property="og:image" content="${escapeHtml(s.imageUrl)}">
+<meta name="twitter:card" content="summary_large_image">` : '';
+  const socialMeta = `<meta property="og:type" content="website">
+<meta property="og:title" content="${escapeHtml(pageTitle)}">
+<meta property="og:description" content="${escapeHtml(ogDesc)}">
+${ogImageTags}`;
+
+  const manifestTag = forPreview ? '' : '<link rel="manifest" href="./manifest.json">';
+  const swScript = forPreview ? '' : `
+  <script>
+    if ('serviceWorker' in navigator) {
+      // Var der allerede en service worker, da siden blev åbnet? Hvis ja, betyder
+      // et skifte, at en NY udgave har overtaget - og så genindlæses siden én gang,
+      // så man ser den nye forside med det samme i stedet for ved næste åbning.
+      var havdeController = !!navigator.serviceWorker.controller;
+      var genindlaeser = false;
+
+      navigator.serviceWorker.addEventListener('controllerchange', function(){
+        if (!havdeController || genindlaeser) return;
+        genindlaeser = true;
+        window.location.reload();
+      });
+
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('./sw.js')
+          .then(function(reg){
+            reg.update();
+            console.log('Service Worker aktiv:', reg.scope);
+          })
+          .catch(function(err){ console.error('Service Worker fejl:', err); });
+      });
+    }
+  <\/script>`;
+
+  return `<!DOCTYPE html>
+<html lang="${escapeHtml(pageLang)}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(pageTitle)}</title>
+${manifestTag}
+<meta name="theme-color" content="${theme.rust}">
+${socialMeta}
+${dcMeta}
+<link rel="icon" href="./icon-192.png">
+<script type="application/json" id="builder-source-data">${JSON.stringify(sourceData)}<\/script>
+<style>
+  :root{
+    --paper:${theme.paper}; --card:${theme.card}; --card-text:${theme.cardText}; --card-bg:${theme.cardBg};
+    --ink:${theme.ink}; --rust:${theme.rust}; --moss:${theme.moss}; --line:${theme.line};
+    --footer-color:${theme.footerColor}; --muted:${theme.muted}; --footer-strong:${theme.footerStrong};
+    --row-hover:${theme.rowHover};
+    --body-text:${theme.bodyText}; --quote-text:${theme.quoteText}; --code-bg:${theme.codeBg};
+    --serif: Arial, 'Helvetica Neue', Helvetica, 'Liberation Sans', sans-serif;
+    --sans: Arial, 'Helvetica Neue', Helvetica, 'Liberation Sans', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); display:flex; justify-content:center; padding:28px 14px;
+  }
+  .card{
+    width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--line);
+    border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(30,25,15,0.12);
+  }
+  .eyebrow{
+    text-align:center; font-size:13.5px; letter-spacing:0.1em; font-weight:700;
+    color:var(--moss); text-transform:uppercase; padding:16px 16px 4px;
+  }
+  .cover{ margin:14px 16px 0; border-radius:10px; overflow:hidden; }
+  .cover img{ width:100%; display:block; aspect-ratio:16/10.5; object-fit:cover; }
+  .title{
+    font-family:var(--serif); font-size:26px; line-height:1.3; text-align:center;
+    padding:18px 20px 6px; font-weight:700; margin:0;
+  }
+  .location{ text-align:center; font-size:16px; color:var(--muted); padding-bottom:8px; }
+
+  .rows{ list-style:none; margin:10px 16px 6px; padding:0; }
+  .rows li{ margin-bottom:10px; }
+  .row{
+    display:flex; align-items:center; gap:14px;
+    min-height:66px; padding:12px 14px;
+    background:var(--card-bg); border:1px solid var(--line); border-radius:12px;
+    text-decoration:none; color:var(--ink);
+  }
+  .row:hover, .row:active{ background:var(--row-hover); border-color:var(--rust); }
+  .row:focus-visible{ outline:3px solid var(--rust); outline-offset:3px; }
+  .rowicon{
+    flex:0 0 auto; width:42px; height:42px; border-radius:50%;
+    background:var(--card); display:flex; align-items:center; justify-content:center;
+  }
+  .rowicon svg{ width:18px; height:18px; margin-left:2px; }
+  .rowtitle{
+    display:block; font-family:var(--serif); font-size:18px; font-weight:700; line-height:1.3;
+  }
+  .rowsub{ display:block; font-size:14.5px; color:var(--muted); margin-top:2px; }
+  .tom{ margin:16px; color:var(--muted); font-size:15px; text-align:center; }
+
+  .desc{ margin:8px 16px 18px; border-top:1px solid var(--line); padding-top:12px; }
+  .desc summary{
+    display:flex; align-items:center; justify-content:space-between;
+    cursor:pointer; list-style:none; padding:6px 6px 6px 20px;
+    font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink);
+  }
+  .desc summary::-webkit-details-marker{ display:none; }
+  .desc summary::marker{ content:''; }
+  .desc .chevron{ color:var(--rust); font-size:17px; transition: transform .2s ease; flex-shrink:0; margin-left:10px; }
+  .desc[open] .chevron{ transform:rotate(180deg); }
+  .desc-body{ padding:10px 6px 4px 20px; font-size:16.5px; line-height:1.75; color:var(--body-text); }
+  .desc-body p{ margin:0 0 12px; }
+  .desc-body p:last-child{ margin-bottom:0; }
+  .desc-body h2, .desc-body h3, .desc-body h4, .desc-body h5{
+    font-family:var(--serif); color:var(--ink); margin:20px 0 8px; line-height:1.3;
+  }
+  .desc-body h2{ font-size:21px; }
+  .desc-body h3{ font-size:18px; }
+  .desc-body h4, .desc-body h5{ font-size:17px; }
+  .desc-body h2:first-child, .desc-body h3:first-child{ margin-top:2px; }
+  .desc-body hr{ border:none; border-top:1px solid var(--line); margin:20px 0; }
+  .desc-body ul, .desc-body ol{ margin:0 0 12px; padding-left:22px; }
+  .desc-body li{ margin-bottom:6px; }
+  .desc-body blockquote{
+    margin:0 0 12px; padding-left:12px; border-left:3px solid var(--rust); color:var(--quote-text); font-style:italic;
+  }
+  .desc-body a{ color:var(--rust); }
+  .desc-body code{ background:var(--code-bg); padding:1px 5px; border-radius:3px; font-size:15px; }
+
+  .meta{ margin:2px 16px 16px; border-top:1px solid var(--line); padding-top:10px; }
+  .meta summary{
+    display:flex; align-items:center; justify-content:space-between;
+    cursor:pointer; list-style:none; padding:6px 6px 6px 20px;
+    font-size:15px; font-weight:700; color:var(--footer-strong);
+  }
+  .meta summary::-webkit-details-marker{ display:none; }
+  .meta summary::marker{ content:''; }
+  .meta .chevron{ color:var(--rust); font-size:14px; transition: transform .2s ease; flex-shrink:0; margin-left:10px; }
+  .meta[open] .chevron{ transform:rotate(180deg); }
+  .meta-list{ margin:8px 0 4px; padding:0 6px 0 20px; font-size:14.5px; }
+  .meta-row{ padding:6px 0; border-bottom:1px solid var(--line); }
+  .meta-row:last-child{ border-bottom:none; }
+  .meta dt{ color:var(--muted); font-size:13.5px; }
+  .meta dd{ margin:2px 0 0; color:var(--body-text); line-height:1.5; }
+  .meta .dc-tag{ opacity:0.7; font-size:12.5px; }
+
+  .cta-wrap{ padding:6px 16px 18px; text-align:center; }
+  .cta-btn{
+    display:block; width:100%;
+    background:var(--rust); color:var(--card-text);
+    text-decoration:none; text-align:center;
+    font-size:16px; font-weight:700; letter-spacing:0.02em;
+    padding:14px 18px; border-radius:12px;
+    box-shadow:0 3px 10px rgba(30,25,15,0.15);
+    transition: filter .15s ease, transform .1s ease;
+  }
+  .cta-btn:hover{ filter:brightness(0.92); }
+  .cta-btn:active{ transform:translateY(1px); }
+  .cta-btn:focus-visible{ outline:3px solid var(--rust); outline-offset:3px; }
+
+  .footer{
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+    text-align:center; padding:4px 20px 22px;
+  }
+  .footer-note{ font-size:14px; color:var(--footer-strong); font-style:italic; }
+</style>
+</head>
+<body>
+  <div class="card">
+    ${eyebrowBlock}
+    ${imageBlock}
+    <h1 class="title">${escapeHtml(s.title) || 'Uden titel'}</h1>
+    ${locationBlock}
+    ${linkBlock}
+    ${descBlock}
+    ${ctaBlock}
+    ${dcBlock}
+    <div class="footer">
+      <div class="footer-note">${escapeHtml(s.footerNote) || 'Virker også uden internet'}</div>
+    </div>
+  </div>${swScript}
+${taellerBlock}</body>
+</html>`;
+}
+
+/* ---------- manifest.json og sw.js ---------- */
+
+function buildManifest(s){
+  const theme = THEMES[s.theme] || THEMES.original;
+  const kort = (s.shortName || '').trim() || (s.title || 'App').split(' ').slice(0,2).join(' ');
+  return JSON.stringify({
+    name: (s.title || 'App').trim(),
+    short_name: kort,
+    description: stripMdToPlain(s.description, 180),
+    start_url: './index.html',
+    scope: './',
+    display: 'standalone',
+    orientation: 'portrait',
+    lang: 'da',
+    background_color: theme.paper,
+    theme_color: theme.rust,
+    icons: [
+      {src:'./icon-192.png', sizes:'192x192', type:'image/png', purpose:'any maskable'},
+      {src:'./icon-512.png', sizes:'512x512', type:'image/png', purpose:'any maskable'}
+    ]
+  }, null, 2);
+}
+
+function cacheName(s){
+  const base = slugify(s.folderName || s.title, 'app');
+  const stamp = new Date().toISOString().slice(0,16).replace(/[-:T]/g,'');
+  return base + '-v' + stamp;
+}
+
+function buildSw(s, navn){
+  const filer = s.links.map(l => (l.file || '').trim()).filter(Boolean);
+  const liste = ['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png']
+    .concat(filer.map(f => './' + f))
+    .map(f => "  '" + f + "'").join(',\n');
+
+  return `// Genereret af PWA · Bygger - ${new Date().toLocaleString('da-DK')}
+// Cache-navnet er nyt hver gang, så gamle udgaver ryddes automatisk væk hos brugerne.
+// Forsiden hentes netværk-først, alt andet cache-først. Se nederst i filen.
+const CACHE_NAME = '${navn}';
+
+const ASSETS = [
+${liste}
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => Promise.all(
+      keys.map((key) => key !== CACHE_NAME ? caches.delete(key) : null)
+    ))
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+  const erForside =
+    event.request.mode === 'navigate' ||
+    url.pathname.endsWith('/') ||
+    url.pathname.endsWith('/index.html');
+
+  // FORSIDEN: netværk først. Er der internet, hentes den altid frisk fra
+  // serveren, så nye knapper dukker op med det samme. Er der ikke internet,
+  // bruges den senest gemte udgave.
+  if (erForside) {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const kopi = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', kopi));
+        }
+        return networkResponse;
+      }).catch(() =>
+        caches.match('./index.html').then((r) => r || caches.match('./'))
+      )
+    );
+    return;
+  }
+
+  // ALT ANDET: cache først. Historier, billeder og ikoner ændrer sig ikke,
+  // og de fylder mest - så de skal ikke hentes igen ved hver åbning.
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
+
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
+        }
+        const kopi = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, kopi));
+        return networkResponse;
+      });
+    })
+  );
+});`;
+}
+
+/* ---------- Ikoner ---------- */
+
+function drawIcon(px){
+  const theme = THEMES[state.theme] || THEMES.original;
+  const c = $('iconCanvas');
+  c.width = px; c.height = px;
+  const g = c.getContext('2d');
+  g.fillStyle = theme.card;
+  g.fillRect(0,0,px,px);
+
+  if (state.iconImage){
+    const img = state.iconImage;
+    const d = Math.min(img.width, img.height);
+    const sx = (img.width - d) / 2, sy = (img.height - d) / 2;
+    const pad = px * 0.10;
+    g.drawImage(img, sx, sy, d, d, pad, pad, px - 2*pad, px - 2*pad);
+  } else {
+    const bogstaver = (state.title || 'App').trim().split(/\s+/).slice(0,2)
+      .map(w => w.charAt(0).toUpperCase()).join('') || 'A';
+    g.fillStyle = theme.cardText;
+    g.font = Math.round(px * 0.40) + 'px Arial, sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(bogstaver, px/2, px*0.53);
+  }
+  return c;
+}
+
+function downloadIcon(px){
+  return new Promise(resolve => {
+    drawIcon(px).toBlob(blob => {
+      downloadBlob(blob, 'icon-' + px + '.png');
+      resolve();
+    }, 'image/png');
+  });
+}
+
+/* ---------- Download ---------- */
+
+function downloadBlob(blob, navn){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = navn;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+function downloadText(indhold, navn, type){
+  downloadBlob(new Blob([indhold], {type: type || 'text/plain;charset=utf-8'}), navn);
+}
+const pause = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- Knapperne til filerne ---------- */
+
+function renderLinkList(){
+  const c = $('linkList');
+  if (!state.links.length){
+    c.innerHTML = '<div class="hint" style="margin:0 0 12px">Ingen knapper endnu.</div>';
+    return;
+  }
+  c.innerHTML = state.links.map((l, i) => `
+    <div class="linkrow">
+      <div class="linkrow-top">
+        <span class="linkrow-nr">Knap ${i+1}</span>
+        <span class="linkrow-tools">
+          <button type="button" class="tool" data-op="up" data-i="${i}" ${i===0?'disabled':''} title="Flyt op">&#9650;</button>
+          <button type="button" class="tool" data-op="down" data-i="${i}" ${i===state.links.length-1?'disabled':''} title="Flyt ned">&#9660;</button>
+          <button type="button" class="tool del" data-op="del" data-i="${i}" title="Slet">Slet</button>
+        </span>
+      </div>
+      <div class="field">
+        <label>Filnavn</label>
+        <input type="text" data-k="file" data-i="${i}" value="${escapeHtml(l.file)}" placeholder="julerier.html">
+      </div>
+      <div class="field">
+        <label>Knaptekst</label>
+        <input type="text" data-k="label" data-i="${i}" value="${escapeHtml(l.label)}" placeholder="Julerier">
+      </div>
+      <div class="field">
+        <label>Linje under (valgfri)</label>
+        <input type="text" data-k="sub" data-i="${i}" value="${escapeHtml(l.sub)}">
+      </div>
+    </div>`).join('');
+
+  c.querySelectorAll('input[data-k]').forEach(inp => {
+    inp.addEventListener('input', e => {
+      state.links[+e.target.dataset.i][e.target.dataset.k] = e.target.value;
+      renderPreview(); checkReady();
+    });
+  });
+  c.querySelectorAll('button[data-op]').forEach(b => {
+    b.addEventListener('click', e => {
+      const btn = e.currentTarget;
+      const i = +btn.dataset.i, op = btn.dataset.op;
+      if (op === 'del') state.links.splice(i,1);
+      if (op === 'up' && i > 0) state.links.splice(i-1, 0, state.links.splice(i,1)[0]);
+      if (op === 'down' && i < state.links.length-1) state.links.splice(i+1, 0, state.links.splice(i,1)[0]);
+      renderLinkList(); renderPreview(); checkReady();
+    });
+  });
+}
+
+/* ---------- Forhåndsvisning ---------- */
+
+function renderPreview(){
+  syncAutoDc();
+  // Tællerkoden udelades bevidst i forhåndsvisningen.
+  $('previewFrame').srcdoc = buildIndexHTML(state, false, true);
+}
+
+function checkReady(){
+  const ok = state.title.trim() && state.links.some(l => (l.file || '').trim());
+  $('generateBtn').disabled = !ok;
+}
+
+/* ---------- Bindinger ---------- */
+
+document.querySelectorAll('#themePicker input[name="theme"]').forEach(radio => {
+  radio.addEventListener('change', e => {
+    state.theme = e.target.value;
+    document.querySelectorAll('#themePicker .theme-option').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.theme === state.theme);
+    });
+    renderPreview();
+  });
+});
+
+$('eyebrow').addEventListener('input', e => { state.eyebrow = e.target.value; renderPreview(); });
+$('title').addEventListener('input', e => { state.title = e.target.value; renderPreview(); checkReady(); });
+$('shortName').addEventListener('input', e => { state.shortName = e.target.value; });
+$('location').addEventListener('input', e => { state.location = e.target.value; renderPreview(); });
+$('description').addEventListener('input', e => { state.description = e.target.value; renderPreview(); });
+$('descLabel').addEventListener('input', e => { state.descLabel = e.target.value; renderPreview(); });
+$('imageUrl').addEventListener('input', e => { state.imageUrl = e.target.value.trim(); });
+$('linkIcon').addEventListener('change', e => { state.linkIcon = e.target.value; renderPreview(); });
+$('ctaText').addEventListener('input', e => { state.ctaText = e.target.value; renderPreview(); });
+$('ctaUrl').addEventListener('input', e => { state.ctaUrl = e.target.value; renderPreview(); });
+$('footerNote').addEventListener('input', e => { state.footerNote = e.target.value; renderPreview(); });
+$('folderName').addEventListener('input', e => { state.folderName = e.target.value; });
+
+DC_FIELDS.forEach(key => {
+  const el = $(dcInputId(key));
+  if (!el) return;
+  el.addEventListener('input', () => {
+    if (key in dcTouched) dcTouched[key] = el.value.trim() !== '';
+    renderPreview();
+  });
+  if (el.tagName === 'SELECT') el.addEventListener('change', renderPreview);
+});
+
+$('addLinkBtn').addEventListener('click', () => {
+  state.links.push({file:'', label:'', sub:''});
+  renderLinkList(); renderPreview(); checkReady();
+});
+
+$('image').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('imageStatus').textContent = 'Komprimerer billede …';
+  $('imageStatus').className = 'status pending';
+  try {
+    state.imageDataUrl = await compressImage(file, 1100, 0.78);
+    const img = new Image();
+    img.onload = () => { state.iconImage = img; };
+    img.src = state.imageDataUrl;
+    const kb = Math.round(state.imageDataUrl.length * 0.75 / 1024);
+    $('imageStatus').textContent = `Billede klar (~${kb} KB efter komprimering)`;
+    $('imageStatus').className = 'status';
+    renderPreview();
+  } catch(err){
+    $('imageStatus').textContent = 'Fejl: ' + err.message;
+    $('imageStatus').className = 'status pending';
+  }
+});
+
+$('metaJsonBtn').addEventListener('click', () => {
+  syncAutoDc();
+  const dc = collectDublinCore();
+  const msg = $('msgBox');
+  if (Object.keys(dc).length === 0){
+    msg.textContent = 'Der er ingen Dublin Core-felter udfyldt endnu.';
+    msg.className = 'msg err';
+    return;
+  }
+  const payload = {
+    '@context': 'http://purl.org/dc/elements/1.1/',
+    dublinCore: dc,
+    generated: new Date().toISOString()
+  };
+  downloadText(JSON.stringify(payload, null, 2), slugify(state.title, 'app') + '-metadata.json', 'application/json');
+  msg.textContent = 'Metadatafilen er downloadet.';
+  msg.className = 'msg ok';
+});
+
+/* ---------- Indlæsning af eksisterende app ---------- */
+
+function setField(id, value){
+  const el = $(id);
+  if (el) el.value = value || '';
+}
+
+function extractTaellerBlock(text){
+  const startMark = text.indexOf('TÆLLER');
+  if (startMark === -1) return '';
+  const endMark = text.indexOf('TÆLLER SLUT');
+  if (endMark === -1) return '';
+  const start = text.lastIndexOf('<!--', startMark);
+  const end = text.indexOf('-->', endMark);
+  if (start === -1 || end === -1 || end < start) return '';
+  return text.slice(start, end + 3);
+}
+
+function fillDcFields(dc){
+  DC_FIELDS.forEach(key => {
+    const el = $(dcInputId(key));
+    if (!el) return;
+    el.value = (dc && dc[key]) ? dc[key]
+      : (key === 'format' ? 'text/html' : (key === 'language' ? 'da' : (key === 'type' ? 'Collection' : '')));
+    if (key in dcTouched) dcTouched[key] = el.value.trim() !== '';
+  });
+}
+
+function selectTheme(themeKey){
+  state.theme = THEMES[themeKey] ? themeKey : 'original';
+  document.querySelectorAll('#themePicker input[name="theme"]').forEach(r => {
+    r.checked = (r.value === state.theme);
+  });
+  document.querySelectorAll('#themePicker .theme-option').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.theme === state.theme);
+  });
+}
+
+$('loadApp').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('loadStatus').textContent = 'Læser fil …';
+  $('loadStatus').className = 'status pending';
+  try {
+    const text = await file.text();
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const dataScript = doc.getElementById('builder-source-data');
+
+    if (!dataScript){
+      $('loadStatus').textContent = 'Filen kan ikke indlæses — den er ikke lavet med denne udgave af værktøjet.';
+      $('loadStatus').className = 'status pending';
+      e.target.value = '';
+      return;
+    }
+
+    const data = JSON.parse(dataScript.textContent);
+    state.eyebrow = data.eyebrow || '';
+    state.title = data.title || '';
+    state.shortName = data.shortName || '';
+    state.location = data.location || '';
+    state.description = data.description || '';
+    state.descLabel = data.descLabel || '';
+    state.imageUrl = data.imageUrl || '';
+    state.links = Array.isArray(data.links) ? data.links.map(l => ({file:l.file||'', label:l.label||'', sub:l.sub||''})) : [];
+    state.linkIcon = data.linkIcon || 'play';
+    state.ctaText = data.ctaText || '';
+    state.ctaUrl = data.ctaUrl || '';
+    state.footerNote = data.footerNote || '';
+    state.folderName = data.folderName || '';
+    selectTheme(data.theme || 'original');
+    fillDcFields(data.dublinCore || {});
+
+    const imgEl = doc.querySelector('.cover img');
+    if (imgEl && imgEl.src && imgEl.src.startsWith('data:')){
+      state.imageDataUrl = imgEl.src;
+      const img = new Image();
+      img.onload = () => { state.iconImage = img; };
+      img.src = state.imageDataUrl;
+      const kb = Math.round(state.imageDataUrl.length * 0.75 / 1024);
+      $('imageStatus').textContent = `Billede indlæst fra fil (~${kb} KB)`;
+      $('imageStatus').className = 'status';
+    }
+
+    setField('eyebrow', state.eyebrow);
+    setField('title', state.title);
+    setField('shortName', state.shortName);
+    setField('location', state.location);
+    setField('description', state.description);
+    setField('descLabel', state.descLabel);
+    setField('imageUrl', state.imageUrl);
+    setField('linkIcon', state.linkIcon);
+    setField('ctaText', state.ctaText);
+    setField('ctaUrl', state.ctaUrl);
+    setField('footerNote', state.footerNote);
+    setField('folderName', state.folderName);
+
+    state.taellerBlock = extractTaellerBlock(text);
+    $('loadStatus').textContent = `Indlæst: ${file.name}`
+      + (state.taellerBlock ? ' · tællerkoden er fundet og følger med i den nye fil' : '');
+    $('loadStatus').className = 'status';
+    renderLinkList(); renderPreview(); checkReady();
+  } catch(err){
+    $('loadStatus').textContent = 'Fejl ved indlæsning: ' + err.message;
+    $('loadStatus').className = 'status pending';
+  }
+});
+
+/* ---------- Generering ---------- */
+
+$('generateBtn').addEventListener('click', async () => {
+  const msg = $('msgBox');
+  try {
+    syncAutoDc();
+    const navn = cacheName(state);
+    downloadText(buildIndexHTML(state, true, false), 'index.html', 'text/html;charset=utf-8');
+    await pause(400);
+    downloadText(buildManifest(state), 'manifest.json', 'application/json');
+    await pause(400);
+    downloadText(buildSw(state, navn), 'sw.js', 'text/javascript');
+    await pause(400);
+    await downloadIcon(192);
+    await pause(400);
+    await downloadIcon(512);
+    msg.innerHTML = 'De fem filer er downloadet. Læg dem i <em>samme</em> mappe som dine html-filer og send hele mappen til serveren.'
+      + (state.taellerBlock ? ' Tællerkoden fra den indlæste fil står stadig nederst i index.html.' : '')
+      + ' Browseren spørger måske, om siden må hente flere filer — sig ja.';
+    msg.className = 'msg ok';
+  } catch(err){
+    msg.textContent = 'Der gik noget galt: ' + err.message;
+    msg.className = 'msg err';
+  }
+});
+
+$('indexBtn').addEventListener('click', () => {
+  syncAutoDc();
+  downloadText(buildIndexHTML(state, true, false), 'index.html', 'text/html;charset=utf-8');
+  $('msgBox').innerHTML = 'index.html er downloadet. Husk at hente en ny <code>sw.js</code> med, hvis du har ændret på knapperne — ellers henter appen stadig den gamle forside frem hos brugerne.';
+  $('msgBox').className = 'msg ok';
+});
+
+$('swBtn').addEventListener('click', async () => {
+  const navn = cacheName(state);
+  downloadText(buildManifest(state), 'manifest.json', 'application/json');
+  await pause(400);
+  downloadText(buildSw(state, navn), 'sw.js', 'text/javascript');
+  $('msgBox').textContent = 'manifest.json og sw.js er downloadet med et nyt cache-navn.';
+  $('msgBox').className = 'msg ok';
+});
+
+$('iconBtn').addEventListener('click', async () => {
+  await downloadIcon(192);
+  await pause(400);
+  await downloadIcon(512);
+  $('msgBox').textContent = 'Ikonerne er downloadet.';
+  $('msgBox').className = 'msg ok';
+});
+
+/* ---------- Start ---------- */
+state.links = [{file:'', label:'', sub:''}];
+renderLinkList();
+renderPreview();
+</script>
+</body>
+</html>

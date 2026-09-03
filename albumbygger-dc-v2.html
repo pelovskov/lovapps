@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Album · Bygger</title>
+<style>
+  /* ---------- Builder-standard afsnit 3: design-tokens ---------- */
+  :root{
+    --paper:     #EDE7D8;
+    --paper-dim: #E2DBC8;
+    --ink:       #211E19;
+    --rust:      #9A4630;
+    --moss:      #47543C;
+    --hint:      #5F5A4B;
+    --line:      #cbc2a8;
+    --danger:    #8C2F2A;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  /* ---------- Topbar ---------- */
+  header.top{
+    border-bottom: 1px solid var(--line);
+    padding: 22px 26px 18px;
+  }
+  header.top h1{
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 26px;
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  header.top p.sub{ margin: 0; color: var(--hint); font-size: 14.5px; max-width: 70ch; }
+
+  /* ---------- Afsnit 2: to-rudet layout ---------- */
+  main.layout{
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 26px;
+    align-items: start;
+    padding: 22px 26px 70px;
+  }
+  .formpane{ max-width: 640px; }
+  .previewpane{ position: sticky; top: 22px; }
+  .previewpane h2{
+    font-size: 13.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--moss); margin: 0 0 8px;
+  }
+  .previewpane iframe{
+    width: 100%; height: 74vh; min-height: 460px;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: var(--paper-dim);
+  }
+  .previewpane p.note{ font-size: 13px; color: var(--hint); margin: 8px 0 0; }
+  @media (max-width: 860px){
+    main.layout{ grid-template-columns: 1fr; }
+    .previewpane{ position: static; }
+    .previewpane iframe{ height: 60vh; }
+  }
+
+  /* ---------- Felter ---------- */
+  .block{
+    border-top: 1px solid var(--line);
+    padding: 20px 0 4px;
+  }
+  .block:first-child{ border-top: none; padding-top: 4px; }
+  .block > h2{
+    font-size: 13.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--moss); margin: 0 0 10px;
+  }
+  .field{ margin-bottom: 16px; }
+  label{
+    display:block; font-size: 13.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--moss); margin-bottom: 4px;
+  }
+  .hint{
+    display:block; font-size: 13.5px; line-height: 1.55;
+    color: var(--hint); font-weight: 400; text-transform: none; letter-spacing: 0;
+    margin-top: 2px;
+  }
+  input[type=text], input[type=url], textarea, select{
+    width: 100%;
+    font-family: inherit;
+    font-size: 15.5px;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #FBF8F0;
+    color: var(--ink);
+  }
+  textarea{ resize: vertical; line-height: 1.5; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible,
+  button:focus-visible, summary:focus-visible{
+    outline: 2px solid var(--rust); outline-offset: 2px;
+  }
+
+  /* ---------- Temavalg ---------- */
+  .themes{ display:flex; gap: 10px; flex-wrap: wrap; }
+  .themes label{
+    display:flex; align-items:center; gap: 9px;
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 14px; cursor: pointer;
+    font-size: 14.5px; font-weight: 600; text-transform: none; letter-spacing: 0;
+    color: var(--ink); background: #FBF8F0; margin: 0;
+    min-height: 44px;
+  }
+  .themes label:has(input:checked){
+    border-color: var(--rust); box-shadow: inset 0 0 0 1px var(--rust);
+  }
+  .themes input{ margin: 0; accent-color: var(--rust); width: 18px; height: 18px; }
+  .dot{ width: 17px; height: 17px; border-radius: 50%; border: 1px solid rgba(0,0,0,.25); }
+
+  /* ---------- Knapper ---------- */
+  .btn{
+    font-family: inherit; font-size: 14.5px; font-weight: 600;
+    min-height: 44px; padding: 10px 17px;
+    border-radius: 8px; border: 2px solid var(--rust);
+    background: var(--rust); color: #FFF9EE; cursor: pointer;
+  }
+  .btn:hover{ background: #82381f; border-color: #82381f; }
+  .btn:disabled{ opacity: .45; cursor: default; }
+  .btn.secondary{ background: #FBF8F0; color: var(--rust); }
+  .btn.secondary:hover:not(:disabled){ background: #F1E8D6; }
+  .btn.danger{
+    background: #FBF8F0; color: var(--danger); border-color: var(--danger);
+    padding: 6px 12px; font-size: 13.5px; min-height: 36px;
+  }
+  .btn.danger:hover{ background: #F6E6E3; }
+  .btn.small{ padding: 4px 11px; font-size: 14px; min-height: 36px; }
+  .btn.generate{ font-size: 17px; font-weight: 700; padding: 13px 22px; min-height: 52px; }
+
+  #fileInput, #importInput{ display:none; }
+
+  .filebox{
+    border: 1px dashed var(--line); border-radius: 8px;
+    background: #FBF8F0; padding: 13px 15px; font-size: 14.5px;
+  }
+  .filebox .status{ font-size: 13.5px; color: var(--hint); margin-top: 6px; display:block; }
+
+  /* ---------- Billedkort ---------- */
+  .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; margin-bottom: 12px; }
+  .count-pill{ font-size: 13.5px; color: var(--hint); }
+  .imggrid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .card{
+    background: #FBF8F0; border: 1px solid var(--line); border-radius: 8px;
+    overflow: hidden; display:flex; flex-direction: column;
+  }
+  .card img{ display:block; width:100%; height: 140px; object-fit: cover; background: var(--paper-dim); }
+  .card .placeholder{
+    height: 140px; background: var(--paper-dim); display:flex; align-items:center;
+    justify-content:center; color: var(--hint); font-size: 13.5px; font-style: italic;
+  }
+  .card .body{ padding: 11px 12px; display:flex; flex-direction:column; gap:8px; }
+  .card .body label{ font-size: 12.5px; margin-bottom: 2px; }
+  .card .body input, .card .body textarea{ font-size: 14.5px; padding: 7px 9px; }
+  .card .sizeinfo{ font-size: 13px; color: var(--hint); }
+  .card .row-btns{ display:flex; justify-content: space-between; align-items:center; gap: 6px; }
+  .move-btns{ display:flex; gap:5px; }
+  .empty-note{ color: var(--hint); font-style: italic; padding: 6px 0; font-size: 14.5px; }
+
+  /* ---------- Dublin Core ---------- */
+  details.dc summary{
+    cursor: pointer; font-size: 13.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .05em; color: var(--moss);
+    padding: 4px 0; min-height: 34px;
+  }
+  details.dc summary::marker{ color: var(--rust); }
+  details.dc[open] summary{ margin-bottom: 8px; }
+  details.dc .panel-sub{ font-size: 13.5px; color: var(--hint); margin: 0 0 14px; max-width: 62ch; }
+  .field-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 0 18px; }
+  .field-grid label{ font-size: 14px; text-transform: none; letter-spacing: 0; }
+  .field-grid .hint{ font-size: 13px; }
+
+  /* ---------- Generér ---------- */
+  .generate-bar{ display:flex; gap:12px; margin-top: 18px; flex-wrap: wrap; align-items:center; }
+  .msgbox{
+    margin-top: 14px; font-size: 14.5px; color: var(--ink);
+    background: #FBF8F0; border-left: 4px solid var(--rust);
+    border-radius: 0 6px 6px 0; padding: 11px 14px; min-height: 44px;
+    display: flex; align-items: center;
+  }
+  .msgbox:empty{ display: none; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Album · Bygger</h1>
+  <p class="sub">Bygger et fotoalbum som én selvstændig HTML-fil. Billederne ligger inde i filen, den virker uden internet, og Dublin Core-metadata følger med — både til mennesker og til maskiner.</p>
+</header>
+
+<main class="layout">
+<div class="formpane">
+
+  <!-- 1. Indlæs eksisterende fil -->
+  <div class="block">
+    <h2>Indlæs eksisterende album (valgfri)</h2>
+    <div class="filebox">
+      <button class="btn secondary" id="btnImport">Vælg en albumfil</button>
+      <input type="file" id="importInput" accept=".html,.htm">
+      <span class="status" id="importStatus">Vælg en albumfil, du tidligere har lavet her, hvis du vil rette i den.</span>
+    </div>
+  </div>
+
+  <!-- 2. Tema -->
+  <div class="block">
+    <h2>Tema</h2>
+    <div class="themes" id="themePicker">
+      <label><input type="radio" name="theme" value="oprindeligt" checked><span class="dot" style="background:#9A4630"></span>Oprindeligt</label>
+      <label><input type="radio" name="theme" value="rodekors"><span class="dot" style="background:#E30A0B"></span>Røde Kors</label>
+      <label><input type="radio" name="theme" value="bordeaux"><span class="dot" style="background:#9E2453"></span>Lokalhistorisk</label>
+    </div>
+  </div>
+
+  <!-- 3. Appens egne indholdsfelter -->
+  <div class="block">
+    <h2>Albummet</h2>
+    <div class="field">
+      <label for="albumTitle">Titel</label>
+      <input type="text" id="albumTitle" placeholder="F.eks. Skomagerværkstedet på Algade">
+    </div>
+    <div class="field">
+      <label for="albumPlace">Sted<span class="hint">Vises under titlen og udfylder feltet Dækning automatisk.</span></label>
+      <input type="text" id="albumPlace" placeholder="Roskilde, 1950-1960">
+    </div>
+    <div class="field">
+      <label for="albumDesc">Beskrivelse<span class="hint">Enkel opmærkning: <code>**fed**</code>, <code>*kursiv*</code>, <code>## Overskrift</code>, <code>### Underoverskrift</code>, <code>- punkt</code>, <code>1. punkt</code>, <code>&gt; citat</code>, <code>[tekst](https://…)</code>, <code>---</code> og <code>`kode`</code>. Tom linje giver et nyt afsnit.</span></label>
+      <textarea id="albumDesc" rows="6" placeholder="Skriv en kort introduktion til albummet …"></textarea>
+    </div>
+    <div class="field">
+      <label for="shareImage">Webadresse til delingsbillede<span class="hint">Valgfri. Billedet inde i filen kan ikke læses af Facebook. Peg her på det samme billede lagt op som selvstændig fil, hvis albummet skal deles.</span></label>
+      <input type="url" id="shareImage" placeholder="https://…/forside.jpg">
+    </div>
+  </div>
+
+  <div class="block">
+    <h2>Billeder</h2>
+    <p class="hint" style="margin: -4px 0 12px;">Billederne skaleres til højst 1100 pixel på den længste led og gemmes som JPEG. Dine originalfiler bliver kun læst, aldrig ændret. Kommer billederne fra <strong>Google Takeout</strong>, kan du markere både billedfilerne og deres <code>.json</code>-filer på én gang — også albummets egen <code>metadata.json</code>. Så hentes beskrivelser, optagetidspunkt og albumoplysninger automatisk.</p>
+    <div class="toolbar">
+      <button class="btn" id="btnAddImages">Tilføj billeder</button>
+      <button class="btn secondary" id="btnSortDate" style="display:none;">Sortér efter optagelsesdato</button>
+      <input type="file" id="fileInput" accept="image/*,.json" multiple>
+      <span class="count-pill" id="countPill">0 billeder</span>
+    </div>
+    <div class="imggrid" id="grid"></div>
+    <p class="empty-note" id="emptyNote">Der er ingen billeder endnu. Tryk “Tilføj billeder” for at vælge nogle.</p>
+  </div>
+
+  <!-- 4. Knap i bunden -->
+  <div class="block">
+    <h2>Knap i bunden (valgfri)</h2>
+    <div class="field">
+      <label for="ctaLabel">Knaptekst</label>
+      <input type="text" id="ctaLabel" placeholder="F.eks. Læs mere om værkstedet">
+    </div>
+    <div class="field">
+      <label for="ctaUrl">Webadresse<span class="hint">Knappen vises kun, når begge felter er udfyldt.</span></label>
+      <input type="url" id="ctaUrl" placeholder="https://…">
+    </div>
+  </div>
+
+  <!-- 5. Dublin Core -->
+  <div class="block">
+    <details class="dc" id="dcDetails">
+      <summary>Dublin Core-metadata</summary>
+      <p class="panel-sub">Til arkivering. Alle felter er valgfrie — udfyld dem der giver mening.</p>
+      <div class="field-grid">
+        <div class="field">
+          <label for="dcTitle">Titel<span class="hint">dc.title — udfyldes automatisk fra titlen</span></label>
+          <input type="text" id="dcTitle">
+        </div>
+        <div class="field">
+          <label for="dcCreator">Ophav / skaber<span class="hint">dc.creator — fortæller, optager eller den der har skabt materialet</span></label>
+          <input type="text" id="dcCreator" placeholder="F.eks. Fotograf Anders Jensen">
+        </div>
+        <div class="field">
+          <label for="dcSubject">Emne / nøgleord<span class="hint">dc.subject — adskil med semikolon</span></label>
+          <input type="text" id="dcSubject" placeholder="Håndværk; Algade; 1950erne">
+        </div>
+        <div class="field">
+          <label for="dcDescription">Beskrivelse<span class="hint">dc.description — udfyldes automatisk fra beskrivelsen</span></label>
+          <input type="text" id="dcDescription">
+        </div>
+        <div class="field">
+          <label for="dcPublisher">Udgiver<span class="hint">dc.publisher — foreningen eller arkivet</span></label>
+          <input type="text" id="dcPublisher" placeholder="F.eks. Lokalhistorisk Forening">
+        </div>
+        <div class="field">
+          <label for="dcContributor">Bidragyder<span class="hint">dc.contributor — den der har interviewet, redigeret eller registreret</span></label>
+          <input type="text" id="dcContributor">
+        </div>
+        <div class="field">
+          <label for="dcDate">Dato<span class="hint">dc.date — helst ÅÅÅÅ-MM-DD, men fx “ca. 1955” er også i orden</span></label>
+          <input type="text" id="dcDate" placeholder="2026-08-14">
+        </div>
+        <div class="field">
+          <label for="dcType">Type<span class="hint">dc.type — DCMI-typeordforråd</span></label>
+          <select id="dcType">
+            <option value="Sound">Sound</option>
+            <option value="InteractiveResource">InteractiveResource</option>
+            <option value="Text">Text</option>
+            <option value="Image" selected>Image</option>
+            <option value="Collection">Collection</option>
+            <option value="Event">Event</option>
+            <option value="">(ingen)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="dcFormat">Format<span class="hint">dc.format — filens tekniske format</span></label>
+          <input type="text" id="dcFormat" value="text/html">
+        </div>
+        <div class="field">
+          <label for="dcIdentifier">Identifikator<span class="hint">dc.identifier — arkivnummer, URL eller lignende</span></label>
+          <input type="text" id="dcIdentifier" placeholder="F.eks. LHF-2026-014">
+        </div>
+        <div class="field">
+          <label for="dcSource">Kilde<span class="hint">dc.source — hvor materialet stammer fra</span></label>
+          <input type="text" id="dcSource" placeholder="F.eks. Privatarkiv, familien Nielsen">
+        </div>
+        <div class="field">
+          <label for="dcLanguage">Sprog<span class="hint">dc.language — sprogkode, fx da</span></label>
+          <input type="text" id="dcLanguage" value="da">
+        </div>
+        <div class="field">
+          <label for="dcRelation">Relation<span class="hint">dc.relation — beslægtet materiale, fx en lydfortælling</span></label>
+          <input type="text" id="dcRelation">
+        </div>
+        <div class="field">
+          <label for="dcCoverage">Dækning<span class="hint">dc.coverage — sted og/eller periode, udfyldes automatisk fra Sted</span></label>
+          <input type="text" id="dcCoverage" placeholder="Roskilde, Danmark; 1950-1960">
+        </div>
+        <div class="field">
+          <label for="dcRights">Rettigheder<span class="hint">dc.rights — ophavsret og vilkår for brug</span></label>
+          <input type="text" id="dcRights" placeholder="F.eks. Foreningen ejer rettighederne. Må ikke gengives uden tilladelse.">
+        </div>
+      </div>
+      <button class="btn secondary" id="btnMetaJson" style="margin-top:6px;">Gem metadata som separat JSON-fil</button>
+    </details>
+  </div>
+
+  <!-- 6. Generér -->
+  <div class="generate-bar">
+    <button class="btn generate" id="btnGenerate">Generér albumfil (.html)</button>
+  </div>
+  <div class="msgbox" id="status"></div>
+
+</div>
+
+<aside class="previewpane">
+  <h2>Forhåndsvisning</h2>
+  <iframe id="preview" title="Forhåndsvisning af albummet"></iframe>
+  <p class="note" id="previewNote">Sådan kommer den færdige fil til at se ud.</p>
+</aside>
+</main>
+
+<!-- ============ Stilarket til den færdige albumfil ============ -->
+<script type="text/plain" id="outputCss">
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--bodyText);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 18px;
+    line-height: 1.65;
+  }
+  a{ color: var(--accent); }
+  .band{ background: var(--card); color: var(--cardText); padding: 34px 24px 30px; }
+  .band .inner{ max-width: 780px; margin: 0 auto; }
+  .band h1{
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 34px; line-height: 1.2; margin: 0; font-weight: 600;
+  }
+  .band p.place{ margin: 10px 0 0; font-size: 17px; opacity: .92; }
+  .intro{ max-width: 780px; margin: 0 auto; padding: 26px 24px 6px; }
+  .intro > *:first-child{ margin-top: 0; }
+  .intro h2{ font-size: 21px; margin: 26px 0 8px; color: var(--ink); }
+  .intro h3{ font-size: 18px; margin: 22px 0 6px; color: var(--ink); }
+  .intro p{ margin: 0 0 14px; }
+  .intro ul, .intro ol{ margin: 0 0 14px; padding-left: 24px; }
+  .intro li{ margin-bottom: 5px; }
+  .intro blockquote{
+    margin: 0 0 14px; padding: 4px 0 4px 16px;
+    border-left: 4px solid var(--accent); color: var(--quoteText);
+  }
+  .intro hr{ border: none; border-top: 1px solid var(--line); margin: 24px 0; }
+  .intro code{ background: var(--codeBg); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+
+  main{ max-width: 1140px; margin: 0 auto; padding: 20px 24px 10px; }
+  .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 20px; }
+  figure.shot{ margin: 0; }
+  .thumb{
+    display:block; width: 100%; padding: 0; border: 1px solid var(--line);
+    border-radius: 8px; overflow: hidden; background: var(--cardBg);
+    cursor: pointer; font: inherit; color: inherit;
+  }
+  .thumb img{ display:block; width:100%; height: 170px; object-fit: cover; background: var(--cardBg); }
+  figure.shot figcaption{ padding: 9px 2px 0; font-size: 15px; line-height: 1.5; color: var(--muted); }
+  figure.shot figcaption b{ display:block; color: var(--ink); font-size: 16px; margin-bottom: 2px; }
+  .thumb:focus-visible, .lb-btn:focus-visible, .savebtn:focus-visible, summary:focus-visible{
+    outline: 3px solid var(--accent); outline-offset: 3px;
+  }
+
+  .cta-wrap{ max-width: 780px; margin: 0 auto; padding: 30px 24px 4px; }
+  .cta{
+    display:inline-block; padding: 13px 24px; border-radius: 999px;
+    background: var(--accent); color: #fff; text-decoration: none;
+    font-size: 17px; font-weight: 700; min-height: 48px;
+  }
+  .cta:hover{ filter: brightness(.92); }
+
+  details.meta-fold{ max-width: 780px; margin: 0 auto; padding: 22px 24px 0; }
+  details.meta-fold summary{
+    cursor: pointer; list-style: none; font-weight: 700; font-size: 16.5px;
+    color: var(--ink); border-top: 1px solid var(--line);
+    padding: 18px 0 4px 26px; position: relative; min-height: 44px;
+  }
+  details.meta-fold summary::-webkit-details-marker{ display: none; }
+  details.meta-fold summary::before{
+    content: '+'; position: absolute; left: 2px; top: 17px;
+    color: var(--accent); font-weight: 700; width: 18px; text-align: center;
+  }
+  details.meta-fold[open] summary::before{ content: '\2212'; }
+  details.meta-fold dl{ margin: 14px 0 0; font-size: 15.5px; }
+  details.meta-fold .meta-row{
+    display: grid; grid-template-columns: 200px 1fr; gap: 4px 16px;
+    padding: 7px 0; border-bottom: 1px solid var(--line);
+  }
+  details.meta-fold dt{ color: var(--muted); }
+  details.meta-fold dd{ margin: 0; color: var(--ink); }
+  details.meta-fold .dc-tag{ color: var(--muted); font-size: 13.5px; }
+
+  .savebar{ max-width: 780px; margin: 0 auto; padding: 30px 24px 60px; }
+  .savebtn{
+    display:inline-flex; align-items:center; gap: 10px;
+    padding: 12px 22px; border-radius: 999px;
+    border: 2px solid var(--accent); background: transparent; color: var(--accent);
+    font: inherit; font-size: 16.5px; font-weight: 700; cursor: pointer; min-height: 48px;
+  }
+  .savebtn svg{ width: 20px; height: 20px; flex: none; }
+  .savebtn:hover{ background: var(--accent); color: #fff; }
+  .savebtn:hover svg{ stroke: #fff; }
+  .savebar p{ margin: 10px 0 0; font-style: italic; font-size: 15.5px; color: var(--footerStrong); }
+
+  .lightbox{
+    position: fixed; inset: 0; background: rgba(18,16,13,.95);
+    display: none; align-items: center; justify-content: center; padding: 20px; z-index: 100;
+  }
+  .lightbox.open{ display: flex; }
+  .lightbox figure{ margin:0; max-width: min(92vw, 1040px); max-height: 92vh; display:flex; flex-direction: column; align-items:center; }
+  .lightbox img{ max-width: 100%; max-height: 72vh; object-fit: contain; border-radius: 4px; background: #000; }
+  .lightbox figcaption{
+    color: #F4F0E6; font-size: 16.5px; margin-top: 16px;
+    max-width: 70ch; white-space: pre-line; text-align: center;
+  }
+  .lightbox figcaption b{ display:block; color: #fff; font-size: 18px; margin-bottom: 4px; }
+  .lb-btn{
+    position: absolute; background: rgba(255,255,255,.12); color: #fff;
+    border: 1px solid rgba(255,255,255,.45); border-radius: 50%;
+    width: 48px; height: 48px; font-size: 22px; cursor: pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .lb-btn:hover{ background: rgba(255,255,255,.26); }
+  .lb-close{ top: 18px; right: 18px; }
+  .lb-prev{ left: 18px; top: 50%; transform: translateY(-50%); }
+  .lb-next{ right: 18px; top: 50%; transform: translateY(-50%); }
+
+  .preview-note{
+    max-width: 780px; margin: 0 auto; padding: 0 24px;
+    font-size: 15px; font-style: italic; color: var(--muted);
+  }
+
+  @media (max-width: 640px){
+    .band{ padding: 26px 18px 22px; }
+    .band h1{ font-size: 26px; }
+    .lb-prev, .lb-next{ width: 44px; height: 44px; font-size: 18px; }
+    details.meta-fold .meta-row{ grid-template-columns: 1fr; }
+  }
+</script>
+
+<!-- ============ Scriptet i den færdige albumfil (kun lightbox + gem) ============ -->
+<script type="text/plain" id="outputJs">
+(function(){
+  var figures = Array.prototype.slice.call(document.querySelectorAll('figure.shot'));
+  var shots = figures.map(function(fig){
+    var cap = fig.querySelector('figcaption');
+    var strong = cap ? cap.querySelector('b') : null;
+    var body = cap ? cap.querySelector('span') : null;
+    return {
+      src: fig.querySelector('img').getAttribute('src'),
+      title: strong ? strong.textContent : '',
+      description: body ? body.textContent : ''
+    };
+  });
+
+  var lightbox = document.getElementById('lightbox');
+  var lbImg = document.getElementById('lbImg');
+  var lbCap = document.getElementById('lbCap');
+  var current = 0, lastFocused = null;
+
+  figures.forEach(function(fig, i){
+    var btn = fig.querySelector('.thumb');
+    if(btn) btn.addEventListener('click', function(){ open(i, btn); });
+  });
+
+  function open(i, trigger){
+    lastFocused = trigger || document.activeElement;
+    show(i);
+    lightbox.classList.add('open');
+    lightbox.setAttribute('aria-hidden', 'false');
+    document.getElementById('lbClose').focus();
+    document.addEventListener('keydown', onKey);
+  }
+  function close(){
+    lightbox.classList.remove('open');
+    lightbox.setAttribute('aria-hidden', 'true');
+    document.removeEventListener('keydown', onKey);
+    if(lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+  function show(i){
+    var n = shots.length;
+    if(!n) return;
+    current = (i + n) % n;
+    var s = shots[current];
+    lbImg.src = s.src;
+    lbImg.alt = s.title || '';
+    lbCap.textContent = '';
+    if(s.title){
+      var b = document.createElement('b');
+      b.textContent = s.title;
+      lbCap.appendChild(b);
+    }
+    if(s.description) lbCap.appendChild(document.createTextNode(s.description));
+  }
+  function onKey(e){
+    if(e.key === 'Escape') close();
+    else if(e.key === 'ArrowRight') show(current + 1);
+    else if(e.key === 'ArrowLeft') show(current - 1);
+  }
+
+  document.getElementById('lbClose').addEventListener('click', close);
+  document.getElementById('lbNext').addEventListener('click', function(){ show(current + 1); });
+  document.getElementById('lbPrev').addEventListener('click', function(){ show(current - 1); });
+  lightbox.addEventListener('click', function(e){ if(e.target === lightbox) close(); });
+
+  var saveBtn = document.getElementById('saveFile');
+  if(saveBtn){
+    saveBtn.addEventListener('click', function(){
+      var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      var blob = new Blob([html], {type: 'text/html'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = (document.title || 'fotoalbum').toLowerCase()
+        .replace(/æ/g,'ae').replace(/ø/g,'oe').replace(/å/g,'aa')
+        .replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-') + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+})();
+</script>
+
+<script>
+/* ==========================================================================
+   Album · Bygger — bygget efter Builder-standard v1.0 (august 2026)
+   ========================================================================== */
+
+var BUILDER_VERSION = 2;
+var FORMAT_NAME = 'billedalbum';
+
+/* Afsnit 8: faste billedindstillinger */
+var MAX_DIM = 1100;
+var JPEG_QUALITY = 0.78;
+var SKIP_TYPES = ['image/gif', 'image/svg+xml'];
+
+/* Hvor mange billeder forhåndsvisningen viser, så den ikke bliver tung */
+var PREVIEW_MAX = 24;
+
+/* Afsnit 3: de tre temaer */
+var THEMES = {
+  oprindeligt: {
+    accent:'#9A4630', paper:'#EDE7D8', card:'#1B1A16', cardText:'#F2ECDD',
+    cardBg:'#F4EFE2', ink:'#211E19', moss:'#47543C', line:'#CBC2A8',
+    timesColor:'#5F5A4B', footerColor:'#5F5A4B', muted:'#6B6455',
+    footerStrong:'#4A463C', bodyText:'#211E19', quoteText:'#3A362E', codeBg:'#E4DCC6'
+  },
+  rodekors: {
+    accent:'#E30A0B', paper:'#FFFFFF', card:'#E30A0B', cardText:'#FFFFFF',
+    cardBg:'#F7F7F7', ink:'#1A1A1A', moss:'#333333', line:'#D8D8D8',
+    timesColor:'#5A5A5A', footerColor:'#5A5A5A', muted:'#5A5A5A',
+    footerStrong:'#333333', bodyText:'#1A1A1A', quoteText:'#3A3A3A', codeBg:'#EFEFEF'
+  },
+  bordeaux: {
+    accent:'#9E2453', paper:'#FAF9F5', card:'#9E2453', cardText:'#FAF9F5',
+    cardBg:'#F2EFEA', ink:'#241C20', moss:'#5A4450', line:'#DCD3D6',
+    timesColor:'#6B5560', footerColor:'#6B5560', muted:'#6B5560',
+    footerStrong:'#3A2630', bodyText:'#241C20', quoteText:'#41313A', codeBg:'#EDE6E8'
+  }
+};
+
+var DC_FIELDS = ['title','creator','subject','description','publisher','contributor',
+                 'date','type','format','identifier','source','language',
+                 'relation','coverage','rights'];
+
+var DC_LABELS = {
+  title:'Titel', creator:'Ophav', subject:'Emne', description:'Beskrivelse',
+  publisher:'Udgiver', contributor:'Bidragyder', date:'Dato', type:'Type',
+  format:'Format', identifier:'Identifikator', source:'Kilde', language:'Sprog',
+  relation:'Relation', coverage:'Dækning', rights:'Rettigheder'
+};
+
+function dcInputId(key){ return 'dc' + key.charAt(0).toUpperCase() + key.slice(1); }
+
+/* ---------- Tilstand ---------- */
+var images = [];      // {id,title,description,src,pending,originalBytes,storedBytes,b64Len,note,origName,takenTime}
+var nextId = 1;
+var preservedCounter = '';   // tællerkode fra en indlæst fil
+
+/* ---------- Elementer ---------- */
+var grid = document.getElementById('grid');
+var emptyNote = document.getElementById('emptyNote');
+var countPill = document.getElementById('countPill');
+var fileInput = document.getElementById('fileInput');
+var importInput = document.getElementById('importInput');
+var importStatus = document.getElementById('importStatus');
+var statusEl = document.getElementById('status');
+var albumTitleInput = document.getElementById('albumTitle');
+var albumPlaceInput = document.getElementById('albumPlace');
+var albumDescInput = document.getElementById('albumDesc');
+var shareImageInput = document.getElementById('shareImage');
+var ctaLabelInput = document.getElementById('ctaLabel');
+var ctaUrlInput = document.getElementById('ctaUrl');
+var btnGenerate = document.getElementById('btnGenerate');
+var btnSortDate = document.getElementById('btnSortDate');
+var previewFrame = document.getElementById('preview');
+var previewNote = document.getElementById('previewNote');
+
+var OUTPUT_CSS = document.getElementById('outputCss').textContent;
+var OUTPUT_JS = document.getElementById('outputJs').textContent;
+
+/* ---------- Hjælpefunktioner ---------- */
+function escapeHtml(s){
+  return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function fmtBytes(b){
+  if(!b) return '';
+  if(b < 1024) return b + ' B';
+  if(b < 1024 * 1024) return Math.round(b / 1024) + ' KB';
+  return (b / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
+}
+
+function dataUrlBytes(dataUrl){
+  var i = (dataUrl || '').indexOf(',');
+  if(i < 0) return 0;
+  var b64 = dataUrl.slice(i + 1);
+  var pad = b64.slice(-2) === '==' ? 2 : (b64.slice(-1) === '=' ? 1 : 0);
+  return Math.floor(b64.length * 3 / 4) - pad;
+}
+
+function safeFileName(name){
+  return (name || '').toLowerCase()
+    .replace(/æ/g, 'ae').replace(/ø/g, 'oe').replace(/å/g, 'aa')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim().replace(/\s+/g, '-') || 'fotoalbum';
+}
+
+function showStatus(msg){ statusEl.textContent = msg; }
+
+function downloadBlob(content, filename, mime){
+  var blob = new Blob([content], {type: mime});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ---------- Afsnit 6: Markdown-delmængden ---------- */
+function mdInline(s){
+  return s
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+             '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+}
+
+function mdToHtml(src){
+  var text = escapeHtml(src || '').replace(/\r\n?/g, '\n');
+  var lines = text.split('\n');
+  var out = [], para = [], quote = [], list = null;
+
+  function flushPara(){
+    if(para.length){ out.push('<p>' + mdInline(para.join('<br>')) + '</p>'); para = []; }
+  }
+  function flushQuote(){
+    if(quote.length){ out.push('<blockquote>' + mdInline(quote.join('<br>')) + '</blockquote>'); quote = []; }
+  }
+  function flushList(){
+    if(list){
+      out.push('<' + list.tag + '>' + list.items.map(function(li){
+        return '<li>' + mdInline(li) + '</li>';
+      }).join('') + '</' + list.tag + '>');
+      list = null;
+    }
+  }
+  function flushAll(){ flushPara(); flushQuote(); flushList(); }
+
+  lines.forEach(function(line){
+    var t = line.trim();
+    if(t === ''){ flushAll(); return; }
+
+    if(/^-{3,}$/.test(t)){ flushAll(); out.push('<hr>'); return; }
+
+    var h = t.match(/^(#{1,6})\s+(.+)$/);
+    if(h){
+      flushAll();
+      var level = h[1].length >= 3 ? 3 : 2;
+      out.push('<h' + level + '>' + mdInline(h[2].trim()) + '</h' + level + '>');
+      return;
+    }
+
+    var q = t.match(/^&gt;\s?(.*)$/);
+    if(q){ flushPara(); flushList(); quote.push(q[1]); return; }
+
+    var ul = t.match(/^[-*]\s+(.+)$/);
+    if(ul){
+      flushPara(); flushQuote();
+      if(!list || list.tag !== 'ul'){ flushList(); list = {tag:'ul', items:[]}; }
+      list.items.push(ul[1]);
+      return;
+    }
+
+    var ol = t.match(/^\d+\.\s+(.+)$/);
+    if(ol){
+      flushPara(); flushQuote();
+      if(!list || list.tag !== 'ol'){ flushList(); list = {tag:'ol', items:[]}; }
+      list.items.push(ol[1]);
+      return;
+    }
+
+    flushQuote(); flushList();
+    para.push(t);
+  });
+
+  flushAll();
+  return out.join('\n');
+}
+
+function stripMarkdown(src){
+  return (src || '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/^\s*#{1,6}\s+/gm, '')
+    .replace(/^\s*[-*]\s+/gm, '')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    .replace(/^\s*&gt;\s?/gm, '')
+    .replace(/^\s*>\s?/gm, '')
+    .replace(/^-{3,}$/gm, '')
+    .replace(/\*\*/g, '').replace(/\*/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/* ---------- Tema ---------- */
+function currentTheme(){
+  var el = document.querySelector('input[name="theme"]:checked');
+  return el ? el.value : 'oprindeligt';
+}
+Array.prototype.forEach.call(document.querySelectorAll('input[name="theme"]'), function(el){
+  el.addEventListener('change', schedulePreview);
+});
+
+/* ---------- Automatisk spejling af title, description og coverage ---------- */
+var dcTouched = { title:false, description:false, coverage:false };
+['title','description','coverage'].forEach(function(key){
+  var el = document.getElementById(dcInputId(key));
+  el.addEventListener('input', function(){ dcTouched[key] = true; schedulePreview(); });
+});
+
+function mirrorTitle(){
+  if(!dcTouched.title) document.getElementById('dcTitle').value = albumTitleInput.value.trim();
+}
+function mirrorDescription(){
+  if(dcTouched.description) return;
+  var plain = stripMarkdown(albumDescInput.value);
+  if(plain.length > 300) plain = plain.slice(0, 297).replace(/\s+\S*$/, '') + '…';
+  document.getElementById('dcDescription').value = plain;
+}
+function mirrorCoverage(){
+  if(!dcTouched.coverage) document.getElementById('dcCoverage').value = albumPlaceInput.value.trim();
+}
+
+albumTitleInput.addEventListener('input', function(){ mirrorTitle(); schedulePreview(); });
+albumDescInput.addEventListener('input', function(){ mirrorDescription(); schedulePreview(); });
+albumPlaceInput.addEventListener('input', function(){ mirrorCoverage(); schedulePreview(); });
+
+[shareImageInput, ctaLabelInput, ctaUrlInput].forEach(function(el){
+  el.addEventListener('input', schedulePreview);
+});
+DC_FIELDS.forEach(function(key){
+  var el = document.getElementById(dcInputId(key));
+  if(el) el.addEventListener('input', schedulePreview);
+});
+document.getElementById('dcType').addEventListener('change', schedulePreview);
+
+/* ---------- Billedbehandling (afsnit 8) ---------- */
+function loadBitmap(file, cb){
+  function fallback(){
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function(){ cb(img); URL.revokeObjectURL(url); };
+    img.onerror = function(){ cb(null); URL.revokeObjectURL(url); };
+    img.src = url;
+  }
+  if(window.createImageBitmap){
+    try{
+      createImageBitmap(file, {imageOrientation: 'from-image'})
+        .then(function(bmp){ cb(bmp); })
+        .catch(fallback);
+      return;
+    }catch(e){ /* falder igennem */ }
+  }
+  fallback();
+}
+
+function processImageFile(file, cb){
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var original = ev.target.result;
+
+    if(SKIP_TYPES.indexOf(file.type) !== -1){
+      cb(original, 'gemt som den er');
+      return;
+    }
+
+    loadBitmap(file, function(bmp){
+      if(!bmp){ cb(original, 'kunne ikke behandles'); return; }
+
+      var w = bmp.width, h = bmp.height;
+      var scale = Math.min(1, MAX_DIM / Math.max(w, h));
+      var tw = Math.max(1, Math.round(w * scale));
+      var th = Math.max(1, Math.round(h * scale));
+
+      var canvas = document.createElement('canvas');
+      canvas.width = tw;
+      canvas.height = th;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, tw, th);
+      ctx.drawImage(bmp, 0, 0, tw, th);
+      if(bmp.close) bmp.close();
+
+      var out;
+      try{ out = canvas.toDataURL('image/jpeg', JPEG_QUALITY); }
+      catch(e){ cb(original, 'kunne ikke behandles'); return; }
+
+      var newBytes = dataUrlBytes(out);
+      if(scale === 1 && newBytes >= file.size){
+        cb(original, 'original beholdt');
+      }else{
+        cb(out, scale < 1 ? ('skaleret til ' + tw + '×' + th) : 'genkomprimeret');
+      }
+    });
+  };
+  reader.onerror = function(){ cb(null, 'kunne ikke læses'); };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('btnAddImages').addEventListener('click', function(){ fileInput.click(); });
+document.getElementById('btnImport').addEventListener('click', function(){ importInput.click(); });
+btnGenerate.addEventListener('click', generateAlbum);
+document.getElementById('btnMetaJson').addEventListener('click', downloadMetaJson);
+
+btnSortDate.addEventListener('click', function(){
+  images = images.map(function(x, i){ return { entry: x, i: i }; })
+    .sort(function(a, b){
+      var ta = a.entry.takenTime, tb = b.entry.takenTime;
+      if(ta && tb) return ta - tb;
+      if(ta && !tb) return -1;
+      if(!ta && tb) return 1;
+      return a.i - b.i;
+    })
+    .map(function(x){ return x.entry; });
+  render();
+  showStatus('Billederne er sorteret efter optagelsesdato.');
+});
+
+fileInput.addEventListener('change', function(e){
+  var allFiles = Array.prototype.slice.call(e.target.files);
+  if(allFiles.length === 0) return;
+
+  var files = allFiles.filter(function(f){ return f.type && f.type.indexOf('image/') === 0; });
+  var jsonFiles = allFiles.filter(function(f){ return /\.json$/i.test(f.name); });
+
+  /* Pladserne oprettes med det samme, så rækkefølgen bevares uanset
+     hvilken rækkefølge billederne bliver færdigbehandlet i */
+  var slots = files.map(function(file){
+    var entry = {
+      id: nextId++,
+      title: file.name.replace(/\.[^.]+$/, ''),
+      description: '',
+      src: '',
+      pending: true,
+      originalBytes: file.size,
+      storedBytes: 0,
+      b64Len: 0,
+      note: '',
+      origName: file.name,
+      takenTime: null
+    };
+    images.push(entry);
+    return entry;
+  });
+  render();
+
+  files.forEach(function(file, i){
+    processImageFile(file, function(dataUrl, note){
+      var entry = slots[i];
+      if(!dataUrl){
+        images = images.filter(function(x){ return x.id !== entry.id; });
+        showStatus('“' + file.name + '” kunne ikke læses og blev sprunget over.');
+      }else{
+        entry.src = dataUrl;
+        entry.pending = false;
+        entry.storedBytes = dataUrlBytes(dataUrl);
+        entry.b64Len = dataUrl.length;
+        entry.note = note;
+      }
+      render();
+    });
+  });
+
+  if(jsonFiles.length > 0){
+    applyTakeoutMetadata(jsonFiles, slots);
+  }
+
+  fileInput.value = '';
+});
+
+/* ---------- Google Takeout-metadata ---------- */
+
+/* Genkender og fjerner de sidecar-endelser Google Takeout bruger, så vi
+   står tilbage med det oprindelige billedfilnavn til matchning. */
+function stripSidecarSuffix(name){
+  var suffixes = ['.supplemental-metadata.json', '.suppl.json', '.json'];
+  var lower = name.toLowerCase();
+  for(var i = 0; i < suffixes.length; i++){
+    var suf = suffixes[i];
+    if(lower.slice(-suf.length) === suf){
+      return name.slice(0, name.length - suf.length);
+    }
+  }
+  return null;
+}
+
+function readJsonFile(file){
+  return new Promise(function(resolve){
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var data = null;
+      try{ data = JSON.parse(ev.target.result); }catch(err){ /* ignorer ugyldig json */ }
+      resolve({ name: file.name, data: data });
+    };
+    reader.onerror = function(){ resolve({ name: file.name, data: null }); };
+    reader.readAsText(file);
+  });
+}
+
+/* En sidecar pr. billede har altid photoTakenTime/imageViews.
+   Albummets egen metadata.json har det ikke, men har typisk en titel
+   og evt. en enrichments-tekst (albummets beskrivelse i Google Fotos). */
+function applyTakeoutMetadata(jsonFiles, slots){
+  Promise.all(jsonFiles.map(readJsonFile)).then(function(results){
+    var sidecars = {};
+    var albumMeta = null;
+
+    results.forEach(function(r){
+      if(!r.data) return;
+      var d = r.data;
+      var looksLikePerImage = d.hasOwnProperty('photoTakenTime') || d.hasOwnProperty('imageViews');
+      if(looksLikePerImage){
+        var baseName = stripSidecarSuffix(r.name);
+        if(!baseName) return;
+        var takenTime = null;
+        if(d.photoTakenTime && d.photoTakenTime.timestamp){
+          takenTime = parseInt(d.photoTakenTime.timestamp, 10) * 1000;
+        }
+        sidecars[baseName.toLowerCase()] = {
+          description: (d.description || '').trim(),
+          takenTime: takenTime
+        };
+      }else if(d.title){
+        var desc = '';
+        if(d.enrichments && d.enrichments.length){
+          for(var i = 0; i < d.enrichments.length; i++){
+            var ne = d.enrichments[i].narrativeEnrichment;
+            if(ne && ne.text){ desc = ne.text; break; }
+          }
+        }
+        albumMeta = { title: d.title, description: desc };
+      }
+    });
+
+    var matched = 0;
+    slots.forEach(function(entry){
+      var sc = entry.origName ? sidecars[entry.origName.toLowerCase()] : null;
+      if(sc){
+        matched++;
+        if(sc.description && !entry.description) entry.description = sc.description;
+        if(sc.takenTime) entry.takenTime = sc.takenTime;
+      }
+    });
+
+    if(albumMeta){
+      if(!albumTitleInput.value.trim()){
+        albumTitleInput.value = albumMeta.title;
+        mirrorTitle();
+      }
+      if(albumMeta.description && !albumDescInput.value.trim()){
+        albumDescInput.value = albumMeta.description;
+        mirrorDescription();
+      }
+    }
+
+    var msgParts = [];
+    if(matched > 0){
+      msgParts.push(matched + ' billedbeskrivelse' + (matched === 1 ? '' : 'r') + ' hentet fra Google Takeout');
+    }
+    if(albumMeta) msgParts.push('albumoplysninger fundet i metadata.json');
+    showStatus(msgParts.length
+      ? (msgParts.join(' · ') + '.')
+      : 'Der var ingen genkendelige Google Takeout-oplysninger i de valgte json-filer.');
+
+    render();
+  });
+}
+
+function updateSortButton(){
+  var any = images.some(function(x){ return x.takenTime; });
+  btnSortDate.style.display = any ? 'inline-block' : 'none';
+}
+
+/* ---------- Afsnit 7: indlæsning af eksisterende fil ---------- */
+var COUNTER_RE = /<!--\s*TÆLLER\s*-->[\s\S]*?<!--\s*TÆLLER SLUT\s*-->/i;
+
+importInput.addEventListener('change', function(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var html = ev.target.result;
+    var doc;
+    try{
+      doc = new DOMParser().parseFromString(html, 'text/html');
+    }catch(err){ doc = null; }
+
+    var block = doc ? doc.getElementById('builder-source-data') : null;
+    var data = null;
+    var legacy = false;
+
+    if(block){
+      try{ data = JSON.parse(block.textContent); }catch(err){ data = null; }
+    }
+
+    /* Læsning af de tidligere albumfiler (albumData). Standarden kræver det ikke,
+       men det gør de allerede byggede album mulige at rette videre i. */
+    if(!data){
+      var old = doc ? doc.getElementById('albumData') : null;
+      if(old){
+        try{
+          var od = JSON.parse(old.textContent);
+          data = {
+            title: (od.album && od.album.name) || '',
+            description: htmlToPlainText((od.album && od.album.description) || ''),
+            dublinCore: od.dublinCore || {},
+            images: (od.images || []).map(function(im){
+              return { title: im.title || '', description: im.description || '' };
+            })
+          };
+          data._legacySrcs = (od.images || []).map(function(im){ return im.src; });
+          legacy = true;
+        }catch(err){ data = null; }
+      }
+    }
+
+    if(!data || (!legacy && data.format !== FORMAT_NAME)){
+      importStatus.textContent = 'Filen kan ikke indlæses — den er ikke lavet med denne udgave af værktøjet.';
+      importInput.value = '';
+      return;
+    }
+
+    /* Tekstfelter */
+    albumTitleInput.value = data.title || '';
+    albumPlaceInput.value = data.place || '';
+    albumDescInput.value = data.description || '';
+    shareImageInput.value = data.shareImage || '';
+    ctaLabelInput.value = (data.cta && data.cta.label) || '';
+    ctaUrlInput.value = (data.cta && data.cta.url) || '';
+
+    /* Tema */
+    var themeEl = document.querySelector('input[name="theme"][value="' + (data.theme || 'oprindeligt') + '"]');
+    if(themeEl) themeEl.checked = true;
+
+    /* Dublin Core */
+    var dc = data.dublinCore || {};
+    DC_FIELDS.forEach(function(key){
+      var el = document.getElementById(dcInputId(key));
+      if(!el) return;
+      if(dc[key] !== undefined){
+        el.value = dc[key];
+        if(dcTouched.hasOwnProperty(key)) dcTouched[key] = true;
+      }
+    });
+    if(Object.keys(dc).length) document.getElementById('dcDetails').open = true;
+
+    /* Billeder: teksten kommer fra JSON-blokken, selve billederne fra dokumentet */
+    var srcs = legacy ? (data._legacySrcs || []) : Array.prototype.map.call(
+      doc.querySelectorAll('figure.shot img'), function(im){ return im.getAttribute('src'); });
+    var texts = data.images || [];
+    var count = Math.max(srcs.length, texts.length);
+    images = [];
+    for(var i = 0; i < count; i++){
+      var src = srcs[i];
+      if(!src) continue;
+      var txt = texts[i] || {};
+      images.push({
+        id: nextId++,
+        title: txt.title || '',
+        description: txt.description || '',
+        src: src,
+        pending: false,
+        originalBytes: 0,
+        storedBytes: dataUrlBytes(src),
+        b64Len: src.length,
+        note: 'indlæst',
+        origName: '',
+        takenTime: null
+      });
+    }
+
+    /* Tællerkoden følger med over */
+    var m = html.match(COUNTER_RE);
+    preservedCounter = m ? m[0] : '';
+
+    var msg = 'Indlæst: ' + file.name + ' — ' + images.length +
+              (images.length === 1 ? ' billede' : ' billeder') + '.';
+    if(preservedCounter) msg += ' Tællerkoden blev fundet og følger med.';
+    if(legacy) msg += ' (Filen er fra en tidligere udgave og blev omsat.)';
+    importStatus.textContent = msg;
+
+    render();
+  };
+  reader.readAsText(file);
+  importInput.value = '';
+});
+
+function htmlToPlainText(html){
+  return (html || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .trim();
+}
+
+/* ---------- Visning af billedkortene ---------- */
+function pendingCount(){
+  return images.filter(function(x){ return x.pending; }).length;
+}
+
+function estimatedFileSize(){
+  var total = 22000;
+  images.forEach(function(x){ total += x.b64Len || 0; });
+  return total;
+}
+
+function render(){
+  grid.innerHTML = '';
+  var waiting = pendingCount();
+
+  var label = images.length + (images.length === 1 ? ' billede' : ' billeder');
+  if(waiting > 0){
+    label += ' · behandler ' + waiting + ' …';
+  }else if(images.length > 0){
+    label += ' · albumfilen fylder ca. ' + fmtBytes(estimatedFileSize());
+  }
+  countPill.textContent = label;
+  emptyNote.style.display = images.length === 0 ? 'block' : 'none';
+  btnGenerate.disabled = (waiting > 0);
+  updateSortButton();
+
+  images.forEach(function(img, i){
+    var card = document.createElement('div');
+    card.className = 'card';
+
+    if(img.pending){
+      var ph = document.createElement('div');
+      ph.className = 'placeholder';
+      ph.textContent = 'Behandler billede …';
+      card.appendChild(ph);
+    }else{
+      var picture = document.createElement('img');
+      picture.src = img.src;
+      picture.alt = '';
+      card.appendChild(picture);
+    }
+
+    var body = document.createElement('div');
+    body.className = 'body';
+
+    var titleField = document.createElement('div');
+    var titleLabel = document.createElement('label');
+    titleLabel.textContent = 'Titel';
+    var titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.value = img.title;
+    titleInput.addEventListener('input', function(){ img.title = titleInput.value; schedulePreview(); });
+    titleField.appendChild(titleLabel);
+    titleField.appendChild(titleInput);
+
+    var descField = document.createElement('div');
+    var descLabel = document.createElement('label');
+    descLabel.textContent = 'Beskrivelse';
+    var descInput = document.createElement('textarea');
+    descInput.rows = 2;
+    descInput.value = img.description;
+    descInput.addEventListener('input', function(){ img.description = descInput.value; schedulePreview(); });
+    descField.appendChild(descLabel);
+    descField.appendChild(descInput);
+
+    body.appendChild(titleField);
+    body.appendChild(descField);
+
+    if(!img.pending && img.storedBytes){
+      var sizeInfo = document.createElement('div');
+      sizeInfo.className = 'sizeinfo';
+      var txt = img.originalBytes
+        ? fmtBytes(img.originalBytes) + ' → ' + fmtBytes(img.storedBytes)
+        : fmtBytes(img.storedBytes);
+      if(img.note) txt += ' (' + img.note + ')';
+      sizeInfo.textContent = txt;
+      body.appendChild(sizeInfo);
+    }
+
+    if(img.takenTime){
+      var dateInfo = document.createElement('div');
+      dateInfo.className = 'sizeinfo';
+      dateInfo.textContent = 'Optaget: ' + new Date(img.takenTime).toLocaleDateString('da-DK');
+      body.appendChild(dateInfo);
+    }
+
+    var rowBtns = document.createElement('div');
+    rowBtns.className = 'row-btns';
+
+    var moveBtns = document.createElement('div');
+    moveBtns.className = 'move-btns';
+    var upBtn = document.createElement('button');
+    upBtn.className = 'btn secondary small';
+    upBtn.textContent = '↑';
+    upBtn.setAttribute('aria-label', 'Flyt billedet op');
+    upBtn.disabled = (i === 0);
+    upBtn.addEventListener('click', function(){ moveImage(i, -1); });
+    var downBtn = document.createElement('button');
+    downBtn.className = 'btn secondary small';
+    downBtn.textContent = '↓';
+    downBtn.setAttribute('aria-label', 'Flyt billedet ned');
+    downBtn.disabled = (i === images.length - 1);
+    downBtn.addEventListener('click', function(){ moveImage(i, 1); });
+    moveBtns.appendChild(upBtn);
+    moveBtns.appendChild(downBtn);
+
+    var removeBtn = document.createElement('button');
+    removeBtn.className = 'btn danger';
+    removeBtn.textContent = 'Fjern';
+    removeBtn.addEventListener('click', function(){
+      images = images.filter(function(x){ return x.id !== img.id; });
+      render();
+    });
+
+    rowBtns.appendChild(moveBtns);
+    rowBtns.appendChild(removeBtn);
+    body.appendChild(rowBtns);
+
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+
+  schedulePreview();
+}
+
+function moveImage(index, dir){
+  var newIndex = index + dir;
+  if(newIndex < 0 || newIndex >= images.length) return;
+  var tmp = images[index];
+  images[index] = images[newIndex];
+  images[newIndex] = tmp;
+  render();
+}
+
+/* ---------- Dublin Core ---------- */
+function collectDublinCore(){
+  var dc = {};
+  DC_FIELDS.forEach(function(key){
+    var el = document.getElementById(dcInputId(key));
+    var val = el ? el.value.trim() : '';
+    if(val) dc[key] = val;
+  });
+  return dc;
+}
+
+function buildDcMetaTags(dc){
+  var lines = [];
+  DC_FIELDS.forEach(function(key){
+    if(!dc[key]) return;
+    if(key === 'subject'){
+      dc[key].split(';').forEach(function(part){
+        var v = part.trim();
+        if(v) lines.push('<meta name="DC.subject" content="' + escapeHtml(v) + '">');
+      });
+    }else{
+      lines.push('<meta name="DC.' + key + '" content="' + escapeHtml(dc[key]) + '">');
+    }
+  });
+  return lines.join('\n');
+}
+
+/* Panelet skrives som færdig HTML, så det kan læses selv hvis
+   JavaScript engang holder op med at virke. */
+function buildMetaPanel(dc){
+  var rows = [];
+  DC_FIELDS.forEach(function(key){
+    if(!dc[key]) return;
+    rows.push(
+      '  <div class="meta-row">' +
+      '<dt>' + DC_LABELS[key] + ' <span class="dc-tag">dc.' + key + '</span></dt>' +
+      '<dd>' + escapeHtml(dc[key]) + '</dd>' +
+      '</div>');
+  });
+  if(!rows.length) return '';
+  return '<details class="meta-fold">\n' +
+         '  <summary>Om denne fil</summary>\n' +
+         '  <dl>\n' + rows.join('\n') + '\n  </dl>\n' +
+         '</details>';
+}
+
+/* ---------- Opbygning af den færdige fil ---------- */
+function buildOutput(opts){
+  opts = opts || {};
+  var t = THEMES[currentTheme()] || THEMES.oprindeligt;
+  var dc = collectDublinCore();
+  var title = albumTitleInput.value.trim() || 'Fotoalbum';
+  var place = albumPlaceInput.value.trim();
+  var descMd = albumDescInput.value;
+  var descHtml = mdToHtml(descMd);
+  var lang = dc.language || 'da';
+  var share = shareImageInput.value.trim();
+  var ctaLabel = ctaLabelInput.value.trim();
+  var ctaUrl = ctaUrlInput.value.trim();
+
+  var ready = images.filter(function(x){ return !x.pending && x.src; });
+  var shown = ready;
+  var trimmed = 0;
+  if(opts.preview && ready.length > PREVIEW_MAX){
+    shown = ready.slice(0, PREVIEW_MAX);
+    trimmed = ready.length - PREVIEW_MAX;
+  }
+
+  var rootVars = Object.keys(t).map(function(k){
+    return '    --' + k + ': ' + t[k] + ';';
+  }).join('\n');
+
+  var ogDesc = stripMarkdown(descMd).slice(0, 200);
+  var og = [
+    '<meta property="og:type" content="article">',
+    '<meta property="og:title" content="' + escapeHtml(title) + '">',
+    '<meta property="og:description" content="' + escapeHtml(ogDesc) + '">'
+  ];
+  if(share){
+    og.push('<meta property="og:image" content="' + escapeHtml(share) + '">');
+    og.push('<meta name="twitter:card" content="summary_large_image">');
+  }
+
+  var head = [];
+  head.push('<meta charset="UTF-8">');
+  head.push('<meta name="viewport" content="width=device-width, initial-scale=1.0">');
+  head.push('<title>' + escapeHtml(title) + '</title>');
+  head.push(og.join('\n'));
+  head.push('<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">');
+  var dcMeta = buildDcMetaTags(dc);
+  if(dcMeta) head.push(dcMeta);
+  if(shown.length) head.push('<link rel="icon" href="' + shown[0].src + '">');
+
+  var figures = shown.map(function(img, i){
+    var cap = '';
+    if(img.title || img.description){
+      cap = '    <figcaption>' +
+            (img.title ? '<b>' + escapeHtml(img.title) + '</b>' : '') +
+            (img.description ? '<span>' + escapeHtml(img.description) + '</span>' : '') +
+            '</figcaption>\n';
+    }
+    return '  <figure class="shot">\n' +
+           '    <button class="thumb" aria-label="Vis billedet i stort format' +
+             (img.title ? ': ' + escapeHtml(img.title) : ' nummer ' + (i + 1)) + '">' +
+           '<img src="' + img.src + '" alt="' + escapeHtml(img.title || '') + '" loading="lazy"></button>\n' +
+           cap +
+           '  </figure>';
+  }).join('\n');
+
+  var body = [];
+  body.push('<header class="band"><div class="inner">');
+  body.push('  <h1>' + escapeHtml(title) + '</h1>');
+  if(place) body.push('  <p class="place">' + escapeHtml(place) + '</p>');
+  body.push('</div></header>');
+  if(descHtml) body.push('<div class="intro">\n' + descHtml + '\n</div>');
+  if(trimmed){
+    body.push('<p class="preview-note">Forhåndsvisningen viser de første ' + PREVIEW_MAX +
+              ' billeder. Alle ' + ready.length + ' kommer med i den færdige fil.</p>');
+  }
+  body.push('<main>\n<div class="grid">\n' + (figures || '') + '\n</div>\n</main>');
+  if(ctaLabel && ctaUrl){
+    body.push('<div class="cta-wrap"><a class="cta" href="' + escapeHtml(ctaUrl) +
+              '" target="_blank" rel="noopener">' + escapeHtml(ctaLabel) + '</a></div>');
+  }
+  var panel = buildMetaPanel(dc);
+  if(panel) body.push(panel);
+
+  body.push(
+    '<div class="savebar">\n' +
+    '  <button class="savebtn" id="saveFile">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M12 4v11"></path><path d="M6.5 12.5 12 18l5.5-5.5"></path>' +
+    '<path d="M5 20h14"></path></svg>Gem filen</button>\n' +
+    '  <p>Et billedalbum. Gem filen på din egen computer — så kan den åbnes uden internet.</p>\n' +
+    '</div>');
+
+  body.push(
+    '<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Billedvisning">\n' +
+    '  <button class="lb-btn lb-close" id="lbClose" aria-label="Luk">&#10005;</button>\n' +
+    '  <button class="lb-btn lb-prev" id="lbPrev" aria-label="Forrige billede">&#8249;</button>\n' +
+    '  <figure><img id="lbImg" src="" alt=""><figcaption id="lbCap"></figcaption></figure>\n' +
+    '  <button class="lb-btn lb-next" id="lbNext" aria-label="Næste billede">&#8250;</button>\n' +
+    '</div>');
+
+  /* Afsnit 5: outputfilens kontrakt. Kildeteksten, ikke den færdige HTML.
+     Billeddata hører ikke til her — de læses tilbage fra dokumentet selv. */
+  var source = {
+    format: FORMAT_NAME,
+    builderVersion: BUILDER_VERSION,
+    title: title,
+    place: place,
+    description: descMd,
+    theme: currentTheme(),
+    shareImage: share,
+    cta: { label: ctaLabel, url: ctaUrl },
+    images: shown.map(function(img){
+      return { title: img.title || '', description: img.description || '' };
+    }),
+    dublinCore: dc
+  };
+  var sourceJson = JSON.stringify(source)
+    .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+
+  body.push('<script type="application/json" id="builder-source-data">\n' + sourceJson + '\n<\/script>');
+  body.push('<script>\n' + OUTPUT_JS + '\n<\/script>');
+
+  /* Tællerkoden skrives aldrig af byggeren selv — kun en bevaret blok følger med,
+     og aldrig i forhåndsvisningen. */
+  if(!opts.preview && preservedCounter) body.push(preservedCounter);
+
+  return '<!DOCTYPE html>\n<html lang="' + escapeHtml(lang) + '">\n<head>\n' +
+         head.join('\n') + '\n<style>\n:root{\n' + rootVars + '\n  }\n' +
+         OUTPUT_CSS + '\n</style>\n</head>\n<body>\n' +
+         body.join('\n\n') + '\n</body>\n</html>';
+}
+
+/* ---------- Forhåndsvisning ---------- */
+var previewTimer = null;
+function schedulePreview(){
+  if(previewTimer) clearTimeout(previewTimer);
+  previewTimer = setTimeout(renderPreview, 350);
+}
+function renderPreview(){
+  try{
+    previewFrame.srcdoc = buildOutput({ preview: true });
+    previewNote.textContent = 'Sådan kommer den færdige fil til at se ud.';
+  }catch(err){
+    previewNote.textContent = 'Forhåndsvisningen kunne ikke opdateres.';
+  }
+}
+
+/* ---------- Generering ---------- */
+function generateAlbum(){
+  if(images.length === 0){
+    showStatus('Tilføj mindst ét billede, før du genererer albummet.');
+    return;
+  }
+  if(pendingCount() > 0){
+    showStatus('Vent til alle billeder er færdigbehandlet.');
+    return;
+  }
+  var name = safeFileName(albumTitleInput.value.trim());
+  var output = buildOutput({});
+  downloadBlob(output, name + '.html', 'text/html');
+  showStatus('Albumfilen er gemt som ' + name + '.html (' + fmtBytes(output.length) + ').');
+}
+
+function downloadMetaJson(){
+  var dc = collectDublinCore();
+  if(Object.keys(dc).length === 0){
+    showStatus('Der er ingen Dublin Core-felter udfyldt endnu.');
+    return;
+  }
+  var payload = {
+    "@context": "http://purl.org/dc/elements/1.1/",
+    dublinCore: dc,
+    imageCount: images.length,
+    generated: new Date().toISOString()
+  };
+  var name = safeFileName(albumTitleInput.value.trim());
+  downloadBlob(JSON.stringify(payload, null, 2), name + '-metadata.json', 'application/json');
+  showStatus('Metadatafilen er gemt som ' + name + '-metadata.json.');
+}
+
+render();
+
+</script>
+</body>
+</html>

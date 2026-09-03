@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skyggeramme · skærmbilleder til wiki</title>
+<style>
+  :root{
+    --ink:#171a1c;
+    --muted:#5c6670;
+    --line:#d7dce1;
+    --panel:#ffffff;
+    --bg:#e8ebee;
+    --accent:#8a1c33;
+    --accent-soft:#f6eaed;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:24px;
+  }
+  .wrap{max-width:1180px;margin:0 auto}
+  header{margin-bottom:20px}
+  .eyebrow{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent);font-weight:700;margin:0 0 6px
+  }
+  h1{font-size:26px;margin:0 0 6px;font-weight:650;letter-spacing:-.01em}
+  header p{margin:0;color:var(--muted);max-width:62ch}
+  .cols{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+  @media (max-width:880px){.cols{grid-template-columns:1fr}}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .panel h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:700}
+
+  #drop{
+    border:2px dashed var(--line);border-radius:var(--radius);
+    padding:22px 16px;text-align:center;color:var(--muted);background:#fbfcfd;
+    margin-bottom:16px;cursor:pointer;
+  }
+  #drop:hover,#drop:focus-visible{border-color:var(--accent);color:var(--ink);outline:none}
+  #drop.hot{border-color:var(--accent);background:var(--accent-soft)}
+  #drop strong{display:block;color:var(--ink);font-size:17px;margin-bottom:4px}
+  kbd{
+    font:600 13px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:#fff;border:1px solid var(--line);border-bottom-width:2px;
+    border-radius:5px;padding:3px 6px;color:var(--ink)
+  }
+
+  .field{margin-bottom:14px}
+  .field label{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:600;margin-bottom:5px}
+  .field label .val{font-weight:400;color:var(--muted);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:7px;background:#fff;font:inherit;font-size:14px}
+  .check{display:flex;gap:9px;align-items:flex-start;font-size:14px;margin-bottom:10px}
+  .check input{accent-color:var(--accent);margin-top:3px}
+  .check span small{display:block;color:var(--muted);font-size:12.5px}
+
+  .presets{display:flex;gap:8px;margin-bottom:16px}
+  .presets button{
+    flex:1;padding:7px 4px;font:inherit;font-size:13px;cursor:pointer;
+    background:#fff;border:1px solid var(--line);border-radius:7px;color:var(--ink)
+  }
+  .presets button:hover{border-color:var(--accent);color:var(--accent)}
+
+  .actions{display:flex;gap:10px;margin-top:4px}
+  button.primary{
+    flex:2;padding:12px;font:inherit;font-weight:650;font-size:16px;cursor:pointer;
+    background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px
+  }
+  button.primary:hover{background:#701629}
+  button.ghost{
+    flex:1;padding:12px 8px;font:inherit;font-size:15px;cursor:pointer;
+    background:#fff;border:1px solid var(--line);border-radius:8px;color:var(--ink)
+  }
+  button.ghost:hover{border-color:var(--accent);color:var(--accent)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  #status{min-height:22px;margin-top:10px;font-size:14px;color:var(--muted)}
+  #status.ok{color:#1a6b3c;font-weight:600}
+  #status.err{color:var(--accent);font-weight:600}
+
+  /* Forhåndsvisning som en wiki-side */
+  .stage-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+  .toggle{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff}
+  .toggle button{border:0;background:#fff;font:inherit;font-size:13px;padding:6px 12px;cursor:pointer;color:var(--muted)}
+  .toggle button[aria-pressed=true]{background:var(--ink);color:#fff}
+  .page{border:1px solid var(--line);border-radius:8px;padding:28px;transition:background .15s}
+  .page.light{background:#fff;color:#1f2328}
+  .page.dark{background:#0d1117;color:#c9d1d9;border-color:#30363d}
+  .page p{margin:0 0 18px;font-size:15px;opacity:.85}
+  .page p.after{margin:18px 0 0}
+  #preview{display:block;max-width:100%;height:auto}
+  .dims{margin-top:12px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .empty{color:var(--muted);font-style:italic}
+  footer{margin-top:22px;font-size:13.5px;color:var(--muted);max-width:70ch}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Værktøj</p>
+  <h1>Skyggeramme</h1>
+  <p>Sæt et skærmbillede ind fra udklipsholderen, læg en blød skygge om det, og kopiér det tilbage — klar til at indsætte i wikien.</p>
+</header>
+
+<div class="cols">
+
+  <div class="panel">
+    <h2>Billede</h2>
+
+    <div id="drop" tabindex="0" role="button" aria-label="Indsæt eller vælg billede">
+      <strong>Tryk <kbd>Ctrl</kbd> + <kbd>V</kbd></strong>
+      eller træk en fil hertil · eller klik for at vælge
+    </div>
+    <input type="file" id="file" accept="image/*" hidden>
+
+    <h2>Skygge og ramme</h2>
+
+    <div class="presets">
+      <button type="button" data-preset="diskret">Diskret</button>
+      <button type="button" data-preset="standard">Standard</button>
+      <button type="button" data-preset="tydelig">Tydelig</button>
+    </div>
+
+    <div class="field">
+      <label for="pad">Luft omkring <span class="val" id="padV"></span></label>
+      <input type="range" id="pad" min="0" max="80" value="28">
+    </div>
+    <div class="field">
+      <label for="blur">Blødhed <span class="val" id="blurV"></span></label>
+      <input type="range" id="blur" min="0" max="80" value="22">
+    </div>
+    <div class="field">
+      <label for="dy">Fald nedad <span class="val" id="dyV"></span></label>
+      <input type="range" id="dy" min="0" max="40" value="6">
+    </div>
+    <div class="field">
+      <label for="op">Styrke <span class="val" id="opV"></span></label>
+      <input type="range" id="op" min="5" max="60" value="26">
+    </div>
+    <div class="field">
+      <label for="rad">Runde hjørner <span class="val" id="radV"></span></label>
+      <input type="range" id="rad" min="0" max="30" value="6">
+    </div>
+    <div class="field">
+      <label for="bg">Baggrund</label>
+      <select id="bg">
+        <option value="transparent">Gennemsigtig — virker på både lys og mørk wiki</option>
+        <option value="#ffffff">Hvid</option>
+        <option value="#f6f8fa">Lys grå</option>
+      </select>
+    </div>
+
+    <label class="check"><input type="checkbox" id="border" checked>
+      <span>Tynd kantstreg<small>Holder lyse skærmbilleder adskilt fra hvid baggrund</small></span></label>
+    <label class="check"><input type="checkbox" id="auto" checked>
+      <span>Kopiér automatisk<small>Så er billedet klar til <kbd>Ctrl</kbd>+<kbd>V</kbd> i wikien med det samme</small></span></label>
+
+    <div class="actions">
+      <button type="button" class="primary" id="copy" disabled>Kopiér billede</button>
+      <button type="button" class="ghost" id="save" disabled>Gem fil</button>
+    </div>
+    <p id="status" role="status" aria-live="polite"></p>
+  </div>
+
+  <div class="panel">
+    <div class="stage-head">
+      <h2 style="margin:0">Sådan ser det ud i wikien</h2>
+      <div class="toggle" role="group" aria-label="Baggrund i forhåndsvisning">
+        <button type="button" id="modeLight" aria-pressed="true">Lys</button>
+        <button type="button" id="modeDark" aria-pressed="false">Mørk</button>
+      </div>
+    </div>
+    <div class="page light" id="page">
+      <p>Herunder ses trin 3 i opsætningen:</p>
+      <canvas id="preview" hidden></canvas>
+      <p class="empty" id="placeholder">Ingen billede endnu — sæt et ind til venstre.</p>
+      <p class="after">Fortsæt derefter til næste afsnit.</p>
+    </div>
+    <p class="dims" id="dims"></p>
+  </div>
+
+</div>
+
+<footer>
+  GitHub fjerner CSS fra Markdown og wiki-sider, så skyggen skal være en del af selve billedet — det er præcis, hvad dette værktøj gør. Filen kører uden internet og uden server; du kan lægge den ved siden af dine andre værktøjer.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var img = null, imgName = "skaermbillede";
+  var cv = document.getElementById("preview");
+  var ctx = cv.getContext("2d");
+  var $ = function(id){ return document.getElementById(id); };
+
+  var ctrls = {
+    pad:$("pad"), blur:$("blur"), dy:$("dy"), op:$("op"), rad:$("rad"),
+    bg:$("bg"), border:$("border"), auto:$("auto")
+  };
+  var PRESETS = {
+    diskret:  {pad:18, blur:12, dy:3,  op:16, rad:4},
+    standard: {pad:28, blur:22, dy:6,  op:26, rad:6},
+    tydelig:  {pad:44, blur:40, dy:14, op:38, rad:10}
+  };
+
+  /* ---- indstillinger huskes, hvis browseren tillader det ---- */
+  function saveSettings(){
+    try{
+      var s = {};
+      for(var k in ctrls){
+        s[k] = ctrls[k].type === "checkbox" ? ctrls[k].checked : ctrls[k].value;
+      }
+      window.localStorage.setItem("skyggeramme", JSON.stringify(s));
+    }catch(e){}
+  }
+  function loadSettings(){
+    try{
+      var s = JSON.parse(window.localStorage.getItem("skyggeramme"));
+      if(!s) return;
+      for(var k in ctrls){
+        if(!(k in s)) continue;
+        if(ctrls[k].type === "checkbox"){ ctrls[k].checked = !!s[k]; }
+        else { ctrls[k].value = s[k]; }
+      }
+    }catch(e){}
+  }
+
+  /* ---- tegning ---- */
+  function roundRect(c, x, y, w, h, r){
+    r = Math.max(0, Math.min(r, w/2, h/2));
+    c.beginPath();
+    c.moveTo(x+r, y);
+    c.lineTo(x+w-r, y); c.arcTo(x+w, y, x+w, y+r, r);
+    c.lineTo(x+w, y+h-r); c.arcTo(x+w, y+h, x+w-r, y+h, r);
+    c.lineTo(x+r, y+h); c.arcTo(x, y+h, x, y+h-r, r);
+    c.lineTo(x, y+r); c.arcTo(x, y, x+r, y, r);
+    c.closePath();
+  }
+
+  function render(){
+    for(var k in ctrls){
+      var el = ctrls[k], out = $(k+"V");
+      if(out) out.textContent = el.value + (k === "op" ? " %" : " px");
+    }
+    if(!img) return;
+
+    var pad = +ctrls.pad.value, blur = +ctrls.blur.value, dy = +ctrls.dy.value;
+    var op = +ctrls.op.value/100, rad = +ctrls.rad.value;
+    var w = img.naturalWidth, h = img.naturalHeight;
+    var extra = pad + Math.ceil(blur/2) + dy;   /* plads så skyggen ikke skæres af */
+
+    cv.width = w + extra*2;
+    cv.height = h + extra*2;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+
+    if(ctrls.bg.value !== "transparent"){
+      ctx.fillStyle = ctrls.bg.value;
+      ctx.fillRect(0, 0, cv.width, cv.height);
+    }
+
+    ctx.save();
+    ctx.shadowColor = "rgba(15,20,25," + op + ")";
+    ctx.shadowBlur = blur;
+    ctx.shadowOffsetY = dy;
+    ctx.fillStyle = "#ffffff";
+    roundRect(ctx, extra, extra, w, h, rad);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    roundRect(ctx, extra, extra, w, h, rad);
+    ctx.clip();
+    ctx.drawImage(img, extra, extra);
+    ctx.restore();
+
+    if(ctrls.border.checked){
+      ctx.save();
+      ctx.strokeStyle = "rgba(15,20,25,0.20)";
+      ctx.lineWidth = 1;
+      roundRect(ctx, extra+0.5, extra+0.5, w-1, h-1, Math.max(0, rad-0.5));
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    cv.hidden = false;
+    $("placeholder").hidden = true;
+    cv.style.maxWidth = "100%";
+    $("dims").textContent = "Færdigt billede: " + cv.width + " × " + cv.height + " px  (oprindeligt " + w + " × " + h + ")";
+    $("copy").disabled = false;
+    $("save").disabled = false;
+    saveSettings();
+  }
+
+  function say(msg, cls){
+    var s = $("status");
+    s.textContent = msg || "";
+    s.className = cls || "";
+  }
+
+  /* ---- indlæsning ---- */
+  function loadFile(file){
+    if(!file || file.type.indexOf("image") !== 0){
+      say("Det var ikke et billede. Prøv igen.", "err"); return;
+    }
+    if(file.name) imgName = file.name.replace(/\.[^.]+$/, "");
+    var url = URL.createObjectURL(file);
+    var next = new Image();
+    next.onload = function(){
+      img = next;
+      render();
+      say("Billedet er sat ind.", "ok");
+      if(ctrls.auto.checked){ copyImage(true); } else { $("copy").focus(); }
+      URL.revokeObjectURL(url);
+    };
+    next.onerror = function(){ say("Billedet kunne ikke læses.", "err"); URL.revokeObjectURL(url); };
+    next.src = url;
+  }
+
+  document.addEventListener("paste", function(e){
+    var items = (e.clipboardData || {}).items || [];
+    for(var i = 0; i < items.length; i++){
+      if(items[i].type.indexOf("image") === 0){
+        e.preventDefault();
+        loadFile(items[i].getAsFile());
+        return;
+      }
+    }
+    say("Der var ikke noget billede i udklipsholderen.", "err");
+  });
+
+  var drop = $("drop");
+  drop.addEventListener("click", function(){ $("file").click(); });
+  drop.addEventListener("keydown", function(e){
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); $("file").click(); }
+  });
+  $("file").addEventListener("change", function(e){ if(e.target.files[0]) loadFile(e.target.files[0]); });
+  ["dragenter","dragover"].forEach(function(t){
+    drop.addEventListener(t, function(e){ e.preventDefault(); drop.classList.add("hot"); });
+  });
+  ["dragleave","drop"].forEach(function(t){
+    drop.addEventListener(t, function(e){ e.preventDefault(); drop.classList.remove("hot"); });
+  });
+  drop.addEventListener("drop", function(e){
+    if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+
+  /* ---- kopiér og gem ---- */
+  function toBlob(){
+    return new Promise(function(res){ cv.toBlob(res, "image/png"); });
+  }
+  function copyImage(auto){
+    if(!img) return;
+    if(!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write){
+      say("Browseren kan ikke kopiere billeder. Brug “Gem fil” i stedet.", "err");
+      return;
+    }
+    var item = new ClipboardItem({ "image/png": toBlob() });
+    navigator.clipboard.write([item]).then(function(){
+      say("Kopieret — sæt det ind i wikien med Ctrl+V.", "ok");
+    }).catch(function(){
+      say(auto ? "Automatisk kopi blev afvist. Tryk på “Kopiér billede”."
+               : "Kopiering blev afvist. Brug “Gem fil” i stedet.", "err");
+    });
+  }
+  $("copy").addEventListener("click", function(){ copyImage(false); });
+  $("save").addEventListener("click", function(){
+    toBlob().then(function(blob){
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = imgName + "-skygge.png";
+      a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+      say("Filen er gemt.", "ok");
+    });
+  });
+
+  /* ---- betjening ---- */
+  for(var k in ctrls){ ctrls[k].addEventListener("input", render); }
+  Array.prototype.forEach.call(document.querySelectorAll("[data-preset]"), function(b){
+    b.addEventListener("click", function(){
+      var p = PRESETS[b.dataset.preset];
+      for(var n in p){ ctrls[n].value = p[n]; }
+      render();
+    });
+  });
+  function setMode(dark){
+    $("page").className = "page " + (dark ? "dark" : "light");
+    $("modeDark").setAttribute("aria-pressed", dark);
+    $("modeLight").setAttribute("aria-pressed", !dark);
+  }
+  $("modeLight").addEventListener("click", function(){ setMode(false); });
+  $("modeDark").addEventListener("click", function(){ setMode(true); });
+
+  loadSettings();
+  render();
+})();
+</script>
+</body>
+</html>

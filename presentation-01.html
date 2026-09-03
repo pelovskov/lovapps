@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Singlefile Arkivsystem - Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --text-color: #2c3e50;
+            --primary-color: #1a5276;
+            --secondary-color: #e74c3c;
+            --card-bg: #ffffff;
+            --border-color: #d5d8dc;
+            --hover-color: #2980b9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 280px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-header p {
+            font-size: 0.8rem;
+            color: #bdc3c7;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--hover-color);
+        }
+
+        .nav-btn.active {
+            background-color: var(--hover-color);
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        /* Grid Layouts */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background-color: #e8f8f5;
+            color: #117a65;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Target Audience Selector */
+        .target-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .target-btn {
+            padding: 10px 20px;
+            background-color: white;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .target-btn:hover {
+            background-color: #ebf5fb;
+        }
+
+        .target-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .target-content-box {
+            background-color: white;
+            border-left: 5px solid var(--secondary-color);
+            padding: 25px;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+
+        .architecture-box {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1>Singlefile Arkiv</h1>
+            <p>Digital Kulturarvsbevaring</p>
+        </div>
+        <button class="nav-btn active" onclick="showSection('koncept')">💡 Konceptet</button>
+        <button class="nav-btn" onclick="showSection('maalgrupper')">🎯 Præsentation / Målgrupper</button>
+        <button class="nav-btn" onclick="showSection('vaerktoejer')">🛠️ Builderværktøjer</button>
+        <button class="nav-btn" onclick="showSection('teknik')">⚙️ Arkitektur & Metadata</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- 1. Konceptet -->
+        <section id="koncept" class="section active">
+            <h2>Konceptet bag Singlefile Arkivering</h2>
+            <p>Systemet er designet til langsigtet digital bevaring af kulturarv og personlige minder. Hemmeligheden ligger i navnet: <strong>Én fil, der indeholder alt.</strong></p>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>🛡️ Privacy-by-design</h3>
+                    <p>Alle builderværktøjer afvikles <strong>100% lokalt i browseren</strong>. Ingen sky, ingen eksterne servere, ingen datalæk. Du har fuldt dataejerskab.</p>
+                </div>
+                <div class="card">
+                    <h3>📦 Selvkonserverende</h3>
+                    <p>Billeder, lyd, layout (CSS), logik (JS) og metadata pakkes ned i én enkelt HTML-fil via Base64-kodning. Filen kræver kun en standard browser for at virke om 50 år.</p>
+                </div>
+                <div class="card">
+                    <h3>🔌 Offline-tilgængelig</h3>
+                    <p>Når filen er genereret, fungerer dit fotoalbum eller din lydfortælling fuldstændig uafhængigt af internettet. Det er et digitalt, fysisk objekt.</p>
+                </div>
+            </div>
+            
+            <div class="architecture-box">
+┌────────────────────────────────────────────────────────┐
+│ ENKELT SINGLEFILE HTML-FIL                             │
+├────────────────────────────────────────────────────────┤
+│ 1. Visningslogik (HTML5 / Embedded CSS / JS-fremviser) │
+│ 2. Indlejrede Medier (Base64-kodede JPG / MP3-data)    │
+│ 3. Metadata-lag 1: Tekniske Exif-data (Kamera, GPS)    │
+│ 4. Metadata-lag 2: Dublin Core (Søgbarhed)             │
+└────────────────────────────────────────────────────────┘
+            </div>
+        </section>
+
+        <!-- 2. Målgrupper (Interaktiv præsentationsdel) -->
+        <section id="maalgrupper" class="section">
+            <h2>Hvorfor bruge Singlefile? (Målgrupper)</h2>
+            <p>Vælg hvem du præsenterer for, for at fremhæve de mest relevante fordele:</p>
+
+            <div class="target-selector">
+                <button class="target-btn active" onclick="showTarget('museum')">🏛️ Museer</button>
+                <button class="target-btn" onclick="showTarget('bibliotek')">📚 Biblioteker</button>
+                <button class="target-btn" onclick="showTarget('lokalarkiv')">🏘️ Lokalhistoriske Foreninger</button>
+                <button class="target-btn" onclick="showTarget('privat')">👤 Private (Slægtsforskere)</button>
+            </div>
+
+            <div id="target-content" class="target-content-box">
+                <!-- Dynamisk indhold indlæses her via JS -->
+            </div>
+        </section>
+
+        <!-- 3. Værktøjer -->
+        <section id="vaerktoejer" class="section">
+            <h2>Builderværktøjer (Labs & Byggere)</h2>
+            <p>Værktøjerne bruges til at forædle medier og bygge arkivfilerne – alt kører lokalt i browseren.</p>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>📸 Fotolab <span class="badge">Redigering</span></h3>
+                    <p>Skab "Polaroid med tekst"-effekten. Teksten bages direkte ind i billedfilens pixeldata, så den menneskelige fortælling aldrig skilles fra billedet, selv hvis metadata mistes.</p>
+                </div>
+                <div class="card">
+                    <h3>🎙️ Lydlab <span class="badge">Optimering</span></h3>
+                    <p>Forvandler optagelser til professionel standard. Konverterer til mono for at spare plads, fjerner brummen, og justerer præcist til EBU R128 standarden (-16 LUFS).</p>
+                </div>
+                <div class="card">
+                    <h3>🖼️ Album-Bygger <span class="badge">Singlefile</span></h3>
+                    <p>Samler billeder og fortællinger i ét responsivt HTML-fotoalbum med lightbox-visning og fuld understøttelse af Markdown-tekstformatering.</p>
+                </div>
+                <div class="card">
+                    <h3>🗂️ Samling-Bygger <span class="badge">Kuratering</span></h3>
+                    <p>Binder 2-6 uafhængige historier/albummer sammen på en flot forside (Liste, Tavle eller Forløb) med automatisk udlæsning af metadata.</p>
+                </div>
+                <div class="card">
+                    <h3>🔍 Søgeindeks <span class="badge">Indexering</span></h3>
+                    <p>Et script, der gennemsøger mappen med HTML-filer og automatisk bygger en `soegeside.html` med fritekstsøgning og metadata-filtre – helt uden ekstern database!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Teknik & Metadata -->
+        <section id="teknik" class="section">
+            <h2>Dobbelt Metadata-Struktur</h2>
+            <p>For at sikre fuld interoperabilitet benytter systemet anerkendte internationale standarder integreret direkte i hver fil.</p>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>📷 Exif-Data (Teknisk)</h3>
+                    <p><strong>Beviser autensitet:</strong> Systemet udlæser og gemmer automatisk data om optagelsen:</p>
+                    <ul>
+                        <li>Kamera model & objektiv</li>
+                        <li>GPS-koordinater</li>
+                        <li>Lukkertid, Blænde, ISO</li>
+                        <li>Optagetidspunkt & software</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🗃️ Dublin Core (Søgbarhed)</h3>
+                    <p><strong>Sikrer fremtidig integration:</strong> 15 internationale standardfelter indlejret i HTML'en.</p>
+                    <ul>
+                        <li><code>dc.title</code> - Objektets navn</li>
+                        <li><code>dc.creator</code> - Ophavsmand/fortæller</li>
+                        <li><code>dc.coverage</code> - Geografisk sted & tid</li>
+                        <li><code>dc.type</code> - Image, Sound eller Collection</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Funktion til at skifte hoved-sektioner i menuen
+        function showSection(sectionId) {
+            // Skjul alle sektioner
+            document.querySelectorAll('.section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            // Vis valgt sektion
+            document.getElementById(sectionId).classList.add('active');
+
+            // Opdater menu-knapper
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+
+        // Data til Målgruppe-præsentation
+        const targetData = {
+            museum: `
+                <h3 style="color: var(--primary-color); margin-bottom: 15px;">🏛️ Værdi for Museer</h3>
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                    <li><strong>Ingen "Vendor Lock-in":</strong> I er ikke bundet af et specifikt dyrt IT-system. Data ligger i rene, læsbare HTML-filer, som enhver enhed i fremtiden kan åbne.</li>
+                    <li><strong>International Standard:</strong> Fuld implementering af Dublin Core (15 felter) sikrer, at arkivet let kan migreres til statslige og internationale databaser senere.</li>
+                    <li><strong>Bevaringssikkerhed:</strong> Ved at bage billeder og metadata sammen (Base64 + HTML) forsvinder forbindelsen mellem metadata og fil aldrig.</li>
+                    <li><strong>Langsigtet formidling:</strong> HTML-formatet kombinerer udstillingsformat og arkivformat i én fil.</li>
+                </ul>
+            `,
+            bibliotek: `
+                <h3 style="color: var(--primary-color); margin-bottom: 15px;">📚 Værdi for Biblioteker</h3>
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                    <li><strong>Lokal drift:</strong> Systemet kræver ingen komplekse server-opsætninger eller databaser. Alt kører i mapper på en almindelig harddisk/intranet.</li>
+                    <li><strong>Kraftfuld Offline Søgning:</strong> Søgeindeks-generatoren skaber en fuld funktionel, lynhurtig søgemaskine over alle samlingens filer helt uden backend.</li>
+                    <li><strong>Kuratering i fokus:</strong> Med "Samling-Bygger" kan bibliotekarer nemt kuratere tematiske udstillinger af eksisterende samlinger.</li>
+                    <li><strong>EBU R128 Lydstandard:</strong> Podcast og lydfortællinger standardiseres automatisk, så brugerne får en ensartet lytteoplevelse.</li>
+                </ul>
+            `,
+            lokalarkiv: `
+                <h3 style="color: var(--primary-color); margin-bottom: 15px;">🏘️ Værdi for Lokalhistoriske Foreninger</h3>
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                    <li><strong>Let for frivillige:</strong> Man skal ikke være IT-ekspert for at bygge et fotoalbum eller en lydfortælling. Interfacet er simpelt og visuelt.</li>
+                    <li><strong>Sikker formidling:</strong> "Polaroid"-effekten i Fotolab brænder den historiske tekst fast i billedet, så navne og steder bevares, selvom billedet bliver kopieret eller delt på Facebook.</li>
+                    <li><strong>Deling på USB:</strong> Hele arkivet (inkl. søgemaskine) kan lægges på et USB-stik og uddeles til skoler eller ældrecentre, uden brug af internet.</li>
+                    <li><strong>Nem opdatering:</strong> En html-fil kan trækkes ind i systemet igen for at rette slåfejl - intet går tabt i processen.</li>
+                </ul>
+            `,
+            privat: `
+                <h3 style="color: var(--primary-color); margin-bottom: 15px;">👤 Værdi for Private & Slægtsforskere</h3>
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                    <li><strong>100% Privacy:</strong> Dine private fotos af familien forlader aldrig din egen computer. Alt genereres lokalt i din browser.</li>
+                    <li><strong>Ingen Cloud-abonnementer:</strong> Du skal ikke betale månedligt til Apple iCloud eller Google Drev for at bevare dine formidlede minder.</li>
+                    <li><strong>Digital arv der overlever:</strong> Dine børnebørn behøver ingen specifik software for at åbne filerne om 50 år – en webbrowser er nok.</li>
+                    <li><strong>Samler historien:</strong> Du kan optage din bedstefars stemme i "Lydlab", koble den med fotos og tekster, og aflevere ét samlet, interaktivt familie-dokument.</li>
+                </ul>
+            `
+        };
+
+        // Funktion til at skifte målgruppe-indhold
+        function showTarget(targetKey) {
+            // Opdater knapper
+            document.querySelectorAll('.target-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Indsæt indhold
+            const contentBox = document.getElementById('target-content');
+            contentBox.style.opacity = 0;
+            setTimeout(() => {
+                contentBox.innerHTML = targetData[targetKey];
+                contentBox.style.opacity = 1;
+                contentBox.style.transition = "opacity 0.3s ease-in-out";
+            }, 150);
+        }
+
+        // Initialize default view for target audience
+        window.onload = () => {
+            document.getElementById('target-content').innerHTML = targetData['museum'];
+        }
+    </script>
+</body>
+</html>

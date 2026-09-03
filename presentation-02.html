@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Formidlings-dashboard · Singlefile Digital Arkivering</title>
+<meta name="description" content="Interaktivt dashboard til præsentationer om singlefile digital arkivering, tilpasset fem brugergrupper.">
+<meta name="DC.title" content="Formidlings-dashboard · Singlefile Digital Arkivering">
+<meta name="DC.type" content="InteractiveResource">
+<meta name="DC.format" content="text/html">
+<meta name="DC.language" content="da">
+<style>
+:root{
+  --dyb:#17141A;
+  --dyb-2:#1F1A24;
+  --kort:#241E29;
+  --kant:#3A3040;
+  --bordeaux:#8E2A41;
+  --bordeaux-lys:#C4536D;
+  --patina:#4E8471;
+  --patina-lys:#7CB8A1;
+  --messing:#C89B5A;
+  --papir:#F2ECE2;
+  --daempet:#A599A8;
+  --skygge:0 18px 40px -22px rgba(0,0,0,.9);
+  --display:Georgia,"Iowan Old Style","Palatino Linotype",Palatino,"Times New Roman",serif;
+  --brod:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --maskine:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --bg:var(--dyb);
+  --flade:var(--kort);
+  --tekst:var(--papir);
+  --sekundaer:var(--daempet);
+  --linje:var(--kant);
+}
+html[data-lys="ja"]{
+  --bg:#EDE7DC;
+  --flade:#FBF7F0;
+  --tekst:#221C26;
+  --sekundaer:#5F5566;
+  --linje:#D3C8B8;
+  --bordeaux:#7C2438;
+  --bordeaux-lys:#8E2A41;
+  --patina:#356E59;
+  --patina-lys:#2C5C4A;
+  --messing:#8A6524;
+  --skygge:0 14px 34px -24px rgba(40,20,30,.55);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--tekst);
+  font-family:var(--brod);font-size:17px;line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(900px 520px at 78% -8%,rgba(142,42,65,.20),transparent 62%),
+    radial-gradient(760px 460px at 4% 22%,rgba(78,132,113,.14),transparent 60%);
+}
+.indhold{position:relative;z-index:1}
+.baand{max-width:1180px;margin:0 auto;padding:0 24px}
+
+/* ---------- overskrifter ---------- */
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:-.015em;margin:0}
+h1{font-size:clamp(2.6rem,7.2vw,5.1rem);line-height:1.02}
+h2{font-size:clamp(1.65rem,3.4vw,2.5rem);line-height:1.14}
+h3{font-size:1.14rem;line-height:1.3}
+.oejenbryn{
+  font-family:var(--maskine);font-size:.72rem;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--messing);margin:0 0 14px;
+}
+.billedtekst{
+  font-family:var(--display);font-style:italic;font-size:1.06rem;
+  color:var(--sekundaer);letter-spacing:.01em;
+  border-top:1px solid var(--linje);padding-top:12px;margin-top:22px;max-width:52ch;
+}
+
+/* ---------- top ---------- */
+header.top{padding:52px 0 34px}
+.toprad{display:flex;gap:28px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+.manchet{font-size:1.14rem;color:var(--sekundaer);max-width:44ch;margin:22px 0 0}
+.kontroller{display:flex;gap:10px;flex-wrap:wrap;padding-top:8px}
+
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+.knap{
+  border:1px solid var(--linje);border-radius:2px;padding:11px 17px;
+  font-size:.9rem;letter-spacing:.02em;background:var(--flade);color:var(--tekst);
+  transition:border-color .18s ease,color .18s ease,background .18s ease;
+}
+.knap:hover{border-color:var(--bordeaux-lys);color:var(--bordeaux-lys)}
+.knap.primaer{background:var(--bordeaux);border-color:var(--bordeaux);color:#FFF3F2}
+.knap.primaer:hover{background:var(--bordeaux-lys);border-color:var(--bordeaux-lys);color:#fff}
+:focus-visible{outline:2px solid var(--messing);outline-offset:3px}
+
+/* ---------- registerfaner ---------- */
+.register{
+  position:sticky;top:0;z-index:40;
+  background:color-mix(in srgb,var(--bg) 92%,transparent);
+  backdrop-filter:blur(9px);
+  border-top:1px solid var(--linje);border-bottom:1px solid var(--linje);
+}
+.faner{display:flex;gap:0;overflow-x:auto;scrollbar-width:thin}
+.fane{
+  flex:1 0 auto;min-width:168px;text-align:left;
+  padding:16px 18px 15px;border-right:1px solid var(--linje);
+  border-top:3px solid transparent;color:var(--sekundaer);
+  transition:color .18s ease,border-color .18s ease,background .18s ease;
+}
+.fane:first-child{border-left:1px solid var(--linje)}
+.fane .nr{font-family:var(--maskine);font-size:.68rem;letter-spacing:.14em;display:block;opacity:.75}
+.fane .navn{font-family:var(--display);font-size:1.06rem;display:block;margin-top:3px;color:var(--tekst)}
+.fane:hover{background:var(--flade)}
+.fane[aria-selected="true"]{
+  border-top-color:var(--bordeaux-lys);background:var(--flade);color:var(--tekst);
+}
+.fane[aria-selected="true"] .nr{color:var(--bordeaux-lys);opacity:1}
+
+/* ---------- sektioner ---------- */
+section{padding:62px 0;border-bottom:1px solid var(--linje)}
+.sektiontop{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:30px}
+.sektiontop .oejenbryn{margin:0}
+
+/* vinkel */
+.vinkel{display:grid;grid-template-columns:1.05fr .95fr;gap:52px;align-items:start}
+.pointer{list-style:none;margin:0;padding:0;display:grid;gap:20px}
+.pointer li{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.mærke{
+  font-family:var(--maskine);font-size:.72rem;color:var(--messing);
+  border:1px solid var(--linje);border-radius:50%;
+  width:30px;height:30px;display:grid;place-items:center;margin-top:2px;
+}
+.pointer .tekst{display:block}
+.pointer .tekst strong{display:block;font-weight:600;font-size:1.02rem;color:var(--tekst)}
+.pointer .tekst em{display:block;font-style:normal;color:var(--sekundaer);font-size:.97rem;margin-top:2px}
+
+/* værktøjer */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:18px}
+.kort{
+  background:var(--flade);border:1px solid var(--linje);border-radius:3px;
+  padding:22px;position:relative;transition:transform .2s ease,border-color .2s ease;
+}
+.kort.primaer-vaerktoej{border-color:color-mix(in srgb,var(--patina) 55%,var(--linje))}
+.kort:hover{transform:translateY(-3px);border-color:var(--bordeaux-lys)}
+.kort .type{
+  font-family:var(--maskine);font-size:.67rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--patina-lys);display:block;margin-bottom:9px;
+}
+.kort p{margin:9px 0 0;font-size:.95rem;color:var(--sekundaer)}
+.fil{
+  font-family:var(--maskine);font-size:.74rem;color:var(--messing);
+  margin-top:14px;padding-top:11px;border-top:1px dotted var(--linje);display:block;
+}
+.badge{
+  position:absolute;top:-9px;right:16px;background:var(--patina);color:#F3FFFA;
+  font-family:var(--maskine);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;
+  padding:3px 9px;border-radius:2px;
+}
+html[data-lys="ja"] .badge{color:#fff}
+
+/* kæde */
+.kaede{display:flex;gap:0;flex-wrap:wrap;align-items:stretch;margin-top:6px}
+.led{
+  flex:1 1 168px;background:var(--flade);border:1px solid var(--linje);
+  border-right:0;padding:20px 18px;position:relative;
+}
+.led:last-child{border-right:1px solid var(--linje)}
+.led .nr{font-family:var(--maskine);font-size:.68rem;color:var(--messing);letter-spacing:.14em}
+.led h3{margin:7px 0 6px;font-size:1.04rem}
+.led p{margin:0;font-size:.88rem;color:var(--sekundaer)}
+
+/* fundament */
+.to-spalter{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.liste{list-style:none;margin:0;padding:0}
+.liste li{
+  padding:13px 0;border-bottom:1px dotted var(--linje);
+  display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:baseline;font-size:.95rem;
+}
+.liste li:last-child{border-bottom:0}
+.felt{font-family:var(--maskine);font-size:.76rem;color:var(--patina-lys);white-space:nowrap}
+.liste span:last-child{color:var(--sekundaer)}
+
+/* program */
+.program{border:1px solid var(--linje);background:var(--flade)}
+.punkt{
+  display:grid;grid-template-columns:96px 1fr;gap:22px;
+  padding:19px 22px;border-bottom:1px solid var(--linje);align-items:baseline;
+}
+.punkt:last-child{border-bottom:0}
+.tid{font-family:var(--maskine);font-size:.8rem;color:var(--messing)}
+.punkt strong{font-weight:600}
+.punkt p{margin:4px 0 0;font-size:.92rem;color:var(--sekundaer)}
+
+/* spørgsmål */
+details{border-bottom:1px solid var(--linje)}
+details summary{
+  cursor:pointer;padding:19px 0;font-family:var(--display);font-size:1.16rem;
+  list-style:none;display:flex;gap:16px;align-items:baseline;
+}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+";color:var(--bordeaux-lys);font-family:var(--maskine);font-size:1rem}
+details[open] summary::before{content:"–"}
+details p{margin:0 0 21px 30px;color:var(--sekundaer);max-width:68ch}
+
+/* fod */
+footer{padding:52px 0 78px;color:var(--sekundaer);font-size:.9rem}
+
+/* ---------- præsentationstilstand ---------- */
+.scene{
+  position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:none;flex-direction:column;padding:5vh 6vw;
+}
+.scene[data-aktiv="ja"]{display:flex}
+.scene-krop{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:1100px;margin:0 auto;width:100%}
+.scene .oejenbryn{font-size:clamp(.8rem,1.3vw,1rem)}
+.scene h2{font-size:clamp(2.2rem,5.6vw,4.4rem);max-width:20ch}
+.scene .stor-brod{font-size:clamp(1.15rem,2.1vw,1.75rem);color:var(--sekundaer);max-width:34ch;margin-top:26px;line-height:1.5}
+.scene ul{font-size:clamp(1.05rem,1.9vw,1.55rem);line-height:1.75;margin:26px 0 0;padding-left:1.1em;max-width:34ch}
+.scene ul li::marker{color:var(--bordeaux-lys)}
+.scene-fod{display:flex;justify-content:space-between;align-items:center;gap:20px;border-top:1px solid var(--linje);padding-top:18px}
+.taeller{font-family:var(--maskine);font-size:.82rem;color:var(--messing);letter-spacing:.1em}
+.scene-knapper{display:flex;gap:10px}
+
+/* ---------- responsivt ---------- */
+@media (max-width:880px){
+  .vinkel,.to-spalter{grid-template-columns:1fr;gap:34px}
+  .led{flex:1 1 100%;border-right:1px solid var(--linje);border-bottom:0}
+  .led:not(:last-child){border-bottom:0}
+  .punkt{grid-template-columns:1fr;gap:4px}
+  section{padding:46px 0}
+  header.top{padding:36px 0 26px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+@media print{
+  body::before,.register,.kontroller,.scene{display:none!important}
+  body{background:#fff;color:#000;font-size:11pt}
+  section{page-break-inside:avoid;border-bottom:1px solid #999}
+  .kort,.program,.led{border:1px solid #999}
+}
+</style>
+</head>
+<body>
+<div class="indhold">
+
+<header class="top">
+  <div class="baand">
+    <div class="toprad">
+      <div>
+        <p class="oejenbryn">Formidlings-dashboard · august 2026</p>
+        <h1>Én fil.<br>Alt indeni.</h1>
+        <p class="manchet">Billedet, lyden, teksten og oplysningerne om hvem og hvornår — samlet i én HTML-fil, der virker uden internet, uden konto og uden en tjeneste der kan lukke.</p>
+        <p class="billedtekst">„Søs og Frede på besøg i sommerhuset“ — sådan stod der under billederne i farmors album. Det er den sætning, hele projektet handler om at få tilbage.</p>
+      </div>
+      <div class="kontroller">
+        <button class="knap" id="temaknap" aria-pressed="false">Lyst tema</button>
+        <button class="knap primaer" id="startpraes">Præsentationstilstand ▶</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="register" aria-label="Vælg brugergruppe">
+  <div class="baand" style="padding:0">
+    <div class="faner" role="tablist" id="faner"></div>
+  </div>
+</nav>
+
+<main>
+  <section id="vinkel-sektion">
+    <div class="baand">
+      <div class="vinkel">
+        <div>
+          <p class="oejenbryn" id="vinkel-mærkat">Vinklen</p>
+          <h2 id="vinkel-overskrift"></h2>
+          <p class="billedtekst" id="vinkel-billedtekst"></p>
+        </div>
+        <ul class="pointer" id="pointer"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="vaerktoej-sektion">
+    <div class="baand">
+      <div class="sektiontop">
+        <p class="oejenbryn">Værktøjskassen</p>
+        <p style="margin:0;color:var(--sekundaer);font-size:.94rem" id="vaerktoej-note"></p>
+      </div>
+      <div class="grid" id="vaerktoejer"></div>
+    </div>
+  </section>
+
+  <section id="kaede-sektion">
+    <div class="baand">
+      <div class="sektiontop">
+        <p class="oejenbryn">Vejen fra materiale til fil</p>
+      </div>
+      <div class="kaede" id="kaede"></div>
+    </div>
+  </section>
+
+  <section id="fundament-sektion">
+    <div class="baand">
+      <div class="sektiontop">
+        <p class="oejenbryn">Fundamentet — det samme uanset hvem der lytter</p>
+      </div>
+      <div class="to-spalter">
+        <div>
+          <h3 style="margin-bottom:14px">Fem tekniske principper</h3>
+          <ul class="liste" id="principper"></ul>
+        </div>
+        <div>
+          <h3 style="margin-bottom:14px">Oplysningerne der følger med filen</h3>
+          <ul class="liste" id="metadata"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="program-sektion">
+    <div class="baand">
+      <div class="sektiontop">
+        <p class="oejenbryn">Forslag til forløbet</p>
+        <p style="margin:0;color:var(--sekundaer);font-size:.94rem" id="program-note"></p>
+      </div>
+      <div class="program" id="program"></div>
+    </div>
+  </section>
+
+  <section id="spm-sektion">
+    <div class="baand">
+      <div class="sektiontop">
+        <p class="oejenbryn">Spørgsmål der plejer at komme</p>
+      </div>
+      <div id="spoergsmaal"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="baand">
+    <p style="margin:0 0 6px">Dette dashboard er selv én HTML-fil uden eksterne filer, skrifttyper eller sporing. Det virker offline, kan lægges på en USB-nøgle og kan printes.</p>
+    <p style="margin:0"><span class="felt">Tastatur</span> · P starter præsentationen · piletaster skifter slide · Esc lukker · piletaster i fanerækken skifter brugergruppe.</p>
+  </div>
+</footer>
+
+</div><!-- /indhold -->
+
+<div class="scene" id="scene" role="dialog" aria-modal="true" aria-label="Præsentationstilstand">
+  <div class="scene-krop" id="scene-krop"></div>
+  <div class="scene-fod">
+    <span class="taeller" id="taeller"></span>
+    <div class="scene-knapper">
+      <button class="knap" id="forrige">← Forrige</button>
+      <button class="knap" id="naeste">Næste →</button>
+      <button class="knap" id="luk">Luk (Esc)</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   INDHOLD — alt tekst samlet ét sted, så det er let at rette
+   ========================================================= */
+
+const VAERKTOEJER = [
+  {id:"album",   navn:"Album-Bygger",         type:"Image",  kort:"Laver et fotoalbum med gitter og lightbox som én fil. Billederne ligger inde i filen, og billedteksterne følger med.", fil:"fotoalbum.html", grupper:["lokalhistorie","familier","seniorer","arkiv"]},
+  {id:"lydfort", navn:"Lydfortælling · Bygger",type:"Sound", kort:"Én lydoptagelse, ét billede og en kort tekst bliver til en afspiller med store knapper. Tænkt som en minipodcast.", fil:"lydfortaelling.html", grupper:["lokalhistorie","rodekors","seniorer"]},
+  {id:"bog",     navn:"Bogbygger",            type:"Text",   kort:"Til de lange tekster. Manuskript i Markdown, forside, kapitler og en læser der husker hvor man kom til.", fil:"ebog.html", grupper:["lokalhistorie","arkiv","familier"]},
+  {id:"enkelt",  navn:"Enkeltbillede",        type:"Image",  kort:"Ét billede i høj opløsning med plads til den lange forklaring — hvem, hvor, hvornår og hvorfor det er værd at gemme.", fil:"billede.html", grupper:["familier","arkiv","rodekors"]},
+  {id:"booklet", navn:"Den Talende Booklet",  type:"Sound",  kort:"Billede, stemme og tekst i samme fil. Bygget til at kunne åbnes af en der ikke er vant til computere.", fil:"booklet.html", grupper:["rodekors","seniorer","familier"]},
+  {id:"fotolab", navn:"Fotolab",              type:"Værktøj",kort:"Prøv filtre, polaroid-ramme og tekst på billedet, mens du ser resultatet. Billedet forlader aldrig computeren.", fil:"redigeret.jpg", grupper:["lokalhistorie","seniorer","familier"]},
+  {id:"lydlab",  navn:"Lydlab",               type:"Værktøj",kort:"Retter optagelsen til: mono, mindre baggrundsstøj og ensartet lydstyrke, så det ene klip ikke er dobbelt så højt som det næste.", fil:"lyd.mp3", grupper:["lokalhistorie","rodekors"]},
+  {id:"samling", navn:"Samling-Bygger",       type:"Collection",kort:"Binder to til seks færdige filer sammen til en temapakke med fælles forside.", fil:"samling.html", grupper:["lokalhistorie","arkiv"]},
+  {id:"soeg",    navn:"Søgeindeks-generator", type:"Index",  kort:"Scanner en mappe med færdige filer og laver en søgeside ud fra oplysningerne inde i dem.", fil:"soegeside.html", grupper:["arkiv","lokalhistorie"]}
+];
+
+const PRINCIPPER = [
+  ["Singlefile","Hele værket er én fil. Ingen mappe med billeder ved siden af, der kan blive væk."],
+  ["Base64","Billeder og lyd er skrevet ind i filen som tekst. Derfor kan den flyttes uden at gå i stykker."],
+  ["Offline","Filen åbner i en browser uden internet. Den virker på en gammel bærbar i et forsamlingshus."],
+  ["Fil-autonomi","Ingen server, intet login, ingen tjeneste der skal blive ved med at eksistere."],
+  ["Privatliv","Alt sker i din egen browser. Intet bliver sendt nogen steder hen."]
+];
+
+const METADATA = [
+  ["dc.title","Hvad hedder det."],
+  ["dc.creator","Hvem har lavet det."],
+  ["dc.subject","Emneord, så det kan findes igen."],
+  ["dc.coverage","Sted og periode — fx Roskilde, 1968."],
+  ["dc.rights","Hvad andre må bruge det til."],
+  ["Exif","Kamera, blænde, tidspunkt og eventuelt GPS. Følger med fra kameraet."],
+  ["+ 10 felter","Dublin Core har 15 felter i alt. Alle byggere bruger de samme, med de samme danske betegnelser."]
+];
+
+const KAEDE = [
+  ["Materiale","Et gammelt foto, en optagelse fra et interview, en tekst du har skrevet."],
+  ["Værktøj","Fotolab eller Lydlab retter det til, hvis det trænger."],
+  ["Bygger","Du udfylder felterne og trækker filerne ind. Forhåndsvisningen står ved siden af."],
+  ["Oplysninger","Titel, ophav, sted og år skrives ind i filen — ikke i en database udenfor."],
+  ["Én fil","Du henter resultatet. Hjemmeside, USB-nøgle, mail eller arkiv — det er den samme fil."]
+];
+
+const GRUPPER = [
+  {
+    id:"lokalhistorie", navn:"Lokalhistorisk forening", nr:"01",
+    overskrift:"Foreningens fortællinger skal kunne åbnes om 20 år — også hvis hjemmesiden er lukket.",
+    billedtekst:"Byvandringen, interviewet med den gamle smed, billederne fra branden. Det er ikke noget nogen laver om igen.",
+    vaerktoejnote:"De fire første er dem, I kommer til at bruge mest.",
+    pointer:[
+      ["Én fortælling = én fil","Læg den på hjemmesiden i dag og på en USB-nøgle i arkivskabet. Det er den samme fil, og den virker begge steder."],
+      ["Billedteksten følger med","Årstal, sted og hvem der er på billedet står inde i filen. Ingen løsrevne billeder som ingen om ti år kan sætte navn på."],
+      ["Ingen udgifter, ingen binding","Ingen abonnement, ingen konto, ingen leverandør. Værktøjerne er frit tilgængelige under MIT-licens."]
+    ],
+    eksempler:["Domkirkebranden 1968 som billedalbum med kilder","Byvandring Syd for Banen med lydfortællinger ved hvert stop","Fotosafari: medlemmernes egne billeder samlet bagefter"],
+    programnote:"Foreningsaften, ca. 90 minutter.",
+    program:[
+      ["0–10","Problemet","Vis et billede uden tekst. Spørg salen hvem der er på det. Ingen ved det."],
+      ["10–25","Løsningen","Åbn en færdig fil på skærmen. Træk netstikket ud. Den virker stadig."],
+      ["25–55","Vi bygger én sammen","Ét billede fra salen ind i Album-Byggeren. Udfyld felterne mens de ser på."],
+      ["55–75","Hvad kan I bruge det til","Byvandring, jubilæumsskrift, arkivmappen. Konkrete forslag fra jeres egen samling."],
+      ["75–90","Kom i gang","Hvem henter værktøjerne, og hvad er det første vi laver sammen."]
+    ],
+    spm:[
+      ["Kan vi lægge det på vores hjemmeside?","Ja. Filen uploades som en helt almindelig side og linkes til. Den kræver ingen særlige indstillinger på webhotellet."],
+      ["Hvad hvis filen bliver meget stor?","Billeder i albummet skaleres ned, når de lægges ind. Et album med 40 billeder ligger typisk på nogle få MB. Til rigtig store samlinger deler man op i flere album."],
+      ["Skal vi kunne kode?","Nej. Du udfylder felter i et skema og trykker på en knap. Koden er noget værktøjet skriver."],
+      ["Hvad med ophavsret til billederne?","Der er et felt til det. Skriv hvem billedet tilhører, og hvad andre må. Det bliver stående i filen."]
+    ]
+  },
+  {
+    id:"rodekors", navn:"Røde Kors & frivillige", nr:"02",
+    overskrift:"Materiale der virker på en gammel tablet i besøgstjenesten — uden login og uden netværk.",
+    billedtekst:"Et billede fra dengang, en stemme der fortæller om det. Det er tit nok til at samtalen kommer i gang.",
+    vaerktoejnote:"Booklet og lydfortælling er kernen. Resten er støtteværktøjer.",
+    pointer:[
+      ["Ét billede, én stemme, én tekst","Den Talende Booklet er lavet til at kunne åbnes af en der ikke er vant til computere. Store knapper, ingen menuer."],
+      ["Filen kan gives videre","Pårørende kan få den på mail eller en nøgle. Den bliver ved med at virke, også når den frivillige stopper."],
+      ["Ingenting forlader computeren","Der er ingen upload og ingen sporing. Det gør en forskel, når indholdet handler om et andet menneskes liv."]
+    ],
+    eksempler:["Hilsen fra familien til en beboer på plejehjem","Erindringskort til besøgsven-samtaler","Introduktion til nye frivillige med billede og lyd"],
+    programnote:"Intromøde for frivillige, ca. 60 minutter.",
+    program:[
+      ["0–10","Hvorfor","Et konkret eksempel: en booklet lavet til én beboer. Vis den."],
+      ["10–20","Sådan ser det ud for modtageren","Åbn på en tablet. Vis hvor lidt der skal til."],
+      ["20–45","Alle laver én","Deltagerne bruger et billede fra deres egen telefon og optager 20 sekunder."],
+      ["45–60","Aftaler","Hvad må vi optage, hvad spørger vi om lov til, hvor gemmer vi filerne."]
+    ],
+    spm:[
+      ["Må vi optage beboerne?","Det er en samtykkesamtale, ikke et teknisk spørgsmål. Værktøjet gør det nemmere at holde materialet ét sted og slette det igen — det er én fil, du kan give videre eller kassere."],
+      ["Hvad hvis modtageren ikke kan finde ud af at åbne den?","Filen kan lægges som et ikon på skrivebordet eller som et bogmærke. Der er ét tryk fra ikonet til afspilningen."],
+      ["Kan vi bruge Røde Kors' farver?","Ja. Værktøjerne har et Røde Kors-tema indbygget ved siden af det neutrale."],
+      ["Kræver det en telefon eller computer der er ny?","Nej. Det er derfor filerne er lavet sådan her. En browser fra de sidste ti år er nok."]
+    ]
+  },
+  {
+    id:"familier", navn:"Familier & private", nr:"03",
+    overskrift:"Dine billeder ligger i skyen, og ingen har skrevet hvem der er på dem.",
+    billedtekst:"Farmor skrev navnene under billederne med kuglepen. Det er der ingen der gør i Google Fotos.",
+    vaerktoejnote:"Start med Album-Byggeren og ét enkelt album.",
+    pointer:[
+      ["Skyen er ikke et arkiv","Delte album er nemme og gode. Men de forsvinder, når kontoen gør, og de indeholder ingen oplysninger om hvem der er på billederne."],
+      ["Hent dine egne billeder hjem","Google Takeout giver dig en mappe. Album-Byggeren laver et album ud af den — med plads til dine egne billedtekster."],
+      ["Én fil, du kan give videre","Til børnene, til søskende, til en usb-nøgle i skuffen. Den kan åbnes uden at nogen skal oprette noget."]
+    ],
+    eksempler:["Sommerhusalbummet 1968–1975 med navne under billederne","Ét enkelt billede med den lange historie bagved","Bedsteforældrenes fortælling optaget og lagt sammen med billedet"],
+    programnote:"Workshop i medbragt materiale, ca. 2 timer.",
+    program:[
+      ["0–15","Prøven","Åbn et tilfældigt album på din telefon. Kan du sætte navn på alle? Det kan de fleste ikke."],
+      ["15–35","Hent dine billeder hjem","Vi bestiller Takeout sammen og ser hvad der kommer i mappen."],
+      ["35–75","Byg albummet","Vælg 20 billeder. Skriv en linje under hvert. Det er arbejdet — resten er knapper."],
+      ["75–105","Skriv det ned mens I husker det","Navne, år, sted. Én linje er bedre end ingenting."],
+      ["105–120","Hvor gemmer du den","To steder, mindst. En i skyen og en du kan tage i hånden."]
+    ],
+    spm:[
+      ["Skal jeg holde op med at bruge Google Fotos?","Nej. Brug det til hverdagen. Det her er til de billeder, du gerne vil have der stadig findes om tredive år."],
+      ["Hvor mange billeder kan der være i et album?","Praktisk ligger grænsen omkring 50–100 billeder pr. fil. Flere end det, og filen bliver tung at åbne. Så laver man to album."],
+      ["Kan jeg rette i albummet bagefter?","Ja. Filen indeholder de oplysninger, du skrev ind, så du kan lægge den tilbage i byggeren og fortsætte."],
+      ["Hvad hvis jeg ikke ved hvem der er på et billede?","Skriv det du ved, og skriv at resten er ukendt. Et halvt svar er mere værd end et tomt felt."]
+    ]
+  },
+  {
+    id:"arkiv", navn:"Arkiv, bibliotek & museum", nr:"04",
+    overskrift:"Dublin Core i selve filen. Ingen database at migrere, ingen platform at forlade.",
+    billedtekst:"Bevaringsstrategien er at der ikke er noget at vedligeholde. HTML og Base64 har været læsbare i tredive år.",
+    vaerktoejnote:"Søgeindekset er det, der gør en mappe til en samling.",
+    pointer:[
+      ["Metadata ligger i objektet","Alle 15 Dublin Core-felter skrives ind i filen som meta-tags og som en datablok. Filen og beskrivelsen kan ikke blive adskilt."],
+      ["Formatstabilitet frem for formatmigrering","HTML, JPEG og MP3 i én tekstfil. Ingen proprietær container, ingen afhængighed af et bibliotek der skal opdateres."],
+      ["Værktøjerne kan efterprøves","Alt er åben kildekode under MIT-licens. Én fil pr. værktøj, som kan læses igennem af den der skal godkende det."]
+    ],
+    eksempler:["Formidlingsobjekter til udstilling, der også fungerer som depotkopi","Søgeside over en hel afleveringsmappe, genereret ud fra filernes egne felter","Temapakke der binder billeder, tekst og lyd om samme emne sammen"],
+    programnote:"Fagligt oplæg, ca. 45 minutter plus spørgsmål.",
+    program:[
+      ["0–10","Præmissen","Hvad koster det at holde en formidlingsplatform i live i tyve år, og hvad sker der når den lukker."],
+      ["10–25","Anatomien i filen","Vis kildekoden. Meta-tags, datablok, Base64. Ingen magi."],
+      ["25–35","Fra mappe til samling","Kør søgeindeks-generatoren på en mappe og vis resultatet."],
+      ["35–45","Hvor det ikke slår til","Store samlinger, versionsstyring, rettighedsadministration. Vær ærlig om grænserne."]
+    ],
+    spm:[
+      ["Er det her et arkivsystem?","Nej. Det er et formidlings- og afleveringsformat. Det erstatter ikke et arkivsystem, men det giver et objekt, der kan læses uden et."],
+      ["Hvad med OAIS og bevaringsniveauer?","Filerne svarer til bit-bevaring plus indlejret beskrivende metadata. Der er ingen automatisk fikstetkontrol — den skal ligge i jeres eget lag omkring filerne."],
+      ["Kan metadata høstes maskinelt?","Ja. Felterne står som DC-meta-tags i head og som JSON i en datablok. Søgeindeks-generatoren læser dem, og det kan andre værktøjer også."],
+      ["Base64 fylder 33 % mere. Er det acceptabelt?","Det er prisen for at billede og beskrivelse ikke kan adskilles. Til formidlingskopier er det som regel en god handel. Til masterfiler er det ikke."]
+    ]
+  },
+  {
+    id:"seniorer", navn:"Seniorer & IT-café", nr:"05",
+    overskrift:"Stor skrift, ingen konto og ingen opdatering der flytter knapperne.",
+    billedtekst:"Det svære ved teknologi er sjældent teknikken. Det er at den bliver ved med at lave sig selv om.",
+    vaerktoejnote:"Vi bruger to værktøjer på en formiddag. Ikke flere.",
+    pointer:[
+      ["Ingenting at oprette","Der er ingen bruger, ingen adgangskode og ingen mail der skal bekræftes. Du åbner en side og går i gang."],
+      ["Det ser ens ud i morgen","Værktøjet er en fil på din egen computer. Den bliver ikke opdateret om natten."],
+      ["Du kan tage resultatet med hjem","Filen ligger i mappen Overførsler. Den kan sættes på en nøgle og gives til et barnebarn."]
+    ],
+    eksempler:["Ét billede med den historie du plejer at fortælle til det","En lydhilsen til familien","Album fra en fødselsdag, med navne under billederne"],
+    programnote:"IT-café, ca. 2 timer med pause.",
+    program:[
+      ["0–15","Se resultatet først","Åbn en færdig fil. Sådan kommer din til at se ud."],
+      ["15–45","Ét billede ind","Alle får ét billede ind i værktøjet og skriver én linje under."],
+      ["45–60","Pause",""],
+      ["60–95","Prøv lyden","Optag 20 sekunder. Hør det. Prøv igen. Det er tilladt at prøve igen."],
+      ["95–120","Gem og find igen","Hvor lander filen, hvordan åbner du den i morgen, hvordan sender du den."]
+    ],
+    spm:[
+      ["Koster det noget?","Nej. Der er hverken pris, prøveperiode eller reklamer."],
+      ["Kan jeg ødelægge noget?","Nej. Værktøjet laver en ny fil. Dit oprindelige billede bliver ikke rørt."],
+      ["Hvor er min fil henne?","I mappen Overførsler, sammen med alt andet du henter fra nettet. Vi finder den sammen."],
+      ["Kan jeg bruge min iPad?","Til at se filerne, ja. Til at bygge dem er en computer nemmere, fordi du skal have fat i billedfilerne."]
+    ]
+  }
+];
+
+/* =========================================================
+   OPBYGNING
+   ========================================================= */
+
+let valgt = 0;
+const $ = s => document.querySelector(s);
+
+/* --- faner --- */
+const fanebeholder = $("#faner");
+GRUPPER.forEach((g,i)=>{
+  const b = document.createElement("button");
+  b.className = "fane";
+  b.type = "button";
+  b.setAttribute("role","tab");
+  b.setAttribute("aria-selected", i===0 ? "true" : "false");
+  b.tabIndex = i===0 ? 0 : -1;
+  b.innerHTML = `<span class="nr">${g.nr}</span><span class="navn">${g.navn}</span>`;
+  b.addEventListener("click",()=>vaelg(i));
+  fanebeholder.appendChild(b);
+});
+
+fanebeholder.addEventListener("keydown", e=>{
+  if(e.key!=="ArrowRight" && e.key!=="ArrowLeft") return;
+  e.preventDefault();
+  const ny = e.key==="ArrowRight"
+    ? (valgt+1)%GRUPPER.length
+    : (valgt-1+GRUPPER.length)%GRUPPER.length;
+  vaelg(ny);
+  fanebeholder.children[ny].focus();
+});
+
+function vaelg(i){
+  valgt = i;
+  [...fanebeholder.children].forEach((b,n)=>{
+    b.setAttribute("aria-selected", n===i ? "true":"false");
+    b.tabIndex = n===i ? 0 : -1;
+  });
+  tegn();
+}
+
+/* --- statiske dele --- */
+$("#principper").innerHTML = PRINCIPPER
+  .map(([f,t])=>`<li><span class="felt">${f}</span><span>${t}</span></li>`).join("");
+$("#metadata").innerHTML = METADATA
+  .map(([f,t])=>`<li><span class="felt">${f}</span><span>${t}</span></li>`).join("");
+$("#kaede").innerHTML = KAEDE
+  .map(([n,t],i)=>`<div class="led"><span class="nr">TRIN ${i+1}</span><h3>${n}</h3><p>${t}</p></div>`).join("");
+
+/* --- det der skifter --- */
+function tegn(){
+  const g = GRUPPER[valgt];
+
+  $("#vinkel-mærkat").textContent = "Vinklen · " + g.navn;
+  $("#vinkel-overskrift").textContent = g.overskrift;
+  $("#vinkel-billedtekst").textContent = g.billedtekst;
+
+  $("#pointer").innerHTML = g.pointer.map(([o,t],i)=>
+    `<li><span class="mærke">${i+1}</span><span class="tekst"><strong>${o}</strong><em>${t}</em></span></li>`).join("");
+
+  $("#vaerktoej-note").textContent = g.vaerktoejnote;
+  const relevante = VAERKTOEJER.filter(v=>v.grupper.includes(g.id));
+  const oevrige   = VAERKTOEJER.filter(v=>!v.grupper.includes(g.id));
+  $("#vaerktoejer").innerHTML = [
+    ...relevante.map(v=>kortHTML(v,true)),
+    ...oevrige.map(v=>kortHTML(v,false))
+  ].join("");
+
+  $("#program-note").textContent = g.programnote;
+  $("#program").innerHTML = g.program.map(([tid,o,t])=>
+    `<div class="punkt"><span class="tid">${tid} min</span><span><strong>${o}</strong>${t?`<p>${t}</p>`:""}</span></div>`).join("");
+
+  $("#spoergsmaal").innerHTML = g.spm.map(([s,sv])=>
+    `<details><summary>${s}</summary><p>${sv}</p></details>`).join("");
+}
+
+function kortHTML(v,relevant){
+  return `<article class="kort${relevant?" primaer-vaerktoej":""}">
+    ${relevant?`<span class="badge">Relevant her</span>`:""}
+    <span class="type">dc.type · ${v.type}</span>
+    <h3>${v.navn}</h3>
+    <p>${v.kort}</p>
+    <span class="fil">→ ${v.fil}</span>
+  </article>`;
+}
+
+/* --- tema --- */
+$("#temaknap").addEventListener("click", e=>{
+  const lys = document.documentElement.getAttribute("data-lys")==="ja";
+  document.documentElement.setAttribute("data-lys", lys?"nej":"ja");
+  e.currentTarget.textContent = lys ? "Lyst tema" : "Mørkt tema";
+  e.currentTarget.setAttribute("aria-pressed", lys?"false":"true");
+});
+
+/* =========================================================
+   PRÆSENTATIONSTILSTAND
+   ========================================================= */
+let slides = [], slideNr = 0;
+
+function byg_slides(){
+  const g = GRUPPER[valgt];
+  const rel = VAERKTOEJER.filter(v=>v.grupper.includes(g.id)).map(v=>v.navn);
+  slides = [
+    {top:g.navn, h:g.overskrift, brod:g.billedtekst},
+    ...g.pointer.map(([o,t],i)=>({top:`Pointe ${i+1} af ${g.pointer.length}`, h:o, brod:t})),
+    {top:"Værktøjer vi bruger", h:"Det I skal røre ved i dag", punkter:rel},
+    {top:"Eksempler", h:"Sådan kan det se ud hos jer", punkter:g.eksempler},
+    {top:"Fundamentet", h:"Én fil. Ingen konto. Ingen forbindelse.", punkter:PRINCIPPER.map(p=>p[0]+" — "+p[1])},
+    {top:"Kom i gang", h:"Værktøjerne er frie at hente og bruge.", brod:"MIT-licens, vejledninger og eksempler. Det eneste du skal medbringe er ét billede og én sætning om det."}
+  ];
+}
+
+function tegn_slide(){
+  const s = slides[slideNr];
+  $("#scene-krop").innerHTML =
+    `<p class="oejenbryn">${s.top}</p>
+     <h2>${s.h}</h2>
+     ${s.brod?`<p class="stor-brod">${s.brod}</p>`:""}
+     ${s.punkter?`<ul>${s.punkter.map(p=>`<li>${p}</li>`).join("")}</ul>`:""}`;
+  $("#taeller").textContent = `${String(slideNr+1).padStart(2,"0")} / ${String(slides.length).padStart(2,"0")} · ${GRUPPER[valgt].navn}`;
+  $("#forrige").disabled = slideNr===0;
+  $("#naeste").disabled = slideNr===slides.length-1;
+}
+
+function aabn(){
+  byg_slides(); slideNr = 0; tegn_slide();
+  $("#scene").setAttribute("data-aktiv","ja");
+  $("#naeste").focus();
+}
+function luk(){
+  $("#scene").setAttribute("data-aktiv","nej");
+  $("#startpraes").focus();
+}
+function skift(n){
+  slideNr = Math.min(Math.max(slideNr+n,0), slides.length-1);
+  tegn_slide();
+}
+
+$("#startpraes").addEventListener("click",aabn);
+$("#luk").addEventListener("click",luk);
+$("#naeste").addEventListener("click",()=>skift(1));
+$("#forrige").addEventListener("click",()=>skift(-1));
+
+document.addEventListener("keydown", e=>{
+  const aktiv = $("#scene").getAttribute("data-aktiv")==="ja";
+  const skriver = /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
+  if(!aktiv){
+    if((e.key==="p"||e.key==="P") && !skriver){ e.preventDefault(); aabn(); }
+    return;
+  }
+  if(e.key==="Escape"){ luk(); }
+  else if(e.key==="ArrowRight"||e.key===" "||e.key==="PageDown"){ e.preventDefault(); skift(1); }
+  else if(e.key==="ArrowLeft"||e.key==="PageUp"){ e.preventDefault(); skift(-1); }
+});
+
+tegn();
+</script>
+</body>
+</html>

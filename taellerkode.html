@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tællerkode — generator</title>
+<style>
+  :root {
+    --papir:  #edf0f2;
+    --kort:   #ffffff;
+    --blaek:  #16202a;
+    --daemp:  #5e6b75;
+    --linje:  #d7dde2;
+    --maerke: #2f5d50;
+    --lys:    #eef4f1;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    padding: 2.5rem 1.25rem 5rem;
+    background: var(--papir);
+    color: var(--blaek);
+    font: 17px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  main { max-width: 680px; margin: 0 auto; }
+
+  h1 {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.7rem; font-weight: 400; letter-spacing: -.01em;
+    margin: 0 0 .3rem;
+  }
+  .intro { color: var(--daemp); font-size: .95rem; margin: 0 0 2.25rem; }
+
+  .eyebrow {
+    font-size: .68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .14em; color: var(--daemp);
+    margin: 0 0 .7rem;
+  }
+
+  /* ---- Arkivnummeret: signaturelementet ---- */
+  .stempel {
+    background: var(--kort);
+    border: 1px solid var(--linje);
+    border-radius: 4px;
+    padding: 1.5rem 1.4rem 1.3rem;
+    margin-bottom: 2.25rem;
+  }
+  .nummer {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: clamp(1.05rem, 4.4vw, 1.55rem);
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--maerke);
+    word-break: break-all;
+    line-height: 1.35;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed var(--linje);
+  }
+  .stempel-fod {
+    display: flex; flex-wrap: wrap; gap: .75rem;
+    align-items: center; justify-content: space-between;
+    margin-top: .9rem;
+  }
+  .stempel-fod p { margin: 0; font-size: .82rem; color: var(--daemp); }
+
+  /* ---- Felter ---- */
+  .felt { margin-bottom: 1.4rem; }
+  label {
+    display: block; font-size: .84rem; font-weight: 600;
+    margin-bottom: .35rem;
+  }
+  .hjaelp { font-weight: 400; color: var(--daemp); }
+
+  input[type=text], select {
+    width: 100%; padding: .65rem .75rem;
+    font: inherit; font-size: 1rem;
+    color: var(--blaek); background: var(--kort);
+    border: 1px solid var(--linje); border-radius: 5px;
+  }
+  input[type=text]:focus, select:focus,
+  button:focus { outline: 3px solid var(--maerke); outline-offset: 2px; }
+
+  .raekke { display: flex; gap: .9rem; }
+  .raekke .felt { flex: 1; }
+  .raekke .felt.smal { flex: 0 0 7rem; }
+
+  /* ---- Knapper ---- */
+  button {
+    font: inherit; font-size: .92rem;
+    padding: .55rem 1.05rem;
+    border-radius: 5px; cursor: pointer;
+    border: 1px solid var(--maerke);
+    background: var(--maerke); color: #fff;
+  }
+  button.let { background: var(--kort); color: var(--maerke); }
+  button:active { transform: translateY(1px); }
+
+  /* ---- Kodeblok ---- */
+  .kode-hoved {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: .75rem; margin-bottom: .6rem;
+  }
+  .kode-hoved .eyebrow { margin: 0; }
+  pre {
+    margin: 0 0 .75rem;
+    background: var(--kort);
+    border: 1px solid var(--linje); border-radius: 5px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .78rem; line-height: 1.5;
+    color: #33414e;
+    max-height: 17rem;
+  }
+  .kvittering {
+    font-size: .84rem; color: var(--maerke); font-weight: 600;
+    min-height: 1.4rem; margin: 0 0 2.25rem;
+  }
+
+  /* ---- Sessionsliste ---- */
+  .liste { border-top: 1px solid var(--linje); padding-top: 1.5rem; }
+  .liste ol { margin: 0; padding: 0; list-style: none; }
+  .liste li {
+    display: flex; flex-wrap: wrap; gap: .3rem 1rem;
+    justify-content: space-between;
+    padding: .55rem 0; border-bottom: 1px solid var(--linje);
+    font-size: .87rem;
+  }
+  .liste code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .8rem; color: var(--maerke);
+  }
+  .tom { color: var(--daemp); font-size: .87rem; margin: 0; }
+
+  @media (max-width: 480px) {
+    .raekke { flex-wrap: wrap; }
+    .raekke .felt.smal { flex: 1 1 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button:active { transform: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Tællerkode</h1>
+  <p class="intro">
+    Vælg type og emne. Så får du en færdig blok, der sættes ind
+    lige før <code>&lt;/body&gt;</code> i HTML-filen.
+  </p>
+
+  <section class="stempel">
+    <p class="eyebrow">Arkivnummer</p>
+    <div class="nummer" id="nummer">—</div>
+    <div class="stempel-fod">
+      <p id="advarsel">De fire sidste tegn er tilfældige.</p>
+      <button type="button" class="let" id="reroll">Ny endelse</button>
+    </div>
+  </section>
+
+  <div class="raekke">
+    <div class="felt">
+      <label for="type">Type</label>
+      <select id="type">
+        <option value="lyd">Lydfortælling</option>
+        <option value="alb">Billedalbum</option>
+        <option value="art">Artikel</option>
+        <option value="bok">E-bog</option>
+        <option value="kort">Kort</option>
+        <option value="bkl">Talende booklet</option>
+        <option value="side">Webside</option>
+        <option value="vej">Vejledning</option>
+        <option value="div">Andet</option>
+      </select>
+    </div>
+    <div class="felt smal">
+      <label for="aar">År</label>
+      <input type="text" id="aar" inputmode="numeric" maxlength="4">
+    </div>
+  </div>
+
+  <div class="felt">
+    <label for="emne">Emne <span class="hjaelp">— kort, til dig selv</span></label>
+    <input type="text" id="emne" placeholder="fx Mosevej eller Byvandring nord"
+           autocomplete="off">
+  </div>
+
+  <div class="felt">
+    <label for="base">Adresse på tælleren <span class="hjaelp">— den samme i alle filer</span></label>
+    <input type="text" id="base" value="https://sfbbilleder.eu/over/t/p.php"
+           autocomplete="off" spellcheck="false">
+  </div>
+
+  <div class="kode-hoved">
+    <p class="eyebrow">Blokken der skal indsættes</p>
+    <button type="button" id="kopier">Kopiér kode</button>
+  </div>
+  <pre id="kode"></pre>
+  <p class="kvittering" id="kvittering"></p>
+
+  <section class="liste">
+    <p class="eyebrow">Lavet i denne omgang</p>
+    <p class="tom" id="tom">Endnu ingen. Listen forsvinder når du lukker siden.</p>
+    <ol id="log"></ol>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var elType   = document.getElementById("type");
+  var elAar    = document.getElementById("aar");
+  var elEmne   = document.getElementById("emne");
+  var elBase   = document.getElementById("base");
+  var elNummer = document.getElementById("nummer");
+  var elKode   = document.getElementById("kode");
+  var elLog    = document.getElementById("log");
+  var elTom    = document.getElementById("tom");
+  var elKvit   = document.getElementById("kvittering");
+  var elAdv    = document.getElementById("advarsel");
+
+  var endelse = "";
+  var brugte  = {};
+
+  elAar.value = String(new Date().getFullYear());
+
+  // --- Slug: dansk tekst til rene ASCII-tegn ---------------------------
+  function slug(t) {
+    t = (t || "").toLowerCase();
+    t = t.replace(/æ/g, "ae").replace(/ø/g, "oe").replace(/å/g, "aa");
+    if (String.prototype.normalize) {
+      t = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+    t = t.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    return t.substring(0, 32).replace(/-+$/, "");
+  }
+
+  // --- Fire tilfældige tegn, uden de forvekslelige ---------------------
+  function nyEndelse() {
+    var tegn = "abcdefghjkmnpqrstuvwxyz23456789"; // ingen i l o 0 1
+    var ud = "";
+    var buf = null;
+    try {
+      if (window.crypto && window.crypto.getRandomValues) {
+        buf = new Uint8Array(4);
+        window.crypto.getRandomValues(buf);
+      }
+    } catch (e) { buf = null; }
+    for (var i = 0; i < 4; i++) {
+      var n = buf ? buf[i] : Math.floor(Math.random() * 256);
+      ud += tegn.charAt(n % tegn.length);
+    }
+    return ud;
+  }
+
+  function byggeId() {
+    var emne = slug(elEmne.value) || "uden-emne";
+    var aar  = (elAar.value || "").replace(/[^0-9]/g, "").substring(0, 4);
+    var dele = [elType.value, emne];
+    if (aar) { dele.push(aar); }
+    dele.push(endelse);
+    return dele.join("-");
+  }
+
+  function byggeKode(id, base) {
+    return [
+      '<!-- ================================================================',
+      '     TÆLLER — indsættes lige før </body>',
+      '     ================================================================ -->',
+      '<script>',
+      '(function () {',
+      '  try {',
+      '    var ID   = "' + id + '";',
+      '    var BASE = "' + base + '";',
+      '',
+      '    if (ID === "SKIFT-MIG") { return; }',
+      '',
+      '    var titel = (document.title || "").substring(0, 120);',
+      '    var sendt = {};',
+      '',
+      '    function husket(navn) {',
+      '      var noegle = "tlr:" + ID + ":" + navn;',
+      '      try {',
+      '        if (window.sessionStorage.getItem(noegle)) { return true; }',
+      '        window.sessionStorage.setItem(noegle, "1");',
+      '        return false;',
+      '      } catch (e) {',
+      '        if (sendt[navn]) { return true; }',
+      '        sendt[navn] = true;',
+      '        return false;',
+      '      }',
+      '    }',
+      '',
+      '    function ping(haendelse) {',
+      '      try {',
+      '        if (husket(haendelse)) { return; }',
+      '        new Image().src = BASE',
+      '          + "?id=" + encodeURIComponent(ID)',
+      '          + "&e="  + encodeURIComponent(haendelse)',
+      '          + "&t="  + encodeURIComponent(titel)',
+      '          + "&r="  + Math.random().toString(36).slice(2);',
+      '      } catch (e) {}',
+      '    }',
+      '',
+      '    ping("open");',
+      '',
+      '    document.addEventListener("play", function () { ping("play"); }, true);',
+      '',
+      '    // Til manuelle kald, fx i et galleris lightbox:',
+      '    //   window.__taeller && window.__taeller("image");',
+      '    window.__taeller = ping;',
+      '',
+      '  } catch (e) {}',
+      '})();',
+      '<\/script>',
+      '<!-- ==================== TÆLLER SLUT ==================== -->'
+    ].join("\n");
+  }
+
+  function opdater() {
+    var id   = byggeId();
+    var base = (elBase.value || "").trim();
+
+    elNummer.textContent = id;
+    elKode.textContent   = byggeKode(id, base);
+
+    if (brugte[id]) {
+      elAdv.textContent = "Dette nummer har du allerede lavet — tryk Ny endelse.";
+      elAdv.style.color = "#b3261e";
+    } else {
+      elAdv.textContent = "De fire sidste tegn er tilfældige.";
+      elAdv.style.color = "";
+    }
+    elKvit.textContent = "";
+  }
+
+  function noter(id) {
+    if (brugte[id]) { return; }
+    brugte[id] = true;
+    elTom.style.display = "none";
+
+    var li = document.createElement("li");
+    var kode = document.createElement("code");
+    kode.textContent = id;
+    var navn = document.createElement("span");
+    navn.textContent = elEmne.value.trim() || "(uden emne)";
+    li.appendChild(kode);
+    li.appendChild(navn);
+    elLog.insertBefore(li, elLog.firstChild);
+  }
+
+  function kopier() {
+    var tekst = elKode.textContent;
+    var faerdig = function (ok) {
+      if (ok) {
+        elKvit.textContent = "Kopieret. Sæt den ind lige før </body>.";
+        noter(byggeId());
+        endelse = nyEndelse();   // næste fil får automatisk et nyt nummer
+        var gemt = elKvit.textContent;
+        opdater();
+        elKvit.textContent = gemt;
+      } else {
+        elKvit.textContent = "Kunne ikke kopiere — markér teksten og tag den manuelt.";
+      }
+    };
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(tekst).then(function () {
+          faerdig(true);
+        }, function () { faerdig(false); });
+        return;
+      }
+    } catch (e) {}
+
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = tekst;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-1000px";
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      faerdig(ok);
+    } catch (e) {
+      faerdig(false);
+    }
+  }
+
+  ["input", "change"].forEach(function (h) {
+    elType.addEventListener(h, opdater);
+    elAar.addEventListener(h, opdater);
+    elEmne.addEventListener(h, opdater);
+    elBase.addEventListener(h, opdater);
+  });
+
+  document.getElementById("reroll").addEventListener("click", function () {
+    endelse = nyEndelse();
+    opdater();
+  });
+
+  document.getElementById("kopier").addEventListener("click", kopier);
+
+  endelse = nyEndelse();
+  opdater();
+})();
+</script>
+</body>
+</html>

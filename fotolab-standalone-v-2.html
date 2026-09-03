@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fotolab</title>
+<style>
+    :root {
+        --bg: #eef1f4;
+        --kort: #ffffff;
+        --kant: #d8dde3;
+        --tekst: #2c3540;
+        --dæmpet: #6b7683;
+        --accent: #2f6fb2;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--tekst);
+    }
+    .ramme { max-width: 960px; margin: 0 auto; padding: 20px 14px 40px; }
+
+    header { text-align: center; margin-bottom: 18px; }
+    header h1 { margin: 0 0 4px; font-size: 1.7em; letter-spacing: .5px; }
+    header p  { margin: 0; color: var(--dæmpet); font-size: .95em; }
+
+    .kort {
+        background: var(--kort);
+        border: 1px solid var(--kant);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+
+    /* ---- Upload-zone ---- */
+    .dropzone {
+        border: 2px dashed var(--kant);
+        border-radius: 10px;
+        padding: 34px 14px;
+        text-align: center;
+        color: var(--dæmpet);
+        cursor: pointer;
+        transition: all .15s;
+        background: #f9fafb;
+    }
+    .dropzone.over { border-color: var(--accent); background: #eaf2fa; color: var(--accent); }
+    .dropzone strong { color: var(--accent); }
+    .dropzone input { display: none; }
+    .dropzone .ikon { font-size: 2em; display: block; margin-bottom: 6px; }
+
+    /* ---- Topbar ---- */
+    .topBar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+    .toolKnap {
+        border: 1px solid var(--kant); background: #f6f8fa; color: var(--tekst);
+        padding: 7px 12px; border-radius: 8px; font-size: .85em; cursor: pointer;
+    }
+    .toolKnap:hover { border-color: var(--accent); }
+    .toolKnap.aktivKnap { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ---- Stort billede ---- */
+    .scene {
+        position: relative;
+        background: #1d232a;
+        border-radius: 8px;
+        min-height: 260px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+        padding: 10px;
+    }
+    .lærredWrap { position: relative; display: flex; flex-direction: column; align-items: center; }
+    .lærredLabel { color: #b7c1cb; font-size: .78em; margin-bottom: 5px; letter-spacing: .3px; }
+    #lærred, #lærredOrig { display: block; border-radius: 4px; max-width: none; cursor: grab; }
+    #lærred.grabbing { cursor: grabbing; }
+    #billedInfo { text-align: center; color: var(--dæmpet); font-size: .9em; margin: 8px 0 0; min-height: 1.2em; }
+    #billedInfo strong { color: var(--tekst); }
+
+    .arbejder {
+        position: absolute; inset: 0;
+        display: none; align-items: center; justify-content: center;
+        background: rgba(29,35,42,.55); color: #fff; font-size: .95em;
+        border-radius: 8px;
+    }
+    .arbejder.vis { display: flex; }
+
+    .cropOverlay { position: absolute; left: 0; top: 0; cursor: crosshair; }
+    .cropSelection {
+        position: absolute; border: 2px dashed #fff;
+        background: rgba(47,111,178,.25); pointer-events: none;
+    }
+
+    /* ---- Værktøjs-rækker ---- */
+    .redigerBar, .sammenligningBar, .eksportBar {
+        display: flex; align-items: center; justify-content: center;
+        gap: 10px; margin: 10px 0 2px; font-size: .88em; color: var(--dæmpet); flex-wrap: wrap;
+    }
+    .redigerBar button {
+        border: 1px solid var(--kant); background: #f6f8fa; color: var(--tekst);
+        padding: 7px 13px; border-radius: 8px; font-size: .9em; cursor: pointer;
+    }
+    .redigerBar button:hover { border-color: var(--accent); }
+    .redigerBar button.aktivKnap { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .redigerBar button:disabled { opacity: .45; cursor: not-allowed; }
+    .sammenligningBar label, .eksportBar label { display: flex; align-items: center; gap: 6px; }
+    .eksportBar select, .eksportBar input[type="range"] { vertical-align: middle; }
+
+    /* ---- Zoom ---- */
+    .zoomBar {
+        display: flex; align-items: center; justify-content: center;
+        gap: 10px; margin: 10px 0 2px; font-size: .88em; color: var(--dæmpet);
+    }
+    .zoomBar button {
+        border: 1px solid var(--kant); background: #f6f8fa; color: var(--tekst);
+        width: 30px; height: 30px; border-radius: 6px; font-size: 1em; cursor: pointer;
+    }
+    .zoomBar button:hover { border-color: var(--accent); }
+    .zoomBar input[type="range"] { width: 140px; }
+    #zoomVærdi { min-width: 42px; text-align: center; }
+
+    /* ---- Filter-miniaturer ---- */
+    #filterBar {
+        display: flex; gap: 10px; overflow-x: auto;
+        padding: 10px 4px; margin-top: 8px;
+        background:
+          repeating-linear-gradient(90deg, transparent 0 14px, #cfd6dd 14px 18px) top / 100% 5px no-repeat,
+          repeating-linear-gradient(90deg, transparent 0 14px, #cfd6dd 14px 18px) bottom / 100% 5px no-repeat,
+          #f3f5f7;
+        border-radius: 6px;
+    }
+    #filterBar::-webkit-scrollbar { height: 8px; }
+    #filterBar::-webkit-scrollbar-thumb { background: #c4ccd4; border-radius: 4px; }
+    .filterThumb {
+        flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px;
+        cursor: pointer; padding: 4px; border-radius: 8px; border: 2px solid transparent;
+    }
+    .filterThumb canvas { border-radius: 4px; display: block; width: 96px; height: auto; background: #fff; }
+    .filterThumb span { font-size: .78em; color: var(--dæmpet); text-align: center; }
+    .filterThumb:hover { border-color: #c7d3de; }
+    .filterThumb.aktiv { border-color: var(--accent); background: #eaf2fa; }
+    .filterThumb.aktiv span { color: var(--accent); font-weight: 600; }
+
+    .forklaringRække { display: flex; align-items: center; justify-content: center; gap: 6px; max-width: 600px; margin: 6px auto 10px; }
+    #filterForklaring { text-align: center; color: var(--dæmpet); font-size: .88em; min-height: 2.4em; margin: 0; }
+    #læsKnap { border: none; background: none; cursor: pointer; font-size: 1.15em; flex: 0 0 auto; }
+    #læsKnap:hover { transform: scale(1.1); }
+
+    /* ---- Handlingsknapper ---- */
+    .handlinger { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+    .handlinger button { border: none; border-radius: 8px; padding: 10px 18px; font-size: .95em; cursor: pointer; }
+    #hentKnap { background: var(--accent); color: #fff; }
+    #hentKnap:hover { background: #275c94; }
+    #sammenlignKnap { background: #e7ebef; color: var(--tekst); }
+    #sammenlignKnap:active { background: #d3dae1; }
+    #nytKnap { background: #e7ebef; color: var(--tekst); }
+
+    .skjult { display: none !important; }
+
+    footer { text-align: center; color: var(--dæmpet); font-size: .8em; margin-top: 22px; }
+
+    /* ---- Tilgængelighedstilstand ---- */
+    body.tilgængelig { font-size: 1.14em; }
+    body.tilgængelig .filterThumb canvas { width: 132px; }
+    body.tilgængelig .redigerBar button,
+    body.tilgængelig .handlinger button,
+    body.tilgængelig .zoomBar button,
+    body.tilgængelig .toolKnap { padding: 13px 18px; font-size: 1.05em; }
+    body.tilgængelig #filterForklaring { font-size: 1.05em; }
+</style>
+</head>
+<body>
+<div class="ramme">
+    <header>
+        <h1>&#128247; Fotolab</h1>
+        <p>Upload et billede og pr&oslash;v farve-effekterne. Alt sker i din browser &ndash; intet sendes til nogen server.</p>
+    </header>
+
+    <div class="kort">
+
+        <div class="dropzone" id="dropzone">
+            <span class="ikon">&#128247;</span>
+            <span><strong>Upload billede</strong> &ndash; klik her, eller tr&aelig;k et billede ind</span>
+            <input type="file" id="filInput" accept="image/*">
+        </div>
+
+        <div id="visning" class="skjult">
+
+            <div class="topBar">
+                <button class="toolKnap" id="tilgKnap">🔠 Stor tekst &amp; oplæsning</button>
+            </div>
+
+            <div class="scene" id="scene">
+                <div class="lærredWrap skjult" id="wrapOriginal">
+                    <div class="lærredLabel">Original</div>
+                    <canvas id="lærredOrig"></canvas>
+                </div>
+                <div class="lærredWrap" id="wrapFiltreret">
+                    <div class="lærredLabel skjult" id="labelFiltreret">Filtreret</div>
+                    <canvas id="lærred"></canvas>
+                    <div class="cropOverlay skjult" id="cropOverlay"><div class="cropSelection skjult" id="cropSelection"></div></div>
+                </div>
+                <div class="arbejder" id="arbejder">Anvender effekt&hellip;</div>
+            </div>
+            <p id="billedInfo"></p>
+
+            <div class="redigerBar">
+                <button id="spejlvendKnap">↔️ Spejlvend</button>
+                <button id="beskærKnap">✂️ Beskær billede</button>
+                <button id="bekræftBeskæring" class="skjult">✔️ Anvend beskæring</button>
+                <button id="annullérBeskæring" class="skjult">✖️ Annullér</button>
+            </div>
+
+            <div class="zoomBar">
+                <button id="zoomUd" title="Zoom ud">&minus;</button>
+                <input type="range" id="zoomSlider" min="20" max="400" value="100">
+                <button id="zoomInd" title="Zoom ind">+</button>
+                <span id="zoomVærdi">100%</span>
+                <button id="zoomNulstil" title="Nulstil zoom">&#8635;</button>
+            </div>
+
+            <div class="sammenligningBar">
+                <label><input type="checkbox" id="sammenligningToggle"> Vis side om side (original / filtreret)</label>
+            </div>
+
+            <div id="filterBar"></div>
+            <div class="forklaringRække">
+                <button id="læsKnap" title="Læs beskrivelsen højt">🔊</button>
+                <p id="filterForklaring"></p>
+            </div>
+
+            <div class="eksportBar">
+                <label>Filtype:
+                    <select id="formatVælg">
+                        <option value="jpg" selected>JPG</option>
+                        <option value="png">PNG</option>
+                    </select>
+                </label>
+                <label id="kvalitetLabel">Kvalitet:
+                    <input type="range" id="kvalitetSlider" min="50" max="100" value="92">
+                    <span id="kvalitetVærdi">92%</span>
+                </label>
+            </div>
+
+            <div class="handlinger">
+                <button id="sammenlignKnap" title="Hold knappen nede for at se originalen">&#128064; Hold for original</button>
+                <button id="hentKnap">&#11015;&#65039; Hent billede med effekt</button>
+                <button id="nytKnap">&#128257; V&aelig;lg nyt billede</button>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>Fotolab er en p&aelig;dagogisk visning &ndash; billedet forlader aldrig din browser.</footer>
+</div>
+
+<script>
+/* ============================================================
+   FILTRE - tro kopi af GD-filtrene fra upload.php / fotolab.php,
+   plus nye effekter i samme stil (faste værdier, ingen skydere).
+   ============================================================ */
+
+function gdGrayscale(d) {
+    for (let i = 0; i < d.length; i += 4) {
+        const g = Math.round(0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]);
+        d[i] = d[i+1] = d[i+2] = g;
+    }
+}
+function gdColorize(d, r, g, b) {
+    for (let i = 0; i < d.length; i += 4) {
+        d[i]   = Math.max(0, Math.min(255, d[i]   + r));
+        d[i+1] = Math.max(0, Math.min(255, d[i+1] + g));
+        d[i+2] = Math.max(0, Math.min(255, d[i+2] + b));
+    }
+}
+function gdBrightness(d, v) { gdColorize(d, v, v, v); }
+function gdContrast(d, arg) {
+    let c = (100 - arg) / 100;
+    c *= c;
+    for (let i = 0; i < d.length; i += 4) {
+        for (let k = 0; k < 3; k++) {
+            let v = d[i+k] / 255;
+            v = (v - 0.5) * c + 0.5;
+            d[i+k] = Math.max(0, Math.min(255, Math.round(v * 255)));
+        }
+    }
+}
+function boostSaturation(d, factor) {
+    for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i+1], b = d[i+2];
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        if (max === min) continue;
+        const l = (max + min) / 2;
+        const diff = max - min;
+        let s = l > 127.5 ? diff / (510 - max - min) : diff / (max + min);
+        s = Math.min(1, s * factor);
+        const newD = (l > 127.5 ? (1 - Math.abs(2*l/255 - 1)) : (2*l/255)) * s * 255;
+        const avg = (max + min) / 2;
+        const scale = diff > 0 ? newD / diff : 1;
+        d[i]   = Math.max(0, Math.min(255, Math.round(avg + (r - avg) * scale)));
+        d[i+1] = Math.max(0, Math.min(255, Math.round(avg + (g - avg) * scale)));
+        d[i+2] = Math.max(0, Math.min(255, Math.round(avg + (b - avg) * scale)));
+    }
+}
+function gdGrain(d) {
+    for (let i = 0; i < d.length; i += 4) {
+        const n = (Math.random() - 0.5) * 42;
+        d[i]   = Math.max(0, Math.min(255, d[i]   + n));
+        d[i+1] = Math.max(0, Math.min(255, d[i+1] + n));
+        d[i+2] = Math.max(0, Math.min(255, d[i+2] + n));
+    }
+}
+function gdVignette(d, w, h) {
+    const cx = w / 2, cy = h / 2;
+    const maxDist = Math.sqrt(cx*cx + cy*cy);
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            const i = (y * w + x) * 4;
+            const dist = Math.sqrt((x-cx)*(x-cx) + (y-cy)*(y-cy)) / maxDist;
+            const factor = 1 - Math.pow(dist, 2) * 0.65;
+            d[i]   = d[i]   * factor;
+            d[i+1] = d[i+1] * factor;
+            d[i+2] = d[i+2] * factor;
+        }
+    }
+}
+function gdPosterize(d, levels) {
+    const step = 255 / (levels - 1);
+    for (let i = 0; i < d.length; i += 4) {
+        d[i]   = Math.round(Math.round(d[i]   / step) * step);
+        d[i+1] = Math.round(Math.round(d[i+1] / step) * step);
+        d[i+2] = Math.round(Math.round(d[i+2] / step) * step);
+    }
+}
+
+const FILTRE = [
+    { id: 'original',  navn: 'Ingen',
+      info: 'Billedet som det er – ingen effekt.',
+      kort: 'Ingen effekt.',
+      kør: (d,w,h) => {} },
+    { id: 'grayscale', navn: 'Sort/Hvid',
+      info: 'Alle farver omregnes til gråtoner ud fra hvor lyse de er. Grøn vejer tungest, fordi øjet er mest følsomt for grønt.',
+      kort: 'Gør billedet sort-hvidt.',
+      kør: (d,w,h) => gdGrayscale(d) },
+    { id: 'sepia',     navn: 'Sepia',
+      info: 'Først sort/hvid, derefter tører der en varm brunlig tone over – som gamle fotografier fra 1900-tallet.',
+      kort: 'Brunlig, gammeldags tone.',
+      kør: (d,w,h) => { gdGrayscale(d); gdColorize(d, 90, 60, 40); } },
+    { id: 'vivid',     navn: 'Stærke Farver',
+      info: 'Farvemætningen skrues op pixel for pixel (60% mere), og kontrasten får et lille ekstra "pop".',
+      kort: 'Skarpere, mættede farver.',
+      kør: (d,w,h) => { boostSaturation(d, 1.6); gdContrast(d, -8); } },
+    { id: 'contrast',  navn: 'Høj Kontrast',
+      info: 'Sort/hvid med kraftigt øget kontrast – lyse områder bliver lysere, mørke bliver mørkere. Dramatisk udtryk.',
+      kort: 'Sort-hvid, meget kontrast.',
+      kør: (d,w,h) => { gdGrayscale(d); gdContrast(d, -35); } },
+    { id: 'vintage',   navn: 'Gammelt Foto',
+      info: 'Lidt ekstra lys, mindre kontrast (falmet look) og et gulligt farveskift – som et ældre farvefoto.',
+      kort: 'Falmet, gulligt gammelt foto.',
+      kør: (d,w,h) => { gdBrightness(d, 12); gdContrast(d, 18); gdColorize(d, 20, 10, -12); } },
+    { id: 'fade',      navn: 'Bleget',
+      info: 'Billedet lysnes og kontrasten dæmpes kraftigt, så det ser udvasket ud – som et blegnet dias.',
+      kort: 'Lyst og udvasket look.',
+      kør: (d,w,h) => { gdBrightness(d, 28); gdContrast(d, 38); } },
+    { id: 'grain',     navn: 'Kornet Film',
+      info: 'Der tilføjes tilfældig støj til hver pixel, så billedet får et kornet, analogt filmudtryk.',
+      kort: 'Kornet, analogt filmlook.',
+      kør: (d,w,h) => gdGrain(d) },
+    { id: 'vignette',  navn: 'Vignettering',
+      info: 'Hjørnerne af billedet gøres mørkere, mens midten forbliver lys – trækker blikket ind mod motivet.',
+      kort: 'Mørke hjørner, lys midte.',
+      kør: (d,w,h) => gdVignette(d, w, h) },
+    { id: 'cool',      navn: 'Kold Tone',
+      info: 'Der lægges et blåligt farveskift over billedet – modsætningen til sepia, for et køligt "måneskins"-udtryk.',
+      kort: 'Blålig, kølig tone.',
+      kør: (d,w,h) => gdColorize(d, -18, -4, 26) },
+    { id: 'posterize', navn: 'Poster-effekt',
+      info: 'Antallet af farvenuancer reduceres kraftigt, så billedet får et fladt, grafisk plakat-udtryk.',
+      kort: 'Fladt, grafisk plakat-look.',
+      kør: (d,w,h) => gdPosterize(d, 5) },
+];
+
+/* ============================================================
+   APP
+   ============================================================ */
+const dropzone      = document.getElementById('dropzone');
+const filInput       = document.getElementById('filInput');
+const visning        = document.getElementById('visning');
+const scene          = document.getElementById('scene');
+const wrapOriginal   = document.getElementById('wrapOriginal');
+const labelFiltreret = document.getElementById('labelFiltreret');
+const lærred         = document.getElementById('lærred');
+const ctx            = lærred.getContext('2d', { willReadFrequently: true });
+const lærredOrig     = document.getElementById('lærredOrig');
+const ctxOrig        = lærredOrig.getContext('2d');
+const filterBar      = document.getElementById('filterBar');
+const forklaring     = document.getElementById('filterForklaring');
+const billedInfo     = document.getElementById('billedInfo');
+const arbejder       = document.getElementById('arbejder');
+const zoomSlider     = document.getElementById('zoomSlider');
+const zoomVærdi      = document.getElementById('zoomVærdi');
+const cropOverlay    = document.getElementById('cropOverlay');
+const cropSelection  = document.getElementById('cropSelection');
+const tilgKnap       = document.getElementById('tilgKnap');
+const læsKnap        = document.getElementById('læsKnap');
+const spejlvendKnap  = document.getElementById('spejlvendKnap');
+const beskærKnap     = document.getElementById('beskærKnap');
+const bekræftBeskæring   = document.getElementById('bekræftBeskæring');
+const annullérBeskæring  = document.getElementById('annullérBeskæring');
+const sammenligningToggle = document.getElementById('sammenligningToggle');
+const sammenlign     = document.getElementById('sammenlignKnap');
+const formatVælg     = document.getElementById('formatVælg');
+const kvalitetLabel  = document.getElementById('kvalitetLabel');
+const kvalitetSlider = document.getElementById('kvalitetSlider');
+const kvalitetVærdi  = document.getElementById('kvalitetVærdi');
+
+let aktivtBillede = null;   // Image-objekt (originalen, evt. beskåret)
+let aktivtFilter  = 'original';
+let egetNavn      = null;
+let zoom          = 1;
+let spejlvendt    = false;
+let tilgængelig   = false;
+let beskærTilstand = false;
+let cropDragging  = false, cropStartX = 0, cropStartY = 0;
+
+// --- Filter-miniaturer ---
+function byggThumbnails() {
+    if (!aktivtBillede) return;
+    filterBar.innerHTML = '';
+    const tw = 96;
+    const th = Math.max(1, Math.round(aktivtBillede.naturalHeight * tw / aktivtBillede.naturalWidth));
+    FILTRE.forEach(f => {
+        const c = document.createElement('canvas');
+        c.width = tw; c.height = th;
+        const tctx = c.getContext('2d');
+        tctx.save();
+        if (spejlvendt) { tctx.translate(tw, 0); tctx.scale(-1, 1); }
+        tctx.drawImage(aktivtBillede, 0, 0, tw, th);
+        tctx.restore();
+        if (f.id !== 'original') {
+            const data = tctx.getImageData(0, 0, tw, th);
+            f.kør(data.data, tw, th);
+            tctx.putImageData(data, 0, 0);
+        }
+        const wrap = document.createElement('div');
+        wrap.className = 'filterThumb' + (f.id === aktivtFilter ? ' aktiv' : '');
+        wrap.dataset.id = f.id;
+        wrap.appendChild(c);
+        const label = document.createElement('span');
+        label.textContent = f.navn;
+        wrap.appendChild(label);
+        wrap.addEventListener('click', () => vælgFilter(f.id));
+        filterBar.appendChild(wrap);
+    });
+}
+
+function vælgFilter(id) {
+    aktivtFilter = id;
+    [...filterBar.children].forEach(k => k.classList.toggle('aktiv', k.dataset.id === id));
+    opdaterForklaring();
+    tegn();
+}
+
+function opdaterForklaring() {
+    const f = FILTRE.find(f => f.id === aktivtFilter);
+    forklaring.textContent = tilgængelig ? f.kort : f.info;
+}
+
+function tegn(visOriginal = false) {
+    if (!aktivtBillede) return;
+    const mw = 1600;
+    let w = aktivtBillede.naturalWidth, h = aktivtBillede.naturalHeight;
+    if (w > mw) { h = Math.round(h * mw / w); w = mw; }
+    lærred.width = w; lærred.height = h;
+    lærredOrig.width = w; lærredOrig.height = h;
+
+    ctxOrig.save();
+    if (spejlvendt) { ctxOrig.translate(w, 0); ctxOrig.scale(-1, 1); }
+    ctxOrig.drawImage(aktivtBillede, 0, 0, w, h);
+    ctxOrig.restore();
+
+    ctx.save();
+    if (spejlvendt) { ctx.translate(w, 0); ctx.scale(-1, 1); }
+    ctx.drawImage(aktivtBillede, 0, 0, w, h);
+    ctx.restore();
+
+    const f = FILTRE.find(f => f.id === aktivtFilter);
+    if (visOriginal || f.id === 'original') { sætZoomVisning(); return; }
+
+    arbejder.classList.add('vis');
+    setTimeout(() => {
+        const data = ctx.getImageData(0, 0, w, h);
+        f.kør(data.data, w, h);
+        ctx.putImageData(data, 0, 0);
+        arbejder.classList.remove('vis');
+        sætZoomVisning();
+    }, 30);
+}
+
+// --- Zoom ---
+function sætZoomVisning() {
+    lærred.style.width = (lærred.width * zoom) + 'px';
+    lærred.style.height = (lærred.height * zoom) + 'px';
+    lærredOrig.style.width = (lærredOrig.width * zoom) + 'px';
+    lærredOrig.style.height = (lærredOrig.height * zoom) + 'px';
+    zoomSlider.value = Math.round(zoom * 100);
+    zoomVærdi.textContent = Math.round(zoom * 100) + '%';
+    if (beskærTilstand) positionOverlay();
+}
+function ændreZoom(nyVærdi) {
+    zoom = Math.max(0.2, Math.min(4, nyVærdi));
+    sætZoomVisning();
+}
+document.getElementById('zoomInd').addEventListener('click', () => ændreZoom(zoom + 0.2));
+document.getElementById('zoomUd').addEventListener('click', () => ændreZoom(zoom - 0.2));
+document.getElementById('zoomNulstil').addEventListener('click', () => ændreZoom(1));
+zoomSlider.addEventListener('input', () => ændreZoom(zoomSlider.value / 100));
+
+scene.addEventListener('wheel', e => {
+    if (!aktivtBillede) return;
+    if (e.ctrlKey || e.metaKey) { e.preventDefault(); ændreZoom(zoom - e.deltaY * 0.0015); }
+}, { passive: false });
+
+// --- Pan (træk) ---
+let trækker = false, startX = 0, startY = 0, startScrollL = 0, startScrollT = 0;
+lærred.addEventListener('mousedown', e => {
+    if (beskærTilstand) return;
+    trækker = true;
+    lærred.classList.add('grabbing');
+    startX = e.clientX; startY = e.clientY;
+    startScrollL = scene.scrollLeft; startScrollT = scene.scrollTop;
+});
+window.addEventListener('mouseup', () => { trækker = false; lærred.classList.remove('grabbing'); });
+window.addEventListener('mousemove', e => {
+    if (!trækker) return;
+    scene.scrollLeft = startScrollL - (e.clientX - startX);
+    scene.scrollTop  = startScrollT - (e.clientY - startY);
+});
+
+// --- Hold for original ---
+const startOrig = e => { e.preventDefault(); tegn(true); };
+const slutOrig  = e => { e.preventDefault(); tegn(false); };
+sammenlign.addEventListener('mousedown', startOrig);
+sammenlign.addEventListener('mouseup', slutOrig);
+sammenlign.addEventListener('mouseleave', slutOrig);
+sammenlign.addEventListener('touchstart', startOrig, { passive: false });
+sammenlign.addEventListener('touchend', slutOrig);
+
+// --- Spejlvending ---
+spejlvendKnap.addEventListener('click', () => {
+    if (!aktivtBillede) return;
+    spejlvendt = !spejlvendt;
+    spejlvendKnap.classList.toggle('aktivKnap', spejlvendt);
+    tegn();
+    byggThumbnails();
+});
+
+// --- Side om side ---
+sammenligningToggle.addEventListener('change', () => {
+    if (sammenligningToggle.checked) {
+        if (beskærTilstand) afslutBeskæring(false);
+        wrapOriginal.classList.remove('skjult');
+        labelFiltreret.classList.remove('skjult');
+        sammenlign.classList.add('skjult');
+        beskærKnap.disabled = true;
+    } else {
+        wrapOriginal.classList.add('skjult');
+        labelFiltreret.classList.add('skjult');
+        sammenlign.classList.remove('skjult');
+        beskærKnap.disabled = false;
+    }
+});
+
+// --- Beskæring ---
+function positionOverlay() {
+    cropOverlay.style.left = lærred.offsetLeft + 'px';
+    cropOverlay.style.top = lærred.offsetTop + 'px';
+    cropOverlay.style.width = lærred.offsetWidth + 'px';
+    cropOverlay.style.height = lærred.offsetHeight + 'px';
+}
+beskærKnap.addEventListener('click', () => {
+    if (!aktivtBillede) return;
+    beskærTilstand = true;
+    sammenligningToggle.disabled = true;
+    beskærKnap.classList.add('skjult');
+    bekræftBeskæring.classList.remove('skjult');
+    annullérBeskæring.classList.remove('skjult');
+    cropOverlay.classList.remove('skjult');
+    positionOverlay();
+});
+annullérBeskæring.addEventListener('click', () => afslutBeskæring(false));
+bekræftBeskæring.addEventListener('click', () => afslutBeskæring(true));
+
+function afslutBeskæring(anvend) {
+    if (anvend) anvendBeskæring();
+    beskærTilstand = false;
+    cropDragging = false;
+    sammenligningToggle.disabled = false;
+    beskærKnap.classList.remove('skjult');
+    bekræftBeskæring.classList.add('skjult');
+    annullérBeskæring.classList.add('skjult');
+    cropOverlay.classList.add('skjult');
+    cropSelection.classList.add('skjult');
+}
+
+cropOverlay.addEventListener('mousedown', e => {
+    if (!beskærTilstand) return;
+    const rect = cropOverlay.getBoundingClientRect();
+    cropStartX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+    cropStartY = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+    cropDragging = true;
+    cropSelection.style.left = cropStartX + 'px';
+    cropSelection.style.top = cropStartY + 'px';
+    cropSelection.style.width = '0px';
+    cropSelection.style.height = '0px';
+    cropSelection.classList.remove('skjult');
+});
+window.addEventListener('mousemove', e => {
+    if (!cropDragging) return;
+    const rect = cropOverlay.getBoundingClientRect();
+    const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+    const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+    const left = Math.min(x, cropStartX), top = Math.min(y, cropStartY);
+    const w = Math.abs(x - cropStartX), h = Math.abs(y - cropStartY);
+    cropSelection.style.left = left + 'px';
+    cropSelection.style.top = top + 'px';
+    cropSelection.style.width = w + 'px';
+    cropSelection.style.height = h + 'px';
+});
+window.addEventListener('mouseup', () => { cropDragging = false; });
+
+function anvendBeskæring() {
+    const selW = parseFloat(cropSelection.style.width) || 0;
+    const selH = parseFloat(cropSelection.style.height) || 0;
+    if (selW < 12 || selH < 12) return;
+    const selLeft = parseFloat(cropSelection.style.left) || 0;
+    const selTop = parseFloat(cropSelection.style.top) || 0;
+    const sx = Math.round(selLeft / zoom);
+    const sy = Math.round(selTop / zoom);
+    const sw = Math.max(1, Math.round(selW / zoom));
+    const sh = Math.max(1, Math.round(selH / zoom));
+
+    const råt = document.createElement('canvas');
+    råt.width = lærred.width; råt.height = lærred.height;
+    const råtCtx = råt.getContext('2d');
+    råtCtx.save();
+    if (spejlvendt) { råtCtx.translate(råt.width, 0); råtCtx.scale(-1, 1); }
+    råtCtx.drawImage(aktivtBillede, 0, 0, råt.width, råt.height);
+    råtCtx.restore();
+
+    const beskåret = document.createElement('canvas');
+    beskåret.width = sw; beskåret.height = sh;
+    beskåret.getContext('2d').drawImage(råt, sx, sy, sw, sh, 0, 0, sw, sh);
+
+    const nytImg = new Image();
+    nytImg.onload = () => {
+        aktivtBillede = nytImg;
+        spejlvendt = false;
+        spejlvendKnap.classList.remove('aktivKnap');
+        zoom = 1;
+        tegn();
+        byggThumbnails();
+    };
+    nytImg.src = beskåret.toDataURL('image/png');
+}
+
+// --- Tilgængelighed & oplæsning ---
+tilgKnap.addEventListener('click', () => {
+    tilgængelig = !tilgængelig;
+    document.body.classList.toggle('tilgængelig', tilgængelig);
+    tilgKnap.classList.toggle('aktivKnap', tilgængelig);
+    opdaterForklaring();
+});
+læsKnap.addEventListener('click', () => {
+    if (!('speechSynthesis' in window)) { alert('Din browser understøtter ikke oplæsning.'); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(forklaring.textContent);
+    u.lang = 'da-DK';
+    window.speechSynthesis.speak(u);
+});
+
+// --- Eksportvalg ---
+formatVælg.addEventListener('change', () => {
+    kvalitetLabel.classList.toggle('skjult', formatVælg.value === 'png');
+});
+kvalitetSlider.addEventListener('input', () => {
+    kvalitetVærdi.textContent = kvalitetSlider.value + '%';
+});
+
+// --- Download ---
+document.getElementById('hentKnap').addEventListener('click', () => {
+    if (!aktivtBillede) return;
+    const format = formatVælg.value;
+    const mime = format === 'png' ? 'image/png' : 'image/jpeg';
+    const kvalitet = kvalitetSlider.value / 100;
+    const grundnavn = (egetNavn || 'billede').replace(/\.[^.]+$/, '');
+    const filnavn = grundnavn.replace(/[^\wæøåÆØÅ\- ]/g, '').trim() + '_' + aktivtFilter + '.' + format;
+    lærred.toBlob(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filnavn;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }, mime, format === 'png' ? undefined : kvalitet);
+});
+
+// --- Vælg nyt billede ---
+document.getElementById('nytKnap').addEventListener('click', () => {
+    aktivtBillede = null;
+    egetNavn = null;
+    zoom = 1;
+    spejlvendt = false;
+    spejlvendKnap.classList.remove('aktivKnap');
+    if (beskærTilstand) afslutBeskæring(false);
+    sammenligningToggle.checked = false;
+    sammenligningToggle.dispatchEvent(new Event('change'));
+    visning.classList.add('skjult');
+    dropzone.classList.remove('skjult');
+    filInput.value = '';
+});
+
+// --- Upload: klik, filvælger, træk-slip ---
+function indlæsFil(fil) {
+    if (!fil || !fil.type.startsWith('image/')) return;
+    const img = new Image();
+    img.onload = () => {
+        aktivtBillede = img;
+        egetNavn = fil.name;
+        zoom = 1;
+        spejlvendt = false;
+        spejlvendKnap.classList.remove('aktivKnap');
+        billedInfo.innerHTML = '<strong>' + escapeHtml(fil.name) + '</strong> &ndash; kun i din browser, uploades ikke';
+        dropzone.classList.add('skjult');
+        visning.classList.remove('skjult');
+        aktivtFilter = 'original';
+        byggThumbnails();
+        opdaterForklaring();
+        tegn();
+    };
+    img.src = URL.createObjectURL(fil);
+}
+
+dropzone.addEventListener('click', () => filInput.click());
+filInput.addEventListener('change', e => indlæsFil(e.target.files[0]));
+
+['dragenter', 'dragover'].forEach(evt =>
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('over'); })
+);
+['dragleave', 'drop'].forEach(evt =>
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('over'); })
+);
+dropzone.addEventListener('drop', e => indlæsFil(e.dataTransfer.files[0]));
+
+scene.addEventListener('dragover', e => e.preventDefault());
+scene.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files[0]) indlæsFil(e.dataTransfer.files[0]); });
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+</body>
+</html>

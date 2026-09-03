@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samling - Bygger DC</title>
+<style>
+  :root{
+    --paper: #EDE7D8;
+    --paper-dim: #E2DBC8;
+    --ink: #211E19;
+    --rust: #9A4630;
+    --moss: #47543C;
+    --hint: #5F5A4B;
+    --card: #1B1A16;
+    --card-text: #F2ECDD;
+    --line: #cbc2a8;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+  .topbar{
+    padding:22px 28px 18px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .topbar h1{
+    font-family:var(--serif);
+    font-size:25px;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  .topbar span{
+    font-size:14.5px;
+    color:var(--hint);
+    letter-spacing:0.3px;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns: 1fr 380px;
+    gap:0;
+    align-items:start;
+  }
+  @media (max-width: 860px){
+    .layout{ grid-template-columns: 1fr; }
+  }
+  .form-pane{
+    padding:28px;
+    max-width:640px;
+  }
+  .field{
+    margin-bottom:20px;
+  }
+  .field label{
+    display:block;
+    font-size:13.5px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--moss);
+    font-weight:600;
+    margin-bottom:7px;
+  }
+  .field .hint code{
+    background:#e5dfcd; padding:1px 5px; border-radius:3px; font-size:13px;
+  }
+  .field .hint{
+    font-size:13.5px;
+    line-height:1.55;
+    color:var(--hint);
+    margin-top:6px;
+    font-weight:400;
+    text-transform:none;
+    letter-spacing:0;
+  }
+  input[type=text], textarea{
+    width:100%;
+    padding:11px 13px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:3px;
+    font-family:var(--sans);
+    font-size:15.5px;
+    color:var(--ink);
+  }
+  textarea{ min-height:150px; resize:vertical; line-height:1.6;}
+  input[type=text]:focus, textarea:focus{
+    outline:2px solid var(--rust);
+    outline-offset:1px;
+  }
+  .filebox{
+    border:1px dashed var(--line);
+    border-radius:3px;
+    padding:14px;
+    background:#f7f3e7;
+    font-size:14.5px;
+  }
+  .filebox input{ font-size:14px; }
+  .filebox .status{
+    margin-top:9px;
+    font-size:13.5px;
+    color:var(--moss);
+    font-weight:600;
+  }
+  .filebox .status.pending{ color:#7A6522; }
+  .filebox.dragover{ border-color:var(--rust); background:#f2e4dc; }
+  .row2{ display:flex; gap:16px; }
+  .row2 > div{ flex:1; }
+
+  .theme-picker{ display:flex; gap:12px; flex-wrap:wrap; }
+  .theme-option{
+    flex:1; min-width:140px;
+    position:relative;
+    border:2px solid var(--line);
+    border-radius:8px;
+    padding:12px 12px 11px;
+    cursor:pointer;
+    background:#fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .theme-option:hover{ border-color:#a89f89; }
+  .theme-option input{
+    position:absolute;
+    top:11px; right:11px;
+    width:19px; height:19px;
+    margin:0;
+    accent-color:var(--rust);
+    cursor:pointer;
+  }
+  .theme-option .swatches{
+    display:flex; gap:6px; margin-bottom:10px;
+  }
+  .theme-option .swatch{
+    width:28px; height:28px;
+    border-radius:50%;
+    border:1px solid rgba(0,0,0,0.12);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35);
+  }
+  .theme-option .tname{
+    font-size:14.5px; font-weight:600; color:var(--ink); padding-right:22px;
+  }
+  .theme-option.selected{
+    border-color:var(--theme-accent, var(--rust));
+    box-shadow: 0 0 0 2px var(--theme-accent, var(--rust)) inset, 0 2px 8px rgba(30,25,15,0.08);
+  }
+
+  /* opstilling - samme mønster som temavælgeren, men uden farveprøver */
+  .lay-picker{ display:flex; gap:12px; flex-wrap:wrap; }
+  .lay-option{
+    flex:1; min-width:140px;
+    position:relative;
+    border:2px solid var(--line);
+    border-radius:8px;
+    padding:12px 34px 11px 12px;
+    cursor:pointer;
+    background:#fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .lay-option:hover{ border-color:#a89f89; }
+  .lay-option input{
+    position:absolute; top:11px; right:11px;
+    width:19px; height:19px; margin:0;
+    accent-color:var(--rust); cursor:pointer;
+  }
+  .lay-option .tname{ font-size:14.5px; font-weight:600; color:var(--ink); }
+  .lay-option .tdesc{
+    font-size:13px; color:var(--hint); margin-top:4px; line-height:1.45;
+  }
+  .lay-option.selected{
+    border-color:var(--rust);
+    box-shadow: 0 0 0 2px var(--rust) inset, 0 2px 8px rgba(30,25,15,0.08);
+  }
+
+  /* posterne i samlingen */
+  .items{ margin-top:16px; }
+  .item{
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:#f7f3e7;
+    padding:14px;
+    margin-bottom:14px;
+  }
+  .item-head{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; margin-bottom:12px;
+  }
+  .item-head .nr{
+    font-size:13px; text-transform:uppercase; letter-spacing:0.09em;
+    color:var(--moss); font-weight:700;
+  }
+  .item-tools{ display:flex; gap:6px; }
+  .item-tools button{
+    border:1px solid var(--line); background:#fff; border-radius:4px;
+    width:30px; height:28px; cursor:pointer; color:var(--hint);
+    font-size:14px; line-height:1; font-family:var(--sans);
+  }
+  .item-tools button:hover:not(:disabled){ border-color:var(--rust); color:var(--rust); }
+  .item-tools button:disabled{ opacity:0.35; cursor:not-allowed; }
+  .item-body{ display:grid; grid-template-columns:96px 1fr; gap:14px; align-items:start; }
+  @media (max-width: 620px){ .item-body{ grid-template-columns:1fr; } }
+  .item-thumb{
+    width:96px; height:96px; border-radius:5px; overflow:hidden;
+    background:#e5dfcd; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:34px;
+  }
+  .item-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .thumb-btn{
+    display:block; width:96px; margin-top:6px; padding:5px 0;
+    font-family:var(--sans); font-size:12.5px;
+    border:1px solid var(--line); background:#fff; border-radius:4px;
+    color:var(--hint); cursor:pointer;
+  }
+  .thumb-btn:hover{ border-color:var(--rust); color:var(--rust); }
+  .item-fields .field{ margin-bottom:12px; }
+  .item-fields label{ font-size:12.5px; }
+  .item-fields input[type=text], .item-fields textarea, .item-fields select{
+    font-size:14.5px; padding:8px 10px;
+  }
+  .item-fields textarea{ min-height:66px; }
+  .note-field{
+    background:#efe7d3; border-radius:5px; padding:10px 12px 2px;
+    border:1px solid var(--line);
+  }
+  .note-field label{ color:var(--rust); }
+  .add-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:4px; }
+  .add-btn{
+    padding:11px 16px; background:transparent; color:var(--moss);
+    border:1px solid var(--line); border-radius:4px;
+    font-family:var(--sans); font-size:14.5px; font-weight:600; cursor:pointer;
+  }
+  .add-btn:hover:not(:disabled){ background:#f2ecdd; }
+  .add-btn:disabled{ opacity:0.45; cursor:not-allowed; }
+
+  .generate-btn{
+    width:100%;
+    padding:17px;
+    background:var(--rust);
+    color:#fdf8ee;
+    border:none;
+    border-radius:4px;
+    font-size:17px;
+    font-weight:700;
+    letter-spacing:0.02em;
+    cursor:pointer;
+    margin-top:8px;
+  }
+  .generate-btn:disabled{
+    background:#c9beac;
+    cursor:not-allowed;
+  }
+  .generate-btn:hover:not(:disabled){ background:#82392a; }
+  .msg{
+    margin-top:12px;
+    font-size:14.5px;
+    line-height:1.55;
+    padding:10px 12px;
+    border-radius:3px;
+    display:none;
+  }
+  .msg.ok{ display:block; background:#e7ecdf; color:#3f4a34; }
+  .msg.err{ display:block; background:#f4ded9; color:#7d2c1a; }
+
+  /* Dublin Core-panel */
+  details.dc{
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#f7f3e7;
+    padding:14px 16px;
+    margin-bottom:20px;
+  }
+  details.dc summary{
+    cursor:pointer;
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--moss);
+    font-weight:600;
+    padding:2px 0;
+  }
+  details.dc summary::marker{ color:var(--rust); }
+  details.dc[open] summary{ margin-bottom:12px; }
+  details.dc .panel-sub{
+    font-size:13.5px;
+    color:var(--hint);
+    margin:0 0 16px;
+    line-height:1.55;
+  }
+  .field-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:0 16px;
+  }
+  .field-grid .field{ margin-bottom:16px; }
+  .field-grid label{ text-transform:none; letter-spacing:0; font-size:14px; }
+  .field-grid label .hint{
+    display:block; font-size:13px; color:var(--hint);
+    font-weight:400; margin-top:3px; line-height:1.5;
+  }
+  select{
+    width:100%;
+    padding:11px 13px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:3px;
+    font-family:var(--sans);
+    font-size:15.5px;
+    color:var(--ink);
+  }
+  select:focus{ outline:2px solid var(--rust); outline-offset:1px; }
+  .meta-btn{
+    width:100%;
+    padding:12px;
+    background:transparent;
+    color:var(--moss);
+    border:1px solid var(--line);
+    border-radius:4px;
+    font-size:14.5px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:10px;
+  }
+  .meta-btn:hover{ background:#f2ecdd; }
+
+  /* preview pane */
+  .preview-pane{
+    background:var(--paper-dim);
+    border-left:1px solid var(--line);
+    padding:28px 22px;
+    position:sticky;
+    top:0;
+    min-height:100vh;
+  }
+  .preview-pane .label{
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--hint);
+    margin-bottom:14px;
+    font-weight:600;
+  }
+  .phone-frame{
+    background:#fbf8ef;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+    box-shadow: 0 8px 24px rgba(30,25,15,0.10);
+  }
+  #previewFrame{
+    width:100%;
+    height:600px;
+    border:none;
+    border-radius:6px;
+    background:#fbf8ef;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Samling · Bygger</h1>
+  <span>Lav en forside der binder 2-6 historier sammen · kører lokalt, ingen server · version 1</span>
+</div>
+
+<div class="layout">
+  <div class="form-pane">
+
+    <div class="field">
+      <label for="loadPage">Indlæs eksisterende samling (valgfri)</label>
+      <div class="filebox">
+        <input type="file" id="loadPage" accept=".html,text/html">
+        <div class="status pending" id="loadStatus">Ingen fil valgt</div>
+      </div>
+      <div class="hint">Vælg en samlingsfil (.html), som er lavet med denne udgave af værktøjet, for at hente den ind i formularen og redigere den videre. Alt kommer med: tekst, poster, miniaturer, opstilling, tema og Dublin Core-felter. Har du selv sat en tællerkode ind nederst i filen, følger den også med. Sådan tilføjer du en ny historie til en samling, du allerede har lavet.</div>
+    </div>
+
+    <div class="field">
+      <label>Tema</label>
+      <div class="theme-picker" id="themePicker">
+        <label class="theme-option" data-theme="original" style="--theme-accent:#9A4630">
+          <input type="radio" name="theme" value="original">
+          <div class="swatches">
+            <span class="swatch" style="background:#9A4630"></span>
+            <span class="swatch" style="background:#EDE7D8"></span>
+          </div>
+          <div class="tname">Oprindeligt</div>
+        </label>
+        <label class="theme-option" data-theme="rodekors" style="--theme-accent:#E30A0B">
+          <input type="radio" name="theme" value="rodekors">
+          <div class="swatches">
+            <span class="swatch" style="background:#E30A0B"></span>
+            <span class="swatch" style="background:#FFFFFF"></span>
+          </div>
+          <div class="tname">Røde Kors</div>
+        </label>
+        <label class="theme-option selected" data-theme="lokalhistorisk2" style="--theme-accent:#9E2453">
+          <input type="radio" name="theme" value="lokalhistorisk2" checked>
+          <div class="swatches">
+            <span class="swatch" style="background:#9E2453"></span>
+            <span class="swatch" style="background:#FAF9F5"></span>
+          </div>
+          <div class="tname">Lokalhistorisk (bordeaux)</div>
+        </label>
+      </div>
+      <div class="hint">Vælg farvetema for den genererede forside. Vælg samme tema som de historier, samlingen peger på.</div>
+    </div>
+
+    <div class="field">
+      <label for="eyebrow">Mærkat (valgfri)</label>
+      <input type="text" id="eyebrow" value="Kurateret samling" placeholder="fx KURATERET SAMLING">
+      <div class="hint">Vises som lille label øverst. Lad stå tom for at udelade.</div>
+    </div>
+
+    <div class="field">
+      <label for="title">Titel</label>
+      <input type="text" id="title" placeholder="fx Musik &amp; Ungdomsliv Syd for Banen">
+    </div>
+
+    <div class="field">
+      <label for="credit">Samlet af (valgfri)</label>
+      <input type="text" id="credit" placeholder="fx Niels Jørgen &amp; Poul Erik">
+      <div class="hint">Vises i linjen under titlen sammen med antal historier og dato.</div>
+    </div>
+
+    <div class="field">
+      <label for="dateline">Datolinje (valgfri)</label>
+      <input type="text" id="dateline" placeholder="fx Opdateret aug. 2026">
+      <div class="hint">Skrives som du vil have det. Lad stå tom for at udelade.</div>
+    </div>
+
+    <div class="field">
+      <label for="cover">Forsidebillede (valgfri)</label>
+      <div class="filebox">
+        <input type="file" id="cover" accept="image/*">
+        <div class="status pending" id="coverStatus">Intet forsidebillede valgt</div>
+      </div>
+      <div class="hint">Vises stort øverst over titlen. Skaleres ned automatisk (maks. 1100px bredde, JPEG). Lad stå tom, hvis miniaturerne på kortene er nok.</div>
+    </div>
+
+    <div class="field">
+      <label for="intro">Rammefortælling</label>
+      <textarea id="intro" placeholder="Teksten der binder historierne sammen. Hvorfor hører netop disse ting sammen?"></textarea>
+      <div class="hint">Den ene tekst der ikke kan hentes fra filerne. Du kan bruge Markdown:<br>
+        <code>**fed**</code> og <code>*kursiv*</code> · <code>## Stor overskrift</code> og <code>### Mindre overskrift</code> · <code>- </code> foran hver linje giver en punktliste · <code>[tekst](https://...)</code> giver et link · en linje med <code>---</code> giver en vandret streg.</div>
+    </div>
+
+    <div class="field">
+      <label>Opstilling</label>
+      <div class="lay-picker" id="layPicker">
+        <label class="lay-option selected" data-lay="liste">
+          <input type="radio" name="lay" value="liste" checked>
+          <div class="tname">Liste</div>
+          <div class="tdesc">Rolig og læsbar. God når kuratornoterne er lange.</div>
+        </label>
+        <label class="lay-option" data-lay="tavle">
+          <input type="radio" name="lay" value="tavle">
+          <div class="tname">Tavle</div>
+          <div class="tdesc">Billederne bærer siden. Kræver et godt billede på hver post.</div>
+        </label>
+        <label class="lay-option" data-lay="forloeb">
+          <input type="radio" name="lay" value="forloeb">
+          <div class="tname">Forløb</div>
+          <div class="tdesc">Nummereret rækkefølge. Kun når rækkefølgen betyder noget.</div>
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="addFiles">Historier i samlingen</label>
+      <div class="filebox" id="addBox">
+        <input type="file" id="addFiles" accept=".html,text/html" multiple>
+        <div class="status pending" id="addStatus">Ingen historier tilføjet endnu</div>
+      </div>
+      <div class="hint">Vælg de færdige HTML-filer, samlingen skal pege på — eller træk dem ind i feltet her. Titel, ophav og type hentes fra filernes Dublin Core-felter, og det første indlejrede billede bliver miniature på kortet. Alt kan rettes bagefter. 2-6 historier anbefales.</div>
+      <div class="items" id="items"></div>
+      <div class="add-row">
+        <button class="add-btn" id="addEmpty" type="button">+ Tilføj tom post</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="backText">Link tilbage til søgesiden (valgfri)</label>
+      <div class="row2">
+        <div><input type="text" id="backText" value="← Tilbage til det samlede søgeindeks" placeholder="Knaptekst"></div>
+        <div><input type="text" id="backUrl" placeholder="fx soegeside.html"></div>
+      </div>
+      <div class="hint">Vises nederst på forsiden. Udfyld begge felter — ellers vises linket ikke. Skriv filnavnet som det står i mappen.</div>
+    </div>
+
+    <div class="field">
+      <label for="footerNote">Fodnote (valgfri)</label>
+      <input type="text" id="footerNote" placeholder="fx Del af det offline arkiv for Syd for Banen">
+    </div>
+
+    <details class="dc" id="dcDetails">
+      <summary>Dublin Core-metadata</summary>
+      <p class="panel-sub">Til arkivering. Alle felter er valgfrie — udfyld dem der giver mening. Felterne skrives både som <code>&lt;meta&gt;</code>-tags i filens hoved og som en oversigt, man kan folde ud nederst på forsiden. <strong>Type er sat til Collection</strong>, så søgesiden kan kende en samling fra en enkelt historie, og hver historie i samlingen får sit eget <code>DC.relation</code>-tag automatisk.</p>
+
+      <div class="field-grid">
+        <div class="field">
+          <label for="dcTitle">Titel <span class="hint">dc.title — udfyldes automatisk fra titlen</span></label>
+          <input type="text" id="dcTitle">
+        </div>
+        <div class="field">
+          <label for="dcCreator">Ophav / skaber <span class="hint">dc.creator — udfyldes automatisk fra "Samlet af"</span></label>
+          <input type="text" id="dcCreator" placeholder="F.eks. Niels Jørgen &amp; Poul Erik">
+        </div>
+        <div class="field">
+          <label for="dcSubject">Emne / nøgleord <span class="hint">dc.subject — adskil med semikolon</span></label>
+          <input type="text" id="dcSubject" placeholder="Musikliv; ungdomskultur; 1960-1980">
+        </div>
+        <div class="field">
+          <label for="dcDescription">Beskrivelse <span class="hint">dc.description — udfyldes automatisk fra rammefortællingen</span></label>
+          <input type="text" id="dcDescription">
+        </div>
+        <div class="field">
+          <label for="dcPublisher">Udgiver <span class="hint">dc.publisher — foreningen eller arkivet</span></label>
+          <input type="text" id="dcPublisher" placeholder="F.eks. Lokalhistorisk Forening">
+        </div>
+        <div class="field">
+          <label for="dcContributor">Bidragyder <span class="hint">dc.contributor — den der har redigeret eller registreret</span></label>
+          <input type="text" id="dcContributor">
+        </div>
+        <div class="field">
+          <label for="dcDate">Dato <span class="hint">dc.date — helst ÅÅÅÅ-MM-DD, men fx "ca. 1955" er også i orden</span></label>
+          <input type="text" id="dcDate" placeholder="2026-08-15">
+        </div>
+        <div class="field">
+          <label for="dcType">Type <span class="hint">dc.type — DCMI-typeordforråd</span></label>
+          <select id="dcType">
+            <option value="Collection" selected>Collection (samling)</option>
+            <option value="Sound">Sound (lyd)</option>
+            <option value="InteractiveResource">InteractiveResource</option>
+            <option value="Text">Text (tekst)</option>
+            <option value="Image">Image (billede)</option>
+            <option value="Event">Event (begivenhed)</option>
+            <option value="">(ingen)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="dcFormat">Format <span class="hint">dc.format — filens tekniske format</span></label>
+          <input type="text" id="dcFormat" value="text/html">
+        </div>
+        <div class="field">
+          <label for="dcIdentifier">Identifikator <span class="hint">dc.identifier — arkivnummer, URL eller lignende</span></label>
+          <input type="text" id="dcIdentifier" placeholder="F.eks. samling-musik-2026-b7qa">
+        </div>
+        <div class="field">
+          <label for="dcSource">Kilde <span class="hint">dc.source — hvor materialet stammer fra</span></label>
+          <input type="text" id="dcSource">
+        </div>
+        <div class="field">
+          <label for="dcLanguage">Sprog <span class="hint">dc.language — sprogkode, fx da</span></label>
+          <input type="text" id="dcLanguage" value="da">
+        </div>
+        <div class="field">
+          <label for="dcRelation">Relation <span class="hint">dc.relation — historierne i samlingen tilføjes automatisk; skriv her hvis der er andet beslægtet materiale</span></label>
+          <input type="text" id="dcRelation">
+        </div>
+        <div class="field">
+          <label for="dcCoverage">Dækning <span class="hint">dc.coverage — sted og/eller periode</span></label>
+          <input type="text" id="dcCoverage" placeholder="Roskilde, Danmark; 1960-1980">
+        </div>
+        <div class="field">
+          <label for="dcRights">Rettigheder <span class="hint">dc.rights — ophavsret og vilkår for brug</span></label>
+          <input type="text" id="dcRights" placeholder="F.eks. Foreningen ejer rettighederne. Må ikke gengives uden tilladelse.">
+        </div>
+      </div>
+
+      <button class="meta-btn" id="metaJsonBtn" type="button">Gem metadata som separat JSON-fil</button>
+    </details>
+
+    <button class="generate-btn" id="generateBtn" disabled>Generér samling (.html)</button>
+    <div class="msg" id="msgBox"></div>
+
+  </div>
+
+  <div class="preview-pane">
+    <div class="label">Forhåndsvisning</div>
+    <div class="phone-frame">
+      <iframe id="previewFrame"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  eyebrow:'Kurateret samling', title:'', credit:'', dateline:'', intro:'',
+  coverDataUrl:null, layout:'liste', theme:'lokalhistorisk2',
+  backText:'← Tilbage til det samlede søgeindeks', backUrl:'',
+  footerNote:'', items:[], taellerBlock:''
+};
+
+const MAX_ITEMS = 6;
+
+const TYPE_ICONS = {
+  Sound:'🎧', Image:'🖼️', Text:'📖', Collection:'📚',
+  InteractiveResource:'🖥️', Event:'📅', '':'📄'
+};
+
+/* ---------- Dublin Core ---------- */
+
+const DC_FIELDS = ['title','creator','subject','description','publisher','contributor',
+  'date','type','format','identifier','source','language','relation','coverage','rights'];
+
+const DC_LABELS = {
+  title:'Titel', creator:'Ophav', subject:'Emne', description:'Beskrivelse',
+  publisher:'Udgiver', contributor:'Bidragyder', date:'Dato', type:'Type',
+  format:'Format', identifier:'Identifikator', source:'Kilde', language:'Sprog',
+  relation:'Relation', coverage:'Dækning', rights:'Rettigheder'
+};
+
+function dcInputId(key){ return 'dc' + key.charAt(0).toUpperCase() + key.slice(1); }
+
+// Felter der spejler formularen ovenfor, indtil man selv skriver i dem.
+const dcTouched = { title:false, creator:false, description:false };
+
+const THEMES = {
+  original: {
+    label:'Oprindeligt',
+    paper:'#EDE7D8', card:'#1B1A16', cardText:'#F2ECDD', cardBg:'#fbf8ef',
+    ink:'#211E19', rust:'#9A4630', moss:'#5C6B4F', line:'#d8d0ba',
+    footerColor:'#6B6455', muted:'#6B6455', footerStrong:'#4A463C',
+    bodyText:'#3a362e', quoteText:'#5a5646', codeBg:'#efe9d8', tile:'#efe9d8'
+  },
+  rodekors: {
+    label:'Røde Kors',
+    paper:'#FFFFFF', card:'#E30A0B', cardText:'#FFFFFF', cardBg:'#FFFFFF',
+    ink:'#1A1A1A', rust:'#E30A0B', moss:'#B00A0B', line:'#EAEAEA',
+    footerColor:'#5A5A5A', muted:'#5A5A5A', footerStrong:'#333333',
+    bodyText:'#262626', quoteText:'#5a5a5a', codeBg:'#F4F4F4', tile:'#F7F7F7'
+  },
+  lokalhistorisk2: {
+    label:'Lokalhistorisk (bordeaux)',
+    paper:'#FAF9F5', card:'#9E2453', cardText:'#FAF9F5', cardBg:'#FFFFFF',
+    ink:'#2A1620', rust:'#9E2453', moss:'#7A1B40', line:'#EAE2E5',
+    footerColor:'#6B5560', muted:'#6B5560', footerStrong:'#3A2630',
+    bodyText:'#332028', quoteText:'#5c3b48', codeBg:'#F3E9ED', tile:'#F3E9ED'
+  }
+};
+
+const $ = id => document.getElementById(id);
+
+function compressImage(file, maxDim, quality){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Kunne ikke læse billedfilen'));
+    reader.onload = (e) => {
+      dataUrlToJpeg(e.target.result, maxDim, quality).then(resolve).catch(reject);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function dataUrlToJpeg(dataUrl, maxDim, quality){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onerror = () => reject(new Error('Kunne ikke afkode billedet'));
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+      else if (h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
+function escapeHtml(str){
+  return (str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function stripMdToPlain(md, maxLen){
+  let t = (md || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/[#>*_`~-]/g, ' ')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (maxLen && t.length > maxLen) t = t.slice(0, maxLen - 1).trim() + '…';
+  return t;
+}
+
+function inlineMd(s){
+  return s
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/(^|[^_])_(.+?)_([^_]|$)/g, '$1<em>$2</em>$3')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+
+function mdToHtml(md){
+  if (!md) return '';
+  const escaped = escapeHtml(md);
+  const lines = escaped.split('\n');
+  let html = '', inUl = false, inOl = false, para = [];
+
+  function flushPara(){
+    if (para.length){ html += '<p>' + inlineMd(para.join('<br>')) + '</p>'; para = []; }
+  }
+  function closeLists(){
+    if (inUl){ html += '</ul>'; inUl = false; }
+    if (inOl){ html += '</ol>'; inOl = false; }
+  }
+
+  for (const line of lines){
+    if (/^\s*$/.test(line)){ flushPara(); closeLists(); continue; }
+    let m;
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)){
+      flushPara(); closeLists();
+      html += '<hr>';
+      continue;
+    }
+    if ((m = line.match(/^(#{1,4})\s+(.*)$/))){
+      flushPara(); closeLists();
+      const level = Math.min(Math.max(m[1].length, 2), 5);
+      html += `<h${level}>${inlineMd(m[2])}</h${level}>`;
+      continue;
+    }
+    if ((m = line.match(/^[-*]\s+(.*)$/))){
+      flushPara();
+      if (inOl){ html += '</ol>'; inOl = false; }
+      if (!inUl){ html += '<ul>'; inUl = true; }
+      html += `<li>${inlineMd(m[1])}</li>`;
+      continue;
+    }
+    if ((m = line.match(/^\d+\.\s+(.*)$/))){
+      flushPara();
+      if (inUl){ html += '</ul>'; inUl = false; }
+      if (!inOl){ html += '<ol>'; inOl = true; }
+      html += `<li>${inlineMd(m[1])}</li>`;
+      continue;
+    }
+    if ((m = line.match(/^>\s?(.*)$/))){
+      flushPara(); closeLists();
+      html += `<blockquote>${inlineMd(m[1])}</blockquote>`;
+      continue;
+    }
+    closeLists();
+    para.push(line);
+  }
+  flushPara(); closeLists();
+  return html;
+}
+
+function collectDublinCore(){
+  const dc = {};
+  DC_FIELDS.forEach(key => {
+    const el = $(dcInputId(key));
+    const val = el ? el.value.trim() : '';
+    if (val) dc[key] = val;
+  });
+  return dc;
+}
+
+// Holder dc.title, dc.creator og dc.description i sync med formularen,
+// så længe man ikke selv har skrevet noget i dem.
+function syncAutoDc(){
+  if (!dcTouched.title) $('dcTitle').value = state.title.trim();
+  if (!dcTouched.creator) $('dcCreator').value = state.credit.trim();
+  if (!dcTouched.description) $('dcDescription').value = stripMdToPlain(state.intro, 300);
+}
+
+function buildDcMetaTags(dc){
+  const lines = [];
+  DC_FIELDS.forEach(key => {
+    if (!dc[key]) return;
+    if (key === 'subject'){
+      dc[key].split(';').forEach(part => {
+        const v = part.trim();
+        if (v) lines.push(`<meta name="DC.subject" content="${escapeHtml(v)}">`);
+      });
+    } else {
+      lines.push(`<meta name="DC.${key}" content="${escapeHtml(dc[key])}">`);
+    }
+  });
+  // Hver historie i samlingen får sit eget relation-tag, så en maskine
+  // kan se hvad samlingen består af uden at kende vores eget format.
+  state.items.forEach(it => {
+    if (it.file && it.file.trim()){
+      lines.push(`<meta name="DC.relation" content="${escapeHtml(it.file.trim())}">`);
+    }
+  });
+  if (!lines.length) return '';
+  return '<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">\n' + lines.join('\n');
+}
+
+// Den synlige oversigt nederst på forsiden. Skrives som færdig HTML,
+// så den også kan læses hvis JavaScript en dag ikke virker.
+function buildDcSection(dc){
+  const rows = DC_FIELDS
+    .filter(key => dc[key])
+    .map(key => `<div class="meta-row"><dt>${DC_LABELS[key]} <span class="dc-tag">dc.${key}</span></dt><dd>${escapeHtml(dc[key])}</dd></div>`);
+  const files = state.items.filter(it => it.file && it.file.trim())
+    .map(it => escapeHtml(it.file.trim()));
+  if (files.length){
+    rows.push(`<div class="meta-row"><dt>Indhold <span class="dc-tag">dc.relation</span></dt><dd>${files.join('<br>')}</dd></div>`);
+  }
+  if (!rows.length) return '';
+  return `<details class="meta">
+      <summary><span class="desc-label">Om denne fil</span><span class="chevron" aria-hidden="true">&#9662;</span></summary>
+      <dl class="meta-list">${rows.join('')}</dl>
+    </details>`;
+}
+
+function safeNameFrom(title, fallback){
+  return (title || fallback).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || fallback;
+}
+
+function buildCards(s, theme){
+  return s.items.map((it, i) => {
+    const icon = TYPE_ICONS[it.type] || TYPE_ICONS[''];
+    const href = escapeHtml((it.file || '').trim());
+    const media = it.thumbDataUrl
+      ? `<div class="tile-media"><img src="${it.thumbDataUrl}" alt=""></div>`
+      : `<div class="tile-media empty" aria-hidden="true">${icon}</div>`;
+    const creator = it.creator ? `<p class="tile-cred">${escapeHtml(it.creator)}</p>` : '';
+    const note = it.note ? `<p class="tile-note">${escapeHtml(it.note)}</p>` : '';
+    const heading = `<h3>${escapeHtml(it.title) || 'Uden titel'}</h3>`;
+
+    if (s.layout === 'tavle'){
+      return `<a class="tile" href="${href}">
+        ${media}
+        <div class="tile-body">${heading}${creator}${note}</div>
+      </a>`;
+    }
+    if (s.layout === 'forloeb'){
+      return `<a class="tile" href="${href}">
+        <span class="tile-nr" aria-hidden="true">${i + 1}</span>
+        <div class="tile-body">${heading}${creator}${note}</div>
+      </a>`;
+    }
+    const listMedia = it.thumbDataUrl
+      ? `<div class="tile-media"><img src="${it.thumbDataUrl}" alt=""></div>`
+      : `<div class="tile-media empty" aria-hidden="true">${icon}</div>`;
+    return `<a class="tile" href="${href}">
+      ${listMedia}
+      <div class="tile-body">${heading}${creator}${note}</div>
+    </a>`;
+  }).join('\n');
+}
+
+function layoutCss(layout){
+  if (layout === 'tavle'){
+    return `
+  .tiles{ display:grid; gap:18px; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); }
+  .tile{ display:block; overflow:hidden; }
+  .tile-media{ width:100%; height:158px; }
+  .tile-media.empty{ font-size:44px; }
+  .tile-body{ padding:16px 18px 18px; }`;
+  }
+  if (layout === 'forloeb'){
+    return `
+  .tiles{ display:grid; gap:14px; }
+  .tile{
+    display:grid; grid-template-columns:34px 1fr; gap:16px; align-items:start;
+    padding:16px 18px;
+  }
+  .tile-nr{
+    width:32px; height:32px; border-radius:50%;
+    background:var(--rust); color:var(--card-text);
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:700; flex-shrink:0;
+  }`;
+  }
+  return `
+  .tiles{ display:grid; gap:16px; }
+  .tile{ display:grid; grid-template-columns:96px 1fr; gap:0; align-items:stretch; overflow:hidden; }
+  .tile-media{ width:96px; height:100%; min-height:96px; }
+  .tile-media.empty{ font-size:32px; }
+  .tile-body{ padding:15px 18px; }
+  @media (max-width: 520px){
+    .tile{ grid-template-columns:1fr; }
+    .tile-media{ width:100%; height:150px; }
+  }`;
+}
+
+function buildPageHTML(s, includeTaeller){
+  const theme = THEMES[s.theme] || THEMES.original;
+  const pageTitle = s.title || 'Kurateret samling';
+  const dc = collectDublinCore();
+  const dcMeta = buildDcMetaTags(dc);
+  const dcBlock = buildDcSection(dc);
+  const pageLang = (dc.language || 'da').trim() || 'da';
+  const taellerBlock = (includeTaeller && s.taellerBlock) ? '\n' + s.taellerBlock + '\n' : '';
+
+  const eyebrowBlock = s.eyebrow ? `<p class="eyebrow">${escapeHtml(s.eyebrow)}</p>` : '';
+  const coverBlock = s.coverDataUrl ? `<div class="cover"><img src="${s.coverDataUrl}" alt=""></div>` : '';
+  const metaBits = [];
+  const n = s.items.length;
+  if (n) metaBits.push(n === 1 ? '1 historie' : n + ' historier');
+  if (s.credit.trim()) metaBits.push('Samlet af ' + escapeHtml(s.credit.trim()));
+  if (s.dateline.trim()) metaBits.push(escapeHtml(s.dateline.trim()));
+  const metaLine = metaBits.length ? `<p class="meta-line">${metaBits.join(' · ')}</p>` : '';
+  const introBlock = s.intro ? `<div class="intro">${mdToHtml(s.intro)}</div>` : '';
+  const cards = buildCards(s, theme);
+  const backBlock = (s.backText.trim() && s.backUrl.trim())
+    ? `<a class="back-link" href="${escapeHtml(s.backUrl.trim())}">${escapeHtml(s.backText.trim())}</a>`
+    : '';
+  const footerNote = s.footerNote.trim()
+    ? `<div class="footer-note">${escapeHtml(s.footerNote.trim())}</div>` : '';
+  const footerBlock = (backBlock || footerNote)
+    ? `<div class="footer">${backBlock}${footerNote}</div>` : '';
+
+  const sourceData = {
+    format: 'samling-forside',
+    builderVersion: 1,
+    eyebrow: s.eyebrow || '', title: s.title || '', credit: s.credit || '',
+    dateline: s.dateline || '', intro: s.intro || '',
+    layout: s.layout || 'liste', theme: s.theme || 'original',
+    backText: s.backText || '', backUrl: s.backUrl || '',
+    footerNote: s.footerNote || '',
+    items: s.items.map(it => ({
+      file: it.file || '', title: it.title || '', creator: it.creator || '',
+      note: it.note || '', type: it.type || '', thumbDataUrl: it.thumbDataUrl || ''
+    })),
+    coverDataUrl: s.coverDataUrl || '',
+    dublinCore: dc
+  };
+
+  const ogDesc = stripMdToPlain(s.intro, 200) || 'En kurateret samling';
+  const faviconTag = s.coverDataUrl ? `<link rel="icon" href="${s.coverDataUrl}">` : '';
+  const socialMeta = `<meta property="og:type" content="website">
+<meta property="og:title" content="${escapeHtml(pageTitle)}">
+<meta property="og:description" content="${escapeHtml(ogDesc)}">`;
+
+  return `<!DOCTYPE html>
+<html lang="${escapeHtml(pageLang)}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(pageTitle)}</title>
+${socialMeta}
+${dcMeta}
+${faviconTag}
+<script type="application/json" id="builder-source-data">${JSON.stringify(sourceData)}<\/script>
+<style>
+  :root{
+    --paper:${theme.paper}; --card:${theme.card}; --card-text:${theme.cardText}; --card-bg:${theme.cardBg};
+    --ink:${theme.ink}; --rust:${theme.rust}; --moss:${theme.moss}; --line:${theme.line};
+    --footer-color:${theme.footerColor}; --muted:${theme.muted}; --footer-strong:${theme.footerStrong};
+    --body-text:${theme.bodyText}; --quote-text:${theme.quoteText}; --code-bg:${theme.codeBg};
+    --tile:${theme.tile};
+    --serif: Arial, 'Helvetica Neue', Helvetica, 'Liberation Sans', sans-serif;
+    --sans: Arial, 'Helvetica Neue', Helvetica, 'Liberation Sans', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); display:flex; justify-content:center; padding:28px 14px 40px;
+  }
+  .sheet{ width:100%; max-width:680px; }
+  .eyebrow{
+    font-size:13.5px; letter-spacing:0.1em; font-weight:700;
+    color:var(--moss); text-transform:uppercase; margin:0 0 12px;
+  }
+  .cover{ margin:0 0 20px; border-radius:12px; overflow:hidden; border:1px solid var(--line); }
+  .cover img{ width:100%; display:block; aspect-ratio:16/8; object-fit:cover; }
+  h1{
+    font-family:var(--serif); font-size:32px; line-height:1.22;
+    margin:0 0 10px; font-weight:700;
+  }
+  .meta-line{ font-size:15px; color:var(--muted); margin:0 0 24px; }
+  .intro{ font-size:17px; line-height:1.7; color:var(--body-text); }
+  .intro p{ margin:0 0 14px; }
+  .intro h2, .intro h3, .intro h4, .intro h5{
+    font-family:var(--serif); color:var(--ink); margin:22px 0 8px; line-height:1.3;
+  }
+  .intro h2{ font-size:21px; } .intro h3{ font-size:18px; }
+  .intro h4, .intro h5{ font-size:17px; }
+  .intro ul, .intro ol{ margin:0 0 14px; padding-left:22px; }
+  .intro li{ margin-bottom:6px; }
+  .intro blockquote{
+    margin:0 0 14px; padding-left:12px; border-left:3px solid var(--rust);
+    color:var(--quote-text); font-style:italic;
+  }
+  .intro a{ color:var(--rust); }
+  .intro code{ background:var(--code-bg); padding:1px 5px; border-radius:3px; font-size:15px; }
+  .intro hr, .divider{ border:none; border-top:1px solid var(--line); margin:28px 0; }
+  h2.section{ font-family:var(--serif); font-size:21px; margin:0 0 18px; font-weight:700; }
+${layoutCss(s.layout)}
+  .tile{
+    background:var(--card-bg); border:1px solid var(--line); border-radius:10px;
+    text-decoration:none; color:inherit;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .tile:hover{ border-color:var(--rust); box-shadow:0 3px 12px rgba(30,25,15,0.10); }
+  .tile:focus-visible{ outline:3px solid var(--rust); outline-offset:3px; }
+  .tile-media{ background:var(--tile); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .tile-media img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .tile h3{ font-family:var(--serif); font-size:19px; margin:0 0 5px; font-weight:700; line-height:1.3; }
+  .tile-cred{ font-size:14px; color:var(--muted); margin:0 0 7px; }
+  .tile-note{ font-size:16px; line-height:1.55; color:var(--body-text); margin:0; }
+  .meta{ margin:30px 0 0; border-top:1px solid var(--line); padding-top:10px; }
+  .meta summary{
+    display:flex; align-items:center; justify-content:space-between;
+    cursor:pointer; list-style:none; padding:6px 2px;
+    font-size:15px; font-weight:700; color:var(--footer-strong);
+  }
+  .meta summary::-webkit-details-marker{ display:none; }
+  .meta summary::marker{ content:''; }
+  .meta .chevron{ color:var(--rust); font-size:14px; transition: transform .2s ease; margin-left:10px; }
+  .meta[open] .chevron{ transform:rotate(180deg); }
+  .meta-list{ margin:8px 0 4px; padding:0 2px; font-size:14.5px; }
+  .meta-row{ padding:6px 0; border-bottom:1px solid var(--line); }
+  .meta-row:last-child{ border-bottom:none; }
+  .meta dt{ color:var(--muted); font-size:13.5px; }
+  .meta dd{ margin:2px 0 0; color:var(--body-text); line-height:1.5; word-break:break-word; }
+  .meta .dc-tag{ opacity:0.7; font-size:12.5px; }
+  .footer{
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+    text-align:center; margin-top:34px; padding-top:22px; border-top:1px solid var(--line);
+  }
+  .back-link{ color:var(--rust); font-size:15.5px; text-decoration:none; }
+  .back-link:hover{ text-decoration:underline; }
+  .back-link:focus-visible{ outline:3px solid var(--rust); outline-offset:3px; }
+  .footer-note{ font-size:14px; color:var(--footer-strong); font-style:italic; }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="sheet">
+    ${eyebrowBlock}
+    ${coverBlock}
+    <h1>${escapeHtml(pageTitle)}</h1>
+    ${metaLine}
+    ${introBlock}
+    <hr class="divider">
+    <h2 class="section">Samlingens indhold</h2>
+    <div class="tiles">
+${cards}
+    </div>
+    ${dcBlock}
+    ${footerBlock}
+  </div>
+${taellerBlock}</body>
+</html>`;
+}
+
+/* ---------- formularen ---------- */
+
+function renderItems(){
+  const box = $('items');
+  box.innerHTML = '';
+  state.items.forEach((it, i) => {
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML = `
+      <div class="item-head">
+        <span class="nr">Historie ${i + 1}</span>
+        <span class="item-tools">
+          <button type="button" data-act="up" data-i="${i}" ${i === 0 ? 'disabled' : ''} title="Flyt op" aria-label="Flyt op">&#8593;</button>
+          <button type="button" data-act="down" data-i="${i}" ${i === state.items.length - 1 ? 'disabled' : ''} title="Flyt ned" aria-label="Flyt ned">&#8595;</button>
+          <button type="button" data-act="del" data-i="${i}" title="Fjern historien" aria-label="Fjern historien">&#10005;</button>
+        </span>
+      </div>
+      <div class="item-body">
+        <div>
+          <div class="item-thumb">${it.thumbDataUrl ? `<img src="${it.thumbDataUrl}" alt="">` : (TYPE_ICONS[it.type] || TYPE_ICONS[''])}</div>
+          <button class="thumb-btn" type="button" data-act="img" data-i="${i}">${it.thumbDataUrl ? 'Skift billede' : 'Vælg billede'}</button>
+          ${it.thumbDataUrl ? `<button class="thumb-btn" type="button" data-act="noimg" data-i="${i}">Fjern billede</button>` : ''}
+        </div>
+        <div class="item-fields">
+          <div class="field">
+            <label for="it-file-${i}">Filnavn</label>
+            <input type="text" id="it-file-${i}" data-f="file" data-i="${i}" value="${escapeHtml(it.file)}" placeholder="fx masser-af-musik.html">
+          </div>
+          <div class="field">
+            <label for="it-title-${i}">Titel</label>
+            <input type="text" id="it-title-${i}" data-f="title" data-i="${i}" value="${escapeHtml(it.title)}">
+          </div>
+          <div class="field">
+            <label for="it-creator-${i}">Ophav (valgfri)</label>
+            <input type="text" id="it-creator-${i}" data-f="creator" data-i="${i}" value="${escapeHtml(it.creator)}" placeholder="fx Fortalt af Peter Ottesen">
+          </div>
+          <div class="field">
+            <label for="it-type-${i}">Type</label>
+            <select id="it-type-${i}" data-f="type" data-i="${i}">
+              ${['Sound','Image','Text','InteractiveResource','Collection','Event'].map(t =>
+                `<option value="${t}" ${t === it.type ? 'selected' : ''}>${t}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field note-field">
+            <label for="it-note-${i}">Hvorfor er den med?</label>
+            <textarea id="it-note-${i}" data-f="note" data-i="${i}" placeholder="Én-to sætninger fra dig som kurator - ikke filens egen beskrivelse igen.">${escapeHtml(it.note)}</textarea>
+          </div>
+        </div>
+      </div>`;
+    box.appendChild(div);
+  });
+  $('addEmpty').disabled = state.items.length >= MAX_ITEMS;
+  const n = state.items.length;
+  $('addStatus').textContent = n
+    ? `${n} ${n === 1 ? 'historie' : 'historier'} i samlingen` + (n > MAX_ITEMS ? ' — flere end de 6 anbefalede' : '')
+    : 'Ingen historier tilføjet endnu';
+  $('addStatus').className = n ? 'status' : 'status pending';
+}
+
+function renderPreview(){
+  syncAutoDc();
+  // Tællerkoden udelades bevidst i forhåndsvisningen — ellers ville den
+  // registrere en åbning hver gang du taster et bogstav.
+  $('previewFrame').srcdoc = buildPageHTML(state, false);
+}
+
+function checkReady(){
+  $('generateBtn').disabled = !(state.title.trim() && state.items.length > 0);
+}
+
+function refresh(){ renderItems(); renderPreview(); checkReady(); }
+
+/* ---------- læs en færdig builder-fil ---------- */
+
+function readStory(file){
+  return file.text().then(text => {
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const metaVal = name => {
+      const el = doc.querySelector(`meta[name="${name}"]`);
+      return el ? el.getAttribute('content') || '' : '';
+    };
+    const title = metaVal('DC.title') || (doc.querySelector('title') || {}).textContent || file.name;
+    const creator = metaVal('DC.creator');
+    const type = metaVal('DC.type') || 'Image';
+
+    // Forsidebilledet først, ellers det første indlejrede billede i filen.
+    let raw = '';
+    const cover = doc.querySelector('.cover img, .tile-media img, img');
+    if (cover && cover.getAttribute('src') && cover.getAttribute('src').startsWith('data:')){
+      raw = cover.getAttribute('src');
+    } else {
+      const m = text.match(/data:image\/(?:jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]{500,}/);
+      if (m) raw = m[0];
+    }
+
+    const item = {
+      file: file.name, title: (title || '').trim(), creator: creator.trim(),
+      note: '', type: type.trim() || 'Image', thumbDataUrl: ''
+    };
+    state.items.push(item);
+    refresh();
+
+    if (raw){
+      return dataUrlToJpeg(raw, 640, 0.72).then(d => { item.thumbDataUrl = d; refresh(); })
+        .catch(() => {});
+    }
+  });
+}
+
+async function addStories(files){
+  const list = [...files].filter(f => /\.html?$/i.test(f.name));
+  if (!list.length) return;
+  $('addStatus').textContent = 'Læser filer …';
+  $('addStatus').className = 'status pending';
+  for (const f of list){
+    try { await readStory(f); }
+    catch(err){ /* en fil der ikke kan læses springes over */ }
+  }
+  refresh();
+}
+
+$('addFiles').addEventListener('change', async (e) => {
+  await addStories(e.target.files);
+  e.target.value = '';
+});
+
+const addBox = $('addBox');
+['dragenter','dragover'].forEach(ev => addBox.addEventListener(ev, e => {
+  e.preventDefault(); addBox.classList.add('dragover');
+}));
+['dragleave','drop'].forEach(ev => addBox.addEventListener(ev, e => {
+  e.preventDefault(); addBox.classList.remove('dragover');
+}));
+addBox.addEventListener('drop', e => { addStories(e.dataTransfer.files); });
+
+$('addEmpty').addEventListener('click', () => {
+  state.items.push({ file:'', title:'', creator:'', note:'', type:'Image', thumbDataUrl:'' });
+  refresh();
+});
+
+$('items').addEventListener('input', e => {
+  const f = e.target.dataset.f;
+  if (!f) return;
+  const i = +e.target.dataset.i;
+  state.items[i][f] = e.target.value;
+  if (f === 'type') renderItems();
+  renderPreview();
+});
+$('items').addEventListener('change', e => {
+  if (e.target.dataset.f === 'type') refresh();
+});
+
+$('items').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const i = +btn.dataset.i;
+  const act = btn.dataset.act;
+  if (act === 'del'){ state.items.splice(i, 1); refresh(); return; }
+  if (act === 'up' && i > 0){ state.items.splice(i - 1, 0, state.items.splice(i, 1)[0]); refresh(); return; }
+  if (act === 'down' && i < state.items.length - 1){ state.items.splice(i + 1, 0, state.items.splice(i, 1)[0]); refresh(); return; }
+  if (act === 'noimg'){ state.items[i].thumbDataUrl = ''; refresh(); return; }
+  if (act === 'img'){
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.addEventListener('change', async () => {
+      const f = inp.files[0];
+      if (!f) return;
+      try {
+        state.items[i].thumbDataUrl = await compressImage(f, 640, 0.72);
+        refresh();
+      } catch(err){ alert('Kunne ikke læse billedet: ' + err.message); }
+    });
+    inp.click();
+  }
+});
+
+/* ---------- de øvrige felter ---------- */
+
+document.querySelectorAll('#themePicker input[name="theme"]').forEach(radio => {
+  radio.addEventListener('change', e => {
+    state.theme = e.target.value;
+    document.querySelectorAll('#themePicker .theme-option').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.theme === state.theme);
+    });
+    renderPreview();
+  });
+});
+
+document.querySelectorAll('#layPicker input[name="lay"]').forEach(radio => {
+  radio.addEventListener('change', e => {
+    state.layout = e.target.value;
+    document.querySelectorAll('#layPicker .lay-option').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.lay === state.layout);
+    });
+    renderPreview();
+  });
+});
+
+$('eyebrow').addEventListener('input', e => { state.eyebrow = e.target.value; renderPreview(); });
+$('title').addEventListener('input', e => { state.title = e.target.value; renderPreview(); checkReady(); });
+$('credit').addEventListener('input', e => { state.credit = e.target.value; renderPreview(); });
+$('dateline').addEventListener('input', e => { state.dateline = e.target.value; renderPreview(); });
+$('intro').addEventListener('input', e => { state.intro = e.target.value; renderPreview(); });
+$('backText').addEventListener('input', e => { state.backText = e.target.value; renderPreview(); });
+$('backUrl').addEventListener('input', e => { state.backUrl = e.target.value; renderPreview(); });
+$('footerNote').addEventListener('input', e => { state.footerNote = e.target.value; renderPreview(); });
+
+$('cover').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('coverStatus').textContent = 'Komprimerer billede …';
+  $('coverStatus').className = 'status pending';
+  try {
+    state.coverDataUrl = await compressImage(file, 1100, 0.78);
+    const kb = Math.round(state.coverDataUrl.length * 0.75 / 1024);
+    $('coverStatus').textContent = `Forsidebillede klar (~${kb} KB efter komprimering)`;
+    $('coverStatus').className = 'status';
+    renderPreview();
+  } catch(err){
+    $('coverStatus').textContent = 'Fejl: ' + err.message;
+    $('coverStatus').className = 'status pending';
+  }
+});
+
+DC_FIELDS.forEach(key => {
+  const el = $(dcInputId(key));
+  if (!el) return;
+  el.addEventListener('input', () => {
+    if (key in dcTouched) dcTouched[key] = el.value.trim() !== '';
+    renderPreview();
+  });
+  if (el.tagName === 'SELECT') el.addEventListener('change', renderPreview);
+});
+
+$('metaJsonBtn').addEventListener('click', () => {
+  syncAutoDc();
+  const dc = collectDublinCore();
+  const msg = $('msgBox');
+  if (Object.keys(dc).length === 0){
+    msg.textContent = 'Der er ingen Dublin Core-felter udfyldt endnu.';
+    msg.className = 'msg err';
+    return;
+  }
+  const payload = {
+    '@context': 'http://purl.org/dc/elements/1.1/',
+    dublinCore: dc,
+    hasPart: state.items.filter(it => it.file.trim()).map(it => it.file.trim()),
+    generated: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'samling-' + safeNameFrom(state.title, 'uden-titel') + '-metadata.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  msg.textContent = 'Metadatafilen er downloadet.';
+  msg.className = 'msg ok';
+});
+
+/* ---------- indlæs eksisterende samling ---------- */
+
+function setField(id, value){
+  const el = $(id);
+  if (el) el.value = value || '';
+}
+
+// Finder en manuelt indsat tællerkode-blok i en eksisterende fil, så den
+// kan sættes tilbage i den nye udgave i stedet for at gå tabt.
+function extractTaellerBlock(text){
+  const startMark = text.indexOf('TÆLLER');
+  if (startMark === -1) return '';
+  const endMark = text.indexOf('TÆLLER SLUT');
+  if (endMark === -1) return '';
+  const start = text.lastIndexOf('<!--', startMark);
+  const end = text.indexOf('-->', endMark);
+  if (start === -1 || end === -1 || end < start) return '';
+  return text.slice(start, end + 3);
+}
+
+function fillDcFields(dc){
+  DC_FIELDS.forEach(key => {
+    const el = $(dcInputId(key));
+    if (!el) return;
+    el.value = (dc && dc[key]) ? dc[key] : (key === 'format' ? 'text/html' : (key === 'language' ? 'da' : (key === 'type' ? 'Collection' : '')));
+    if (key in dcTouched) dcTouched[key] = el.value.trim() !== '';
+  });
+}
+
+function selectTheme(themeKey){
+  state.theme = THEMES[themeKey] ? themeKey : 'original';
+  document.querySelectorAll('#themePicker input[name="theme"]').forEach(r => {
+    r.checked = (r.value === state.theme);
+  });
+  document.querySelectorAll('#themePicker .theme-option').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.theme === state.theme);
+  });
+}
+
+function selectLayout(layKey){
+  state.layout = ['liste','tavle','forloeb'].includes(layKey) ? layKey : 'liste';
+  document.querySelectorAll('#layPicker input[name="lay"]').forEach(r => {
+    r.checked = (r.value === state.layout);
+  });
+  document.querySelectorAll('#layPicker .lay-option').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.lay === state.layout);
+  });
+}
+
+$('loadPage').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('loadStatus').textContent = 'Læser fil …';
+  $('loadStatus').className = 'status pending';
+  try {
+    const text = await file.text();
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const dataScript = doc.getElementById('builder-source-data');
+
+    if (!dataScript){
+      $('loadStatus').textContent = 'Filen kan ikke indlæses — den er ikke lavet med denne udgave af værktøjet.';
+      $('loadStatus').className = 'status pending';
+      e.target.value = '';
+      return;
+    }
+
+    const data = JSON.parse(dataScript.textContent);
+    if (data.format && data.format !== 'samling-forside'){
+      $('loadStatus').textContent = 'Filen er lavet med et andet værktøj i serien — den kan ikke indlæses her.';
+      $('loadStatus').className = 'status pending';
+      e.target.value = '';
+      return;
+    }
+
+    state.eyebrow = data.eyebrow || '';
+    state.title = data.title || '';
+    state.credit = data.credit || '';
+    state.dateline = data.dateline || '';
+    state.intro = data.intro || '';
+    state.backText = data.backText || '';
+    state.backUrl = data.backUrl || '';
+    state.footerNote = data.footerNote || '';
+    state.coverDataUrl = data.coverDataUrl || null;
+    state.items = Array.isArray(data.items) ? data.items.map(it => ({
+      file: it.file || '', title: it.title || '', creator: it.creator || '',
+      note: it.note || '', type: it.type || 'Image', thumbDataUrl: it.thumbDataUrl || ''
+    })) : [];
+    selectTheme(data.theme || 'original');
+    selectLayout(data.layout || 'liste');
+    fillDcFields(data.dublinCore || {});
+
+    setField('eyebrow', state.eyebrow);
+    setField('title', state.title);
+    setField('credit', state.credit);
+    setField('dateline', state.dateline);
+    setField('intro', state.intro);
+    setField('backText', state.backText);
+    setField('backUrl', state.backUrl);
+    setField('footerNote', state.footerNote);
+
+    if (state.coverDataUrl){
+      const kb = Math.round(state.coverDataUrl.length * 0.75 / 1024);
+      $('coverStatus').textContent = `Forsidebillede indlæst fra fil (~${kb} KB)`;
+      $('coverStatus').className = 'status';
+    }
+
+    state.taellerBlock = extractTaellerBlock(text);
+    $('loadStatus').textContent = `Indlæst: ${file.name}`
+      + (state.taellerBlock ? ' · tællerkoden er fundet og følger med i den nye fil' : '');
+    $('loadStatus').className = 'status';
+    refresh();
+  } catch(err){
+    $('loadStatus').textContent = 'Fejl ved indlæsning: ' + err.message;
+    $('loadStatus').className = 'status pending';
+  }
+});
+
+$('generateBtn').addEventListener('click', () => {
+  const msg = $('msgBox');
+  try {
+    syncAutoDc();
+    const html = buildPageHTML(state, true);
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'samling-' + safeNameFrom(state.title, 'uden-titel') + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    msg.textContent = 'Filen er genereret og downloadet. Læg den i samme mappe som historierne, den peger på — så virker linkene, og søgesiden finder den som en samling.'
+      + (state.taellerBlock ? ' Tællerkoden fra den indlæste fil står stadig nederst i filen.' : '');
+    msg.className = 'msg ok';
+  } catch(err){
+    msg.textContent = 'Der gik noget galt: ' + err.message;
+    msg.className = 'msg err';
+  }
+});
+
+refresh();
+</script>
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StackEdit — dansk vejledning</title>
+<meta name="description" content="Gennemgang af funktionerne i StackEdit (version 5) på dansk: arbejdsområder, synkronisering, publicering, Markdown-udvidelser, skabeloner og backup.">
+<style>
+:root{
+  --papir:#FCFBF8;
+  --papir-dyb:#F3EEE6;
+  --blaek:#1E1B1A;
+  --dæmpet:#6C645C;
+  --bordeaux:#6B1E2E;
+  --bordeaux-lys:#8E2A3C;
+  --linje:#E0D9CE;
+  --gul:#FBF3D8;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--papir);color:var(--blaek);
+  font-family:var(--sans);font-size:18px;line-height:1.65;
+}
+.skip{position:absolute;left:-9999px;top:0;background:var(--bordeaux);color:#fff;padding:.7rem 1rem;z-index:20}
+.skip:focus{left:0}
+a{color:var(--bordeaux)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid var(--bordeaux-lys);outline-offset:2px}
+
+/* Hoved */
+header.top{
+  border-bottom:1px solid var(--linje);
+  background:var(--papir-dyb);
+  padding:2.6rem 1.5rem 2.1rem;
+}
+.wrap{max-width:1120px;margin:0 auto}
+.kicker{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--bordeaux);margin:0 0 .9rem;
+}
+h1{
+  font-family:var(--serif);font-weight:400;font-size:clamp(2.1rem,5vw,3.2rem);
+  line-height:1.1;margin:0 0 .6rem;letter-spacing:-.01em;
+}
+h1 em{font-style:italic;color:var(--bordeaux)}
+.manchet{max-width:60ch;margin:0;color:var(--dæmpet);font-size:1.05rem}
+
+/* Layout */
+.layout{max-width:1120px;margin:0 auto;padding:0 1.5rem;display:grid;gap:3rem;grid-template-columns:1fr}
+@media(min-width:940px){
+  .layout{grid-template-columns:245px 1fr;gap:3.5rem}
+}
+nav.indeks{padding-top:2.5rem}
+@media(min-width:940px){
+  nav.indeks{position:sticky;top:0;align-self:start;max-height:100vh;overflow-y:auto;padding-bottom:2rem}
+}
+nav.indeks h2{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--dæmpet);margin:0 0 .8rem;font-weight:600;
+}
+nav.indeks ol{list-style:none;margin:0;padding:0;counter-reset:i}
+nav.indeks li{counter-increment:i;border-top:1px solid var(--linje)}
+nav.indeks a{
+  display:block;padding:.55rem 0 .55rem 2.1rem;position:relative;
+  text-decoration:none;color:var(--blaek);font-size:.95rem;line-height:1.35;
+}
+nav.indeks a::before{
+  content:counter(i,decimal-leading-zero);position:absolute;left:0;top:.6rem;
+  font-family:var(--mono);font-size:.72rem;color:var(--bordeaux);
+}
+nav.indeks a:hover{color:var(--bordeaux)}
+.soegefelt{width:100%;padding:.6rem .7rem;font:inherit;font-size:.95rem;
+  border:1px solid var(--linje);background:#fff;border-radius:2px;margin-bottom:1.4rem}
+
+main{padding:2.5rem 0 5rem;min-width:0}
+
+/* Afsnit */
+section.afsnit{border-top:2px solid var(--blaek);padding-top:1.6rem;margin-bottom:3.4rem;scroll-margin-top:1rem}
+section.afsnit:first-of-type{border-top:none;padding-top:0}
+section.afsnit > h2{
+  font-family:var(--serif);font-weight:400;font-size:1.85rem;line-height:1.2;margin:0 0 1.1rem;
+}
+section.afsnit > h2 .nr{
+  font-family:var(--mono);font-size:.72rem;color:var(--bordeaux);
+  display:block;letter-spacing:.16em;margin-bottom:.35rem;
+}
+h3{font-family:var(--sans);font-size:1.08rem;font-weight:650;margin:1.9rem 0 .5rem}
+p{margin:0 0 1rem;max-width:66ch}
+ul,ol{max-width:64ch;padding-left:1.25rem;margin:0 0 1.1rem}
+li{margin-bottom:.45rem}
+
+/* Sti-chip: signaturelementet */
+.sti{
+  font-family:var(--mono);font-size:.8rem;line-height:1.5;
+  display:inline-block;background:#fff;border:1px solid var(--linje);
+  border-left:3px solid var(--bordeaux);
+  padding:.4rem .7rem;margin:0 0 1rem;color:var(--blaek);
+  border-radius:0 2px 2px 0;
+}
+.sti b{font-weight:600;color:var(--bordeaux)}
+
+code{font-family:var(--mono);font-size:.87em;background:var(--papir-dyb);padding:.12em .35em;border-radius:2px}
+pre{
+  font-family:var(--mono);font-size:.83rem;line-height:1.55;background:#fff;
+  border:1px solid var(--linje);border-left:3px solid var(--linje);
+  padding:.9rem 1rem;overflow-x:auto;max-width:66ch;margin:0 0 1.2rem;
+}
+pre code{background:none;padding:0;font-size:1em}
+
+table{border-collapse:collapse;width:100%;max-width:66ch;margin:0 0 1.3rem;font-size:.95rem}
+th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--linje);vertical-align:top}
+th{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dæmpet);font-weight:600}
+td code{white-space:nowrap}
+
+.obs{
+  background:var(--gul);border-left:3px solid #B58900;
+  padding:1rem 1.1rem;margin:0 0 1.3rem;max-width:66ch;
+}
+.obs p:last-child{margin-bottom:0}
+.obs strong{display:block;margin-bottom:.2rem}
+
+footer{border-top:1px solid var(--linje);padding:2rem 1.5rem 3rem;color:var(--dæmpet);font-size:.9rem}
+footer p{max-width:66ch}
+
+/* Filter */
+.skjult{display:none}
+.intet{display:none;color:var(--dæmpet);font-style:italic}
+
+@media print{
+  nav.indeks,.soegefelt{display:none}
+  body{font-size:11pt;background:#fff}
+  .layout{display:block;padding:0}
+  section.afsnit{break-inside:avoid-page;page-break-inside:avoid}
+  header.top{background:#fff;padding:0 0 1rem}
+  a{color:#000;text-decoration:none}
+}
+@media(prefers-reduced-motion:no-preference){
+  html{scroll-behavior:smooth}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#indhold">Spring til indholdet</a>
+
+<header class="top">
+  <div class="wrap">
+    <p class="kicker">Dansk vejledning · august 2026</p>
+    <h1>StackEdit <em>fra ende til anden</em></h1>
+    <p class="manchet">StackEdit har ingen samlet manual. Den dokumentation, man finder på nettet, beskriver version 4 og passer kun delvist på den udgave, der ligger på stackedit.io i dag. Her er funktionerne gennemgået, som de faktisk ligger i programmet — med den vej gennem menuerne, du skal følge for at nå dem.</p>
+  </div>
+</header>
+
+<div class="layout">
+
+<nav class="indeks" aria-label="Indhold">
+  <h2>Indhold</h2>
+  <label class="skip" for="filter">Søg i vejledningen</label>
+  <input id="filter" class="soegefelt" type="search" placeholder="Søg i vejledningen…" autocomplete="off">
+  <ol id="toc">
+    <li><a href="#grundstruktur">Sådan er programmet skruet sammen</a></li>
+    <li><a href="#arbejdsomraade">Arbejdsområder, filer og mapper</a></li>
+    <li><a href="#backup">Hvor dine filer ligger — og hvordan du sikrer dem</a></li>
+    <li><a href="#skrivning">Skriveruden og forhåndsvisningen</a></li>
+    <li><a href="#markdown">Markdown: grundsyntaksen</a></li>
+    <li><a href="#udvidelser">Markdown: StackEdits udvidelser</a></li>
+    <li><a href="#egenskaber">Filegenskaber og metadata</a></li>
+    <li><a href="#synk">Synkronisering</a></li>
+    <li><a href="#udgiv">Publicering</a></li>
+    <li><a href="#eksport">Import og eksport</a></li>
+    <li><a href="#skabeloner">Skabeloner</a></li>
+    <li><a href="#indstillinger">Indstillinger og genvejstaster</a></li>
+    <li><a href="#arbejdsgang">Forslag til en arbejdsgang</a></li>
+  </ol>
+</nav>
+
+<main id="indhold">
+
+<section class="afsnit" id="grundstruktur">
+  <h2><span class="nr">01</span>Sådan er programmet skruet sammen</h2>
+  <p>Næsten alt i StackEdit sidder tre steder. Kender du de tre, kan du finde resten selv:</p>
+  <ul>
+    <li><strong>Knappen øverst til venstre</strong> åbner filoversigten: dine filer, dine mapper og — nederst — skiftet mellem arbejdsområder.</li>
+    <li><strong>Menuknappen øverst til højre</strong> (de tre streger) rummer synkronisering, publicering, import/eksport, konti, skabeloner, indstillinger og syntaksoversigten.</li>
+    <li><strong>Selve skriveruden</strong> med teksten til venstre og forhåndsvisningen til højre.</li>
+  </ul>
+  <p>I resten af vejledningen står vejen gennem menuerne i en lille ramme over hvert afsnit, sådan her:</p>
+  <p class="sti"><b>☰ Menu</b> › Markdown cheat sheet</p>
+  <p>Ordlyden i menuerne er engelsk, også selvom du bruger en dansk browser. Skulle en menupunkt hedde noget lidt andet hos dig, ligger det næsten altid ét trin fra det, der står her.</p>
+</section>
+
+<section class="afsnit" id="arbejdsomraade">
+  <h2><span class="nr">02</span>Arbejdsområder, filer og mapper</h2>
+  <p class="sti"><b>Filoversigt</b> (øverst til venstre) › nederst i panelet: navnet på arbejdsområdet</p>
+
+  <h3>Filer og mapper</h3>
+  <p>Nye filer og mapper oprettes fra ikonerne i filoversigten. Du kan trække filer ind i mapper, omdøbe ved at klikke på navnet, og sortere dine dokumenter i så mange niveauer, du har lyst til. Mapperne er kun StackEdits egen sortering — de bliver ikke automatisk til mapper ude på Google Drev eller GitHub.</p>
+
+  <h3>Flere arbejdsområder</h3>
+  <p>Det er den funktion, flest overser. Et arbejdsområde er en hel samling af filer, mapper og indstillinger. Du kan have flere, og de holdes helt adskilt: ét til lokalhistorien, ét til Røde Kors, ét til dine vejledninger.</p>
+  <p>Ud over det arbejdsområde, der bare ligger i browseren, kan du oprette et, der er knyttet til en mappe på Google Drev eller til et GitHub-arkiv. Så er hele arbejdsområdet det samme som indholdet af mappen eller arkivet — filerne hentes og gemmes der, og du kan åbne det samme arbejdsområde fra en anden computer ved at logge ind.</p>
+  <div class="obs">
+    <strong>Værd at vide</strong>
+    <p>Hvert arbejdsområde har sin egen webadresse. Gem adressen som bogmærke, så åbner du direkte det rigtige arbejdsområde.</p>
+  </div>
+</section>
+
+<section class="afsnit" id="backup">
+  <h2><span class="nr">03</span>Hvor dine filer ligger — og hvordan du sikrer dem</h2>
+  <p class="sti"><b>☰ Menu</b> › Settings › Import/Export workspace backup</p>
+  <p>Det her er det vigtigste afsnit i hele vejledningen. Bruger du StackEdit uden at logge ind, ligger dine dokumenter <strong>udelukkende i browserens lager på den maskine, du sidder ved</strong>. De ligger ikke på en server, og de følger ikke med til en anden browser.</p>
+  <p>Det betyder tre ting:</p>
+  <ul>
+    <li>Rydder du browserdata, cookies eller «webstedsdata», kan alle dine dokumenter forsvinde.</li>
+    <li>Bruger du browserens private tilstand, er de væk, når vinduet lukkes.</li>
+    <li>En genoprettelse af maskinen tager dem med sig.</li>
+  </ul>
+  <p>Du har tre måder at sikre dig på, og de udelukker ikke hinanden:</p>
+  <ol>
+    <li><strong>Log ind og synkronisér arbejdsområdet</strong> (afsnit 8). Så ligger der en kopi i skyen.</li>
+    <li><strong>Tag en backup af arbejdsområdet</strong> under Settings. Det giver én fil, du kan lægge på din egen disk — og læse ind igen samme sted.</li>
+    <li><strong>Eksportér de færdige filer til disken</strong> som almindelige <code>.md</code>-filer (afsnit 10). Det er den udgave, der stadig kan læses om tyve år, uanset hvad der sker med StackEdit.</li>
+  </ol>
+  <div class="obs">
+    <strong>Vane, der er værd at tage op</strong>
+    <p>Når et dokument er færdigt: eksportér det til disk og læg det, hvor resten af dit materiale ligger. StackEdit er et skrivebord, ikke et arkiv.</p>
+  </div>
+</section>
+
+<section class="afsnit" id="skrivning">
+  <h2><span class="nr">04</span>Skriveruden og forhåndsvisningen</h2>
+  <p>Teksten står til venstre, resultatet til højre. Der er et par ting i ruderne, man sjældent finder af sig selv:</p>
+  <ul>
+    <li><strong>Bundet rulning.</strong> De to ruder følges ad, når du ruller. Står du langt nede i et langt dokument, viser forhåndsvisningen det samme sted.</li>
+    <li><strong>Formatering mens du skriver.</strong> Overskrifter, fed skrift, citater og links vises med deres virkning direkte i skriveruden — du behøver ikke kigge over i forhåndsvisningen for at se, om det virkede.</li>
+    <li><strong>Ruderne kan slås fra.</strong> Vil du kun se din tekst, kan du skjule forhåndsvisningen — og omvendt. Knapperne sidder i den øverste bjælke.</li>
+    <li><strong>Statistik.</strong> Antal ord og tegn kan vises for dokumentet.</li>
+    <li><strong>Billeder indsættes som link.</strong> StackEdit gemmer ikke selve billedfilen. Du henviser til en adresse med <code>![tekst](adresse)</code>, så billedet skal ligge et sted, der kan nås — for dit vedkommende dit eget webhotel.</li>
+  </ul>
+</section>
+
+<section class="afsnit" id="markdown">
+  <h2><span class="nr">05</span>Markdown: grundsyntaksen</h2>
+  <p class="sti"><b>☰ Menu</b> › Markdown cheat sheet</p>
+  <p>Den indbyggede oversigt er god at have åben ved siden af. Her er det, der bruges mest:</p>
+  <table>
+    <thead><tr><th>Det du skriver</th><th>Det du får</th></tr></thead>
+    <tbody>
+      <tr><td><code># Titel</code></td><td>Overskrift, niveau 1. Flere <code>#</code> giver dybere niveauer, op til seks.</td></tr>
+      <tr><td><code>**fed**</code></td><td>Fed skrift</td></tr>
+      <tr><td><code>*kursiv*</code></td><td>Kursiv</td></tr>
+      <tr><td><code>- punkt</code></td><td>Punktopstilling. Indryk fire mellemrum for et underpunkt.</td></tr>
+      <tr><td><code>1. punkt</code></td><td>Nummereret liste</td></tr>
+      <tr><td><code>&gt; tekst</code></td><td>Citat, indrykket blok</td></tr>
+      <tr><td><code>[tekst](adresse)</code></td><td>Link</td></tr>
+      <tr><td><code>![tekst](adresse)</code></td><td>Billede</td></tr>
+      <tr><td><code>---</code></td><td>Vandret streg</td></tr>
+      <tr><td><code>`kode`</code></td><td>Kode midt i en sætning</td></tr>
+    </tbody>
+  </table>
+  <p>To vigtige småting: en tom linje mellem afsnit er det, der skaber et nyt afsnit — et enkelt linjeskift gør ikke altid noget. Og tabeller laves med lodrette streger:</p>
+<pre><code>| Årstal | Begivenhed        |
+|--------|-------------------|
+| 1943   | Fabrikken udvides |
+| 1961   | Ny hal opføres    |</code></pre>
+</section>
+
+<section class="afsnit" id="udvidelser">
+  <h2><span class="nr">06</span>Markdown: StackEdits udvidelser</h2>
+  <p>Ud over den almindelige syntaks har StackEdit en række udvidelser slået til. De kan tændes og slukkes enkeltvis i indstillingerne (afsnit 12).</p>
+
+  <h3>Indholdsfortegnelse</h3>
+  <p>Skriv <code>[TOC]</code> på en linje for sig, og StackEdit bygger en indholdsfortegnelse ud fra dine overskrifter. Den opdaterer sig selv, mens du skriver — meget værd i lange vejledninger.</p>
+
+  <h3>Fodnoter</h3>
+<pre><code>Fabrikken lukkede i 1974.[^kilde]
+
+[^kilde]: Sogneprotokollen, bind 4, s. 112.</code></pre>
+  <p>Selve noten kan stå hvor som helst i dokumentet — den havner automatisk nederst, nummereret.</p>
+
+  <h3>Opgavelister</h3>
+<pre><code>- [x] Scannet negativer
+- [ ] Skrevet billedtekster
+- [ ] Lagt i arkivet</code></pre>
+
+  <h3>Andre småting</h3>
+  <ul>
+    <li><code>~~gennemstreget~~</code> og <code>==fremhævet==</code></li>
+    <li>Definitionslister: begrebet på én linje, forklaringen på næste med <code>:</code> foran</li>
+    <li>Forkortelser: skriv <code>*[RK]: Røde Kors</code> et sted i dokumentet, så får hvert <code>RK</code> en forklarende boble</li>
+    <li>Hævet og sænket skrift med <code>^</code> og <code>~</code></li>
+    <li>Humørikoner skrevet som <code>:smile:</code></li>
+  </ul>
+
+  <h3>Formler og diagrammer</h3>
+  <p>Matematik skrives mellem dollartegn: <code>$E = mc^2$</code>. Diagrammer skrives som tekst i en kodeblok mærket <code>mermaid</code>, og StackEdit tegner dem:</p>
+<pre><code>```mermaid
+graph LR
+  A[Optagelse] --&gt; B[Redigering]
+  B --&gt; C[Udgivelse]
+```</code></pre>
+  <div class="obs">
+    <strong>Vær opmærksom</strong>
+    <p>Diagrammer og formler er StackEdits egne udvidelser. De vises fint i forhåndsvisningen og i HTML-eksporten, men et andet Markdown-program kan vise dem som ren tekst. Skal filen kunne læses hvor som helst om mange år, så brug dem med måde.</p>
+  </div>
+</section>
+
+<section class="afsnit" id="egenskaber">
+  <h2><span class="nr">07</span>Filegenskaber og metadata</h2>
+  <p class="sti"><b>☰ Menu</b> › File properties</p>
+  <p>Hvert dokument kan have sit eget lille sæt oplysninger, skrevet som YAML — altså feltnavn, kolon, værdi:</p>
+<pre><code>title: Sengeløse Metalvarefabrik
+creator: Lokalhistorisk forening
+date: 1961
+subject: industri, arbejdsliv</code></pre>
+  <p>To ting gør det brugbart. For det første kan felterne bruges i dine egne skabeloner (afsnit 11), så oplysningerne automatisk havner det rigtige sted i den færdige HTML. For det andet er det præcis det format, Jekyll forventer øverst i en side — så en fil, du skriver her, kan lægges direkte ind på GitHub Pages.</p>
+</section>
+
+<section class="afsnit" id="synk">
+  <h2><span class="nr">08</span>Synkronisering</h2>
+  <p class="sti"><b>☰ Menu</b> › Synchronize</p>
+  <p>Der er to slags, og de kan bruges hver for sig eller sammen. Forskellen er værd at have styr på:</p>
+
+  <h3>Synkronisering af arbejdsområdet</h3>
+  <p>Log ind med Google, og hele arbejdsområdet — alle filer, alle mapper, alle indstillinger — holdes ajour. Formålet er at kunne sætte sig ved en anden maskine og finde det hele, som du forlod det. Det er en sikkerhedskopi og en flytning, ikke en måde at få fat i filerne udefra.</p>
+
+  <h3>Synkronisering af en enkelt fil</h3>
+  <p>Her binder du <em>ét</em> dokument til en bestemt fil ude i verden: en fil på Google Drev, i Dropbox eller i et GitHub-arkiv. Fra da af holder StackEdit de to i takt af sig selv, cirka hvert minut: den henter ændringer, fletter dem og lægger dine egne op. Ét dokument kan godt være bundet til flere steder på én gang.</p>
+  <p>Det er den funktion, der er mest værd for dig: en <code>.md</code>-fil i dit GitHub-arkiv kan redigeres direkte i StackEdit, og ændringen lander i arkivet uden omvejen over VS Code og GitHub Desktop.</p>
+  <p>Har du rettet både her og der, opdager StackEdit sammenstødet og forsøger at flette. Er det ikke muligt, får du besked. Vil du ikke vente på det næste minut, kan du sætte synkroniseringen i gang med det samme fra menuen.</p>
+
+  <h3>Konti</h3>
+  <p class="sti"><b>☰ Menu</b> › Accounts</p>
+  <p>Her ligger de tjenester, du har givet adgang: Google Drev, Dropbox, GitHub, GitLab, WordPress, Blogger, Zendesk. Adgang gives, når du første gang bruger en funktion, der kræver det — og kan trækkes tilbage samme sted.</p>
+</section>
+
+<section class="afsnit" id="udgiv">
+  <h2><span class="nr">09</span>Publicering</h2>
+  <p class="sti"><b>☰ Menu</b> › Publish</p>
+  <p>Publicering er noget andet end synkronisering, og forskellen forvirrer mange. Synkronisering handler om <em>kilden</em> — din Markdown-tekst, der skal være den samme to steder. Publicering handler om <em>resultatet</em> — den færdige side, som andre skal kunne læse.</p>
+  <p>Du kan udgive til:</p>
+  <ul>
+    <li>et GitHub-arkiv eller en Gist</li>
+    <li>Google Drev eller Dropbox</li>
+    <li>WordPress, Blogger og Zendesk</li>
+  </ul>
+  <p>Når du opretter et udgivelsessted, vælger du samtidig en skabelon — altså om der skal sendes ren Markdown af sted, eller om StackEdit skal bygge en færdig HTML-side ud af teksten. Et dokument kan have flere udgivelsessteder på én gang, og du kan sætte det op, så teksten udgives igen af sig selv, hver gang du retter i den.</p>
+</section>
+
+<section class="afsnit" id="eksport">
+  <h2><span class="nr">10</span>Import og eksport</h2>
+  <p class="sti"><b>☰ Menu</b> › Import/Export</p>
+  <table>
+    <thead><tr><th>Funktion</th><th>Hvad den gør</th></tr></thead>
+    <tbody>
+      <tr><td>Import Markdown</td><td>Læser en <code>.md</code>-fil fra din disk ind som nyt dokument.</td></tr>
+      <tr><td>Import HTML</td><td>Tager en HTML-fil og oversætter den til Markdown. Nyttigt, når gammelt materiale skal skrives om.</td></tr>
+      <tr><td>Export to disk</td><td>Gemmer dokumentet på din maskine — som Markdown eller som HTML formateret efter en skabelon.</td></tr>
+    </tbody>
+  </table>
+  <div class="obs">
+    <strong>Om PDF</strong>
+    <p>PDF står med på listen over formater, men eksport til PDF kræver et betalt abonnement på StackEdit. Vil du undgå det, kan du eksportere til HTML og lade browseren udskrive siden til PDF — resultatet er ofte pænere, fordi du selv styrer skabelonen.</p>
+  </div>
+</section>
+
+<section class="afsnit" id="skabeloner">
+  <h2><span class="nr">11</span>Skabeloner</h2>
+  <p class="sti"><b>☰ Menu</b> › Import/Export › Templates</p>
+  <p>En skabelon bestemmer, hvordan den færdige HTML kommer til at se ud, når du eksporterer eller udgiver. StackEdit har nogle stykker med — ren HTML uden pynt, HTML med et stilsæt på, og en til Jekyll — og du kan lave dine egne.</p>
+  <p>Den bedste fremgangsmåde er at tage en af de eksisterende, lave en kopi og rette i kopien. En skabelon er almindelig HTML med et par indsætningspunkter i tvekrøllede parenteser, hvor teksten og oplysningerne fra filegenskaberne bliver sat ind.</p>
+  <p>Det er her, StackEdit bliver interessant for dit arbejde: du kan lave en skabelon med din egen typografi og dine egne farver én gang, og derefter kommer hver eneste eksporterede fil ud i samme dragt.</p>
+</section>
+
+<section class="afsnit" id="indstillinger">
+  <h2><span class="nr">12</span>Indstillinger og genvejstaster</h2>
+  <p class="sti"><b>☰ Menu</b> › Settings</p>
+  <p>Indstillingerne er ikke afkrydsningsfelter, men et stykke tekst i YAML, som du retter direkte i. Det ser voldsommere ud, end det er — men gør ét først:</p>
+  <div class="obs">
+    <strong>Inden du retter</strong>
+    <p>Markér hele teksten, kopiér den, og gem den i et dokument for sig. Så kan du altid sætte det oprindelige tilbage, hvis noget går skævt.</p>
+  </div>
+  <p>Tre ting er værd at kigge på:</p>
+  <ul>
+    <li><strong>Udvidelser.</strong> Her tændes og slukkes de Markdown-funktioner fra afsnit 6 — fodnoter, indholdsfortegnelse, diagrammer, formler og resten.</li>
+    <li><strong>Genvejstaster.</strong> Alle genveje står opskrevet og kan laves om til noget, der passer dine fingre bedre.</li>
+    <li><strong>Skrivebordets udseende.</strong> Skriftstørrelse og linjebredde i skriveruden — værd at skrue op, hvis du sidder længe.</li>
+  </ul>
+  <p>Samme sted finder du backup af arbejdsområdet (afsnit 3) og en nulstilling af hele programmet. Vær varsom med den sidste.</p>
+
+  <h3>De genveje, du bruger hver dag</h3>
+  <table>
+    <thead><tr><th>Genvej</th><th>Virkning</th></tr></thead>
+    <tbody>
+      <tr><td><code>⌘ B</code></td><td>Fed skrift på det markerede</td></tr>
+      <tr><td><code>⌘ I</code></td><td>Kursiv</td></tr>
+      <tr><td><code>⌘ K</code></td><td>Gør det markerede til et link</td></tr>
+      <tr><td><code>⌘ Z</code></td><td>Fortryd</td></tr>
+    </tbody>
+  </table>
+  <p>På en Mac er det ⌘, på Windows Ctrl. Den fulde liste ligger i indstillingerne.</p>
+
+  <h3>Temaer</h3>
+  <p>Der er nogle få udseender at vælge imellem, herunder et mørkt. Det ændrer kun StackEdit selv — ikke det, dine læsere ser.</p>
+</section>
+
+<section class="afsnit" id="arbejdsgang">
+  <h2><span class="nr">13</span>Forslag til en arbejdsgang</h2>
+  <p>Sat sammen kan de enkelte funktioner blive til noget, der er mere værd end delene. En måde at gøre det på:</p>
+  <ol>
+    <li>Opret ét arbejdsområde pr. sammenhæng — lokalhistorie for sig, Røde Kors for sig.</li>
+    <li>Bind arbejdsområdet eller de enkelte filer til det GitHub-arkiv, teksterne alligevel skal ende i.</li>
+    <li>Skriv oplysningerne om dokumentet i filegenskaberne, så de er i teksten og ikke kun i hovedet på dig.</li>
+    <li>Lav én skabelon med din egen typografi, og brug den til al eksport.</li>
+    <li>Eksportér den færdige tekst til disk som <code>.md</code> og læg den, hvor resten af materialet ligger.</li>
+  </ol>
+  <p>Punkt fem er det, der gør arbejdet holdbart. StackEdit er et godt sted at skrive og et dårligt sted at gemme — og det er der ikke noget galt i, så længe man ved det.</p>
+</section>
+
+<p class="intet" id="intet">Ingen afsnit passer på det, du søgte efter.</p>
+
+</main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>Vejledningen dækker StackEdit version 5, som den ligger på stackedit.io i august 2026. Programmet er frit og open source. Der findes ingen officiel manual til denne udgave; menuernes ordlyd kan derfor afvige en smule fra det, der står her.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var felt = document.getElementById('filter');
+  var afsnit = Array.prototype.slice.call(document.querySelectorAll('section.afsnit'));
+  var punkter = Array.prototype.slice.call(document.querySelectorAll('#toc li'));
+  var intet = document.getElementById('intet');
+  if(!felt) return;
+  felt.addEventListener('input', function(){
+    var q = felt.value.trim().toLowerCase();
+    var fundet = 0;
+    afsnit.forEach(function(s, i){
+      var traef = q === '' || s.textContent.toLowerCase().indexOf(q) !== -1;
+      s.classList.toggle('skjult', !traef);
+      if(punkter[i]) punkter[i].classList.toggle('skjult', !traef);
+      if(traef) fundet++;
+    });
+    intet.style.display = fundet === 0 ? 'block' : 'none';
+  });
+})();
+</script>
+</body>
+</html>

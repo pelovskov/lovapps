@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <title>Udtræk MP3 fra HTML</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; line-height: 1.6; }
+    .box { border: 2px dashed #ccc; padding: 30px; border-radius: 8px; max-width: 500px; text-align: center; }
+    input { margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Træk MP3 ud af HTML-fil</h2>
+    <p>Vælg din HTML-fil med den indlejrede lyd:</p>
+    <input type="file" id="fileInput" accept=".html,.htm">
+  </div>
+
+  <script>
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const text = event.target.result;
+        
+        // Søger efter data URI for lyd
+        const match = text.match(/data:audio\/[^;]+;base64,([A-Za-z0-9+/=]+)/);
+        
+        if (match) {
+          const base64Data = match[1];
+          const byteCharacters = atob(base64Data);
+          const byteNumbers = new Array(byteCharacters.length);
+          
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'audio/mp3' });
+          
+          // Opret download-link
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'udtrukket_lyd.mp3';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          alert('Kunne ikke finde en indlejret base64-lydfil i den valgte fil.');
+        }
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>

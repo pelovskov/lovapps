@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vejledningsbygger</title>
+<style>
+  :root{
+    --ink:#1c2733;
+    --muted:#5b6b7a;
+    --bg:#eef1f5;
+    --panel:#ffffff;
+    --line:#d3dae2;
+    --accent:#2b6f7a;
+    --accent-soft:#e4f0f2;
+    --warn:#8a4b12;
+    --radius:10px;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);
+    font-size:17px;line-height:1.55;
+  }
+  button{font-family:inherit;font-size:inherit}
+  a{color:var(--accent)}
+
+  /* ---------- Topbar ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:12px 18px;background:var(--panel);border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:30;
+  }
+  .topbar h1{font-size:20px;margin:0;letter-spacing:.2px}
+  .topbar .sub{color:var(--muted);font-size:14px;margin-left:-6px}
+  .spacer{flex:1}
+  .btn{
+    border:1px solid var(--line);background:#fff;color:var(--ink);
+    padding:9px 14px;border-radius:8px;cursor:pointer;
+  }
+  .btn:hover{background:#f4f7f9}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.primary:hover{background:#245c66}
+  .btn.small{padding:5px 9px;font-size:14px}
+  .btn.icon{padding:5px 9px;font-size:15px;line-height:1}
+  .btn:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,
+  .dropzone:focus-visible{outline:3px solid #ffb703;outline-offset:2px}
+  .filesize{font-size:14px;color:var(--muted)}
+
+  /* ---------- Layout ---------- */
+  .layout{display:grid;grid-template-columns:minmax(420px,1fr) minmax(420px,1fr);
+    gap:0;height:calc(100vh - 61px)}
+  .pane{overflow:auto;padding:20px}
+  .pane-form{border-right:1px solid var(--line)}
+  .pane-preview{background:#dfe4ea;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .preview-bar{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+  iframe#preview{flex:1;width:100%;border:1px solid var(--line);border-radius:var(--radius);
+    background:#fff;min-height:400px}
+
+  /* ---------- Form ---------- */
+  fieldset{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
+    padding:16px 18px 18px;margin:0 0 18px}
+  legend{font-weight:700;padding:0 8px;font-size:15px;letter-spacing:.3px;text-transform:uppercase;
+    color:var(--muted)}
+  label{display:block;font-weight:600;margin:12px 0 4px;font-size:15px}
+  label .hint{font-weight:400;color:var(--muted);font-size:14px}
+  input[type=text],input[type=date],textarea,select{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
+    font-family:inherit;font-size:16px;background:#fff;color:var(--ink)
+  }
+  textarea{resize:vertical;min-height:90px;line-height:1.5}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row>*{flex:1;min-width:180px}
+  .checkline{display:flex;align-items:center;gap:8px;margin:10px 0;font-weight:600;font-size:15px}
+  .checkline input{width:18px;height:18px}
+  .help{font-size:14px;color:var(--muted);margin:6px 0 0}
+
+  /* ---------- Trin ---------- */
+  .step{border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:var(--radius);
+    background:#fbfcfd;padding:14px 16px 16px;margin-bottom:14px}
+  .step.is-active{background:#fff;border-left-color:#ffb703;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+  .step-head{display:flex;align-items:center;gap:8px}
+  .step-no{font-weight:700;font-size:15px;color:var(--muted);letter-spacing:.4px}
+  .step-tools{margin-left:auto;display:flex;gap:4px}
+  .kindrow{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0 4px}
+  .kindrow label{display:flex;align-items:center;gap:6px;margin:0;font-weight:600;font-size:15px}
+  .kindrow input{width:17px;height:17px}
+  .dropzone{
+    border:2px dashed var(--line);border-radius:var(--radius);background:#fff;
+    padding:18px;text-align:center;color:var(--muted);font-size:15px;cursor:pointer
+  }
+  .dropzone:hover,.dropzone.over{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+  .dropzone strong{color:var(--ink)}
+  .thumbwrap{display:flex;gap:12px;align-items:flex-start}
+  .thumb{max-width:190px;max-height:140px;border:1px solid var(--line);border-radius:6px;
+    box-shadow:0 1px 4px rgba(0,0,0,.15);background:#fff}
+  .thumbmeta{font-size:14px;color:var(--muted)}
+  .addstep{width:100%;padding:12px;border:2px dashed var(--line);background:#fff;border-radius:var(--radius);
+    cursor:pointer;font-weight:600;color:var(--accent)}
+  .addstep:hover{border-color:var(--accent);background:var(--accent-soft)}
+
+  details.dc{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);margin-bottom:18px}
+  details.dc>summary{padding:14px 18px;font-weight:700;cursor:pointer;font-size:15px;
+    text-transform:uppercase;letter-spacing:.3px;color:var(--muted)}
+  details.dc .dcbody{padding:0 18px 18px}
+  .dcgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 16px}
+
+  .note{background:#fff8e6;border:1px solid #e8d49a;border-left:5px solid #d9a441;
+    border-radius:8px;padding:10px 14px;font-size:15px;margin:0 0 18px}
+
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:15px;
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:100}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;height:auto}
+    .pane{height:auto}
+    .pane-form{border-right:none;border-bottom:1px solid var(--line)}
+    iframe#preview{height:70vh}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Vejledningsbygger</h1>
+  <span class="sub">trin-for-trin vejledninger som én HTML-fil</span>
+  <span class="spacer"></span>
+  <span class="filesize" id="filesize"></span>
+  <button class="btn" id="btnOpen">Åbn vejledning …</button>
+  <button class="btn" id="btnExample">Indsæt eksempel</button>
+  <button class="btn" id="btnReset">Ryd alt</button>
+  <button class="btn primary" id="btnSave">Hent vejledning</button>
+  <input type="file" id="fileOpen" accept=".html,text/html" hidden>
+</div>
+
+<div class="layout">
+  <!-- ============ VENSTRE: FORMULAR ============ -->
+  <div class="pane pane-form">
+
+    <p class="note">
+      <strong>Skærmbilleder:</strong> kopiér billedet i Screenpal og sæt det ind med <kbd>⌘V</kbd> / <kbd>Ctrl+V</kbd>
+      direkte i det trin, du arbejder i. Du kan også trække en fil ind eller vælge den fra disken.
+    </p>
+
+    <fieldset>
+      <legend>Vejledningen</legend>
+      <label for="f-title">Titel</label>
+      <input type="text" id="f-title" data-bind="title" placeholder="Sådan laver du en lydfortælling">
+
+      <label for="f-ingress">Kort indledning <span class="hint">— hvad handler vejledningen om, og hvem er den til?</span></label>
+      <textarea id="f-ingress" data-bind="ingress" rows="3"
+        placeholder="Denne vejledning viser trin for trin, hvordan du …"></textarea>
+
+      <div class="row">
+        <div>
+          <label for="f-author">Forfatter</label>
+          <input type="text" id="f-author" data-bind="author">
+        </div>
+        <div>
+          <label for="f-date">Dato</label>
+          <input type="date" id="f-date" data-bind="date">
+        </div>
+        <div>
+          <label for="f-version">Version <span class="hint">— valgfri</span></label>
+          <input type="text" id="f-version" data-bind="version" placeholder="1.0">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Udseende</legend>
+      <div class="row">
+        <div>
+          <label for="f-theme">Farvetema</label>
+          <select id="f-theme" data-bind="theme">
+            <option value="neutral">Neutral (blågrå)</option>
+            <option value="rodekors">Røde Kors</option>
+            <option value="bordeaux">Lokalhistorisk bordeaux</option>
+            <option value="skov">Skovgrøn</option>
+            <option value="graa">Gråtone (til print)</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-imgmax">Billedbredde <span class="hint">— i den færdige fil</span></label>
+          <select id="f-imgmax" data-bind="imgMax">
+            <option value="1200">1200 px (lille fil)</option>
+            <option value="1600" selected>1600 px (anbefalet)</option>
+            <option value="2000">2000 px (skarpt)</option>
+            <option value="0">Original størrelse</option>
+          </select>
+        </div>
+        <div>
+          <label for="f-imgfmt">Billedformat</label>
+          <select id="f-imgfmt" data-bind="imgFormat">
+            <option value="jpeg">JPEG — mindre fil</option>
+            <option value="png">PNG — skarp skærmtekst</option>
+          </select>
+        </div>
+      </div>
+      <div class="checkline"><input type="checkbox" id="f-toc" data-bind="showToc" checked>
+        <label for="f-toc" style="margin:0">Vis indholdsfortegnelse øverst</label></div>
+      <div class="checkline"><input type="checkbox" id="f-num" data-bind="numbered" checked>
+        <label for="f-num" style="margin:0">Nummerér trinnene</label></div>
+      <div class="checkline"><input type="checkbox" id="f-zoom" data-bind="zoom" checked>
+        <label for="f-zoom" style="margin:0">Klik på et billede forstørrer det</label></div>
+      <p class="help">Ændringer af billedbredde og -format gælder billeder, du indsætter herefter.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Trin</legend>
+      <div id="steps"></div>
+      <button class="addstep" id="btnAddStep">+ Tilføj trin</button>
+    </fieldset>
+
+    <details class="dc">
+      <summary>Metadata (Dublin Core)</summary>
+      <div class="dcbody">
+        <p class="help" style="margin-bottom:10px">Skrives ind i filens hoved, så den kan findes og filtreres senere.
+          Titel, skaber, dato, type, format og sprog udfyldes automatisk.</p>
+        <div class="dcgrid" id="dcgrid"></div>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- ============ HØJRE: FORHÅNDSVISNING ============ -->
+  <div class="pane-preview">
+    <div class="preview-bar">
+      <strong style="color:var(--ink)">Forhåndsvisning</strong>
+      <span class="spacer"></span>
+      <button class="btn small" id="btnNewTab">Åbn i nyt faneblad</button>
+    </div>
+    <iframe id="preview" title="Forhåndsvisning af vejledningen"></iframe>
+  </div>
+</div>
+
+<datalist id="publishers">
+  <option value="Privat">
+  <option value="Syd for Banen — Lokalhistorisk Forening">
+  <option value="Røde Kors Roskilde">
+</datalist>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   1. Data
+   ============================================================ */
+
+const DC_FIELDS = [
+  ["title","Titel"],["creator","Skaber"],["subject","Emne"],["description","Beskrivelse"],
+  ["publisher","Udgiver"],["contributor","Bidragyder"],["date","Dato"],["type","Type"],
+  ["format","Format"],["identifier","Identifikator"],["source","Kilde"],["language","Sprog"],
+  ["relation","Relation"],["coverage","Dækning"],["rights","Rettigheder"]
+];
+
+const THEMES = {
+  neutral : {ink:"#1c2733",soft:"#f2f5f8",line:"#d3dae2",accent:"#2b6f7a",accentSoft:"#e4f0f2",onAccent:"#ffffff"},
+  rodekors: {ink:"#20232a",soft:"#faf3f3",line:"#e0d5d5",accent:"#c8102e",accentSoft:"#fbe9ec",onAccent:"#ffffff"},
+  bordeaux: {ink:"#241a1e",soft:"#f9f4f5",line:"#ddd0d4",accent:"#6b1f35",accentSoft:"#f3e6ea",onAccent:"#ffffff"},
+  skov    : {ink:"#1b2620",soft:"#f2f6f2",line:"#d2ded4",accent:"#2f6b3e",accentSoft:"#e6f1e8",onAccent:"#ffffff"},
+  graa    : {ink:"#222222",soft:"#f4f4f4",line:"#d6d6d6",accent:"#4a4a4a",accentSoft:"#ebebeb",onAccent:"#ffffff"}
+};
+
+const PREFIX = {
+  "Privat":"PRIV",
+  "Syd for Banen — Lokalhistorisk Forening":"SFB",
+  "Røde Kors Roskilde":"RKR"
+};
+
+let seq = 1;
+let activeStepId = null;
+let state = blankState();
+
+function blankState(){
+  return {
+    builder:"Vejledningsbygger", builderVersion:"1.0",
+    title:"", ingress:"", author:"", date:todayISO(), version:"",
+    theme:"neutral", imgMax:1600, imgFormat:"jpeg",
+    showToc:true, numbered:true, zoom:true,
+    dc:Object.fromEntries(DC_FIELDS.map(f=>[f[0],""])),
+    steps:[ newStep() ]
+  };
+}
+function newStep(){
+  return {id:"s"+(seq++), heading:"", kind:"image", image:"", imageW:0, imageH:0,
+          caption:"", alt:"", video:"", body:""};
+}
+function todayISO(){
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+
+/* ============================================================
+   2. Hjælpefunktioner
+   ============================================================ */
+
+const $  = s=>document.querySelector(s);
+const $$ = s=>Array.from(document.querySelectorAll(s));
+
+function esc(s){
+  return String(s==null?"":s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function slug(s){
+  return (s||"vejledning").toLowerCase()
+    .replace(/æ/g,"ae").replace(/ø/g,"oe").replace(/å/g,"aa")
+    .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60) || "vejledning";
+}
+function danskDato(iso){
+  if(!iso) return "";
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if(!m) return iso;
+  const mnd=["januar","februar","marts","april","maj","juni","juli",
+             "august","september","oktober","november","december"];
+  return Number(m[3])+". "+mnd[Number(m[2])-1]+" "+m[1];
+}
+function humanSize(bytes){
+  if(bytes<1024) return bytes+" B";
+  if(bytes<1024*1024) return (bytes/1024).toFixed(0)+" KB";
+  return (bytes/1048576).toFixed(1).replace(".",",")+" MB";
+}
+
+/* ---------- Markdown (delmængde) ---------- */
+function md(src){
+  if(!src||!src.trim()) return "";
+  const lines = String(src).replace(/\r\n?/g,"\n").split("\n");
+  let out=[], list=null, para=[], quote=[];
+
+  const inline = t => {
+    t = esc(t);
+    t = t.replace(/`([^`]+)`/g,'<code>$1</code>');
+    t = t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+    t = t.replace(/(^|[\s(])\*([^*\n]+)\*/g,'$1<em>$2</em>');
+    t = t.replace(/(^|[\s(])_([^_\n]+)_/g,'$1<em>$2</em>');
+    t = t.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return t;
+  };
+  const flushPara = ()=>{ if(para.length){ out.push("<p>"+inline(para.join("\n")).replace(/\n/g,"<br>")+"</p>"); para=[]; } };
+  const flushList = ()=>{ if(list){ out.push("</"+list+">"); list=null; } };
+  const flushQuote= ()=>{ if(quote.length){ out.push('<blockquote>'+inline(quote.join("\n")).replace(/\n/g,"<br>")+"</blockquote>"); quote=[]; } };
+  const flushAll  = ()=>{ flushPara(); flushList(); flushQuote(); };
+
+  for(const raw of lines){
+    const line = raw.replace(/\s+$/,"");
+    if(!line.trim()){ flushAll(); continue; }
+
+    let m;
+    if((m=/^(#{2,4})\s+(.*)$/.exec(line))){
+      flushAll(); const lvl=Math.min(m[1].length+1,5);
+      out.push("<h"+lvl+">"+inline(m[2])+"</h"+lvl+">"); continue;
+    }
+    if(/^(-{3,}|\*{3,})$/.test(line.trim())){ flushAll(); out.push("<hr>"); continue; }
+    if((m=/^>\s?(.*)$/.exec(line))){ flushPara(); flushList(); quote.push(m[1]); continue; }
+    if((m=/^[-*+]\s+(.*)$/.exec(line))){
+      flushPara(); flushQuote();
+      if(list!=="ul"){ flushList(); out.push("<ul>"); list="ul"; }
+      out.push("<li>"+inline(m[1])+"</li>"); continue;
+    }
+    if((m=/^\d+[.)]\s+(.*)$/.exec(line))){
+      flushPara(); flushQuote();
+      if(list!=="ol"){ flushList(); out.push("<ol>"); list="ol"; }
+      out.push("<li>"+inline(m[1])+"</li>"); continue;
+    }
+    flushList(); flushQuote(); para.push(line);
+  }
+  flushAll();
+  return out.join("\n");
+}
+
+/* ---------- Video-embed ---------- */
+function embedInfo(url){
+  const u = (url||"").trim();
+  if(!u) return null;
+  let m;
+  if((m=/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/.exec(u)))
+    return {src:"https://www.youtube-nocookie.com/embed/"+m[1], label:"YouTube", link:u, ratio:56.25};
+  if((m=/vimeo\.com\/(?:video\/)?(\d+)/.exec(u)))
+    return {src:"https://player.vimeo.com/video/"+m[1], label:"Vimeo", link:u, ratio:56.25};
+  if((m=/screenpal\.com\/(?:watch|player)\/([A-Za-z0-9]+)/.exec(u)) ||
+     (m=/screencast-o-matic\.com\/(?:watch|player)\/([A-Za-z0-9]+)/.exec(u)))
+    return {src:"https://go.screenpal.com/player/"+m[1]+"?width=100%&height=100%&ff=1&title=0",
+            label:"Screenpal", link:u, ratio:62.5};
+  if(/^<iframe/i.test(u)) return {raw:u, label:"Indlejret afspiller", link:"", ratio:56.25};
+  if(/^https?:\/\//i.test(u)) return {link:u, label:"Video", ratio:0};
+  return null;
+}
+
+/* ============================================================
+   3. Formular
+   ============================================================ */
+
+function buildDcFields(){
+  $("#dcgrid").innerHTML = DC_FIELDS.map(([k,label])=>{
+    const list = k==="publisher" ? ' list="publishers"' : "";
+    return '<div><label for="dc-'+k+'">'+label+' <span class="hint">dc.'+k+'</span></label>'+
+           '<input type="text" id="dc-'+k+'" data-dc="'+k+'"'+list+'></div>';
+  }).join("");
+}
+
+function stepMarkup(st,i){
+  const n=i+1;
+  const img = st.image
+    ? '<div class="thumbwrap"><img class="thumb" src="'+st.image+'" alt="">'+
+      '<div class="thumbmeta">'+esc(st.imageW+"×"+st.imageH+" px")+'<br>'+humanSize(Math.round(st.image.length*0.75))+
+      '<br><button class="btn small" data-act="delimg" style="margin-top:8px">Fjern billede</button>'+
+      '<button class="btn small" data-act="pick" style="margin-top:8px">Skift …</button></div></div>'
+    : '<div class="dropzone" tabindex="0" data-act="pick">'+
+      '<strong>Sæt billedet ind her</strong><br>⌘V / Ctrl+V · træk en fil hertil · eller klik for at vælge</div>';
+
+  const videoBlock =
+    '<label>Link til video <span class="hint">— fra Screenpal, YouTube eller Vimeo</span></label>'+
+    '<input type="text" data-field="video" value="'+esc(st.video)+'" placeholder="https://screenpal.com/watch/…">'+
+    '<p class="help">Linket vises også som almindeligt link under afspilleren, så vejledningen stadig kan bruges, hvis indlejringen holder op med at virke.</p>';
+
+  return '<div class="step'+(st.id===activeStepId?" is-active":"")+'" data-id="'+st.id+'">'+
+    '<div class="step-head"><span class="step-no">TRIN '+n+'</span>'+
+      '<div class="step-tools">'+
+        '<button class="btn icon" data-act="up" title="Flyt op" aria-label="Flyt trin '+n+' op">↑</button>'+
+        '<button class="btn icon" data-act="down" title="Flyt ned" aria-label="Flyt trin '+n+' ned">↓</button>'+
+        '<button class="btn icon" data-act="dup" title="Kopiér trin" aria-label="Kopiér trin '+n+'">⧉</button>'+
+        '<button class="btn icon" data-act="del" title="Slet trin" aria-label="Slet trin '+n+'">✕</button>'+
+      '</div></div>'+
+    '<label>Overskrift</label>'+
+    '<input type="text" data-field="heading" value="'+esc(st.heading)+'" placeholder="Åbn byggeren i browseren">'+
+    '<div class="kindrow">'+
+      '<label><input type="radio" name="kind-'+st.id+'" data-field="kind" value="image"'+(st.kind==="image"?" checked":"")+'> Billede</label>'+
+      '<label><input type="radio" name="kind-'+st.id+'" data-field="kind" value="video"'+(st.kind==="video"?" checked":"")+'> Video</label>'+
+      '<label><input type="radio" name="kind-'+st.id+'" data-field="kind" value="text"'+(st.kind==="text"?" checked":"")+'> Kun tekst</label>'+
+    '</div>'+
+    (st.kind==="image" ? img : st.kind==="video" ? videoBlock : "")+
+    (st.kind!=="text"
+      ? '<label>Billedtekst <span class="hint">— valgfri</span></label>'+
+        '<input type="text" data-field="caption" value="'+esc(st.caption)+'">'+
+        (st.kind==="image"
+          ? '<label>Alternativ tekst <span class="hint">— beskriver billedet for skærmlæsere</span></label>'+
+            '<input type="text" data-field="alt" value="'+esc(st.alt)+'">' : "")
+      : "")+
+    '<label>Beskrivelse <span class="hint">— Markdown: **fed**, *kursiv*, - punkter, > bemærkning</span></label>'+
+    '<textarea data-field="body" rows="4">'+esc(st.body)+'</textarea>'+
+    '<input type="file" accept="image/*" hidden data-role="filepick">'+
+  '</div>';
+}
+
+function renderSteps(){
+  $("#steps").innerHTML = state.steps.map(stepMarkup).join("");
+}
+
+function renderAll(){
+  $$("[data-bind]").forEach(el=>{
+    const k=el.dataset.bind;
+    if(el.type==="checkbox") el.checked=!!state[k]; else el.value=state[k];
+  });
+  $$("[data-dc]").forEach(el=>{ el.value = state.dc[el.dataset.dc]||""; });
+  renderSteps();
+  schedulePreview();
+}
+
+/* ---------- Binding ---------- */
+document.addEventListener("input", e=>{
+  const el=e.target;
+  if(el.dataset.bind){
+    const k=el.dataset.bind;
+    state[k] = el.type==="checkbox" ? el.checked : (k==="imgMax" ? Number(el.value) : el.value);
+    if(k==="theme") { schedulePreview(); return; }
+    schedulePreview(); return;
+  }
+  if(el.dataset.dc){
+    state.dc[el.dataset.dc]=el.value;
+    if(el.dataset.dc==="publisher") suggestId();
+    schedulePreview(); return;
+  }
+  const card = el.closest(".step");
+  if(card && el.dataset.field){
+    const st = state.steps.find(s=>s.id===card.dataset.id);
+    if(!st) return;
+    st[el.dataset.field]=el.value;
+    schedulePreview();
+  }
+});
+
+document.addEventListener("change", e=>{
+  const el=e.target;
+  if(el.dataset.field==="kind"){
+    const card=el.closest(".step");
+    const st=state.steps.find(s=>s.id===card.dataset.id);
+    st.kind=el.value; renderSteps(); schedulePreview();
+  }
+  if(el.dataset.role==="filepick" && el.files && el.files[0]){
+    const card=el.closest(".step");
+    handleImage(el.files[0], card.dataset.id);
+    el.value="";
+  }
+});
+
+document.addEventListener("focusin", e=>{
+  const card=e.target.closest(".step");
+  if(card && card.dataset.id!==activeStepId){
+    activeStepId=card.dataset.id;
+    $$(".step").forEach(c=>c.classList.toggle("is-active",c.dataset.id===activeStepId));
+  }
+});
+document.addEventListener("click", e=>{
+  const card=e.target.closest(".step");
+  if(card){
+    activeStepId=card.dataset.id;
+    $$(".step").forEach(c=>c.classList.toggle("is-active",c.dataset.id===activeStepId));
+  }
+  const btn=e.target.closest("[data-act]");
+  if(!btn||!card) return;
+  const id=card.dataset.id;
+  const i=state.steps.findIndex(s=>s.id===id);
+  const act=btn.dataset.act;
+  if(act==="pick"){ card.querySelector('[data-role="filepick"]').click(); return; }
+  if(act==="delimg"){ state.steps[i].image=""; renderSteps(); schedulePreview(); return; }
+  if(act==="up" && i>0){ state.steps.splice(i-1,0,state.steps.splice(i,1)[0]); }
+  if(act==="down" && i<state.steps.length-1){ state.steps.splice(i+1,0,state.steps.splice(i,1)[0]); }
+  if(act==="dup"){ const c=JSON.parse(JSON.stringify(state.steps[i])); c.id="s"+(seq++); state.steps.splice(i+1,0,c); }
+  if(act==="del"){
+    if(state.steps.length===1){ state.steps=[newStep()]; }
+    else if(confirm("Slet trin "+(i+1)+"?")) state.steps.splice(i,1);
+  }
+  renderSteps(); schedulePreview();
+});
+
+$("#btnAddStep").addEventListener("click",()=>{
+  const st=newStep(); state.steps.push(st); activeStepId=st.id;
+  renderSteps(); schedulePreview();
+  const cards=$$(".step"); const last=cards[cards.length-1];
+  last.scrollIntoView({block:"center",behavior:"smooth"});
+  last.querySelector('[data-field="heading"]').focus();
+});
+
+function suggestId(){
+  const p=state.dc.publisher;
+  if(PREFIX[p] && !state.dc.identifier){
+    state.dc.identifier = PREFIX[p]+"-"+slug(state.title||"vejledning").slice(0,28);
+    const el=$("#dc-identifier"); if(el) el.value=state.dc.identifier;
+  }
+}
+
+/* ============================================================
+   4. Billeder
+   ============================================================ */
+
+function handleImage(file, stepId){
+  if(!file || !file.type.startsWith("image/")){ toast("Det er ikke en billedfil."); return; }
+  const st=state.steps.find(s=>s.id===stepId);
+  if(!st) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=Number(state.imgMax)||0;
+      let w=img.naturalWidth, h=img.naturalHeight;
+      if(max && w>max){ h=Math.round(h*max/w); w=max; }
+      const cv=document.createElement("canvas");
+      cv.width=w; cv.height=h;
+      const cx=cv.getContext("2d");
+      if(state.imgFormat==="jpeg"){ cx.fillStyle="#fff"; cx.fillRect(0,0,w,h); }
+      cx.drawImage(img,0,0,w,h);
+      st.image = state.imgFormat==="jpeg" ? cv.toDataURL("image/jpeg",0.92) : cv.toDataURL("image/png");
+      st.imageW=w; st.imageH=h;
+      st.kind="image";
+      renderSteps(); schedulePreview();
+      const n=state.steps.findIndex(s=>s.id===stepId)+1;
+      toast("Billedet er sat ind i trin "+n+".");
+    };
+    img.onerror=()=>toast("Billedet kunne ikke læses.");
+    img.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* Indsæt fra udklipsholder */
+document.addEventListener("paste", e=>{
+  const t=e.target;
+  if(t && (t.tagName==="TEXTAREA" || (t.tagName==="INPUT" && t.type==="text"))){
+    const hasImage=Array.from(e.clipboardData?e.clipboardData.items:[]).some(i=>i.type.startsWith("image/"));
+    if(!hasImage) return;
+  }
+  const items=Array.from(e.clipboardData?e.clipboardData.items:[]);
+  const item=items.find(i=>i.type.startsWith("image/"));
+  if(!item) return;
+  const file=item.getAsFile();
+  if(!file) return;
+  e.preventDefault();
+  let id=activeStepId;
+  if(!id || !state.steps.some(s=>s.id===id)){
+    const empty=state.steps.find(s=>!s.image && s.kind==="image");
+    if(empty){ id=empty.id; }
+    else { const st=newStep(); state.steps.push(st); id=st.id; }
+    activeStepId=id;
+  }
+  handleImage(file,id);
+});
+
+/* Træk og slip */
+document.addEventListener("dragover", e=>{
+  const dz=e.target.closest(".dropzone");
+  if(dz){ e.preventDefault(); dz.classList.add("over"); }
+});
+document.addEventListener("dragleave", e=>{
+  const dz=e.target.closest(".dropzone"); if(dz) dz.classList.remove("over");
+});
+document.addEventListener("drop", e=>{
+  const dz=e.target.closest(".dropzone");
+  if(!dz) return;
+  e.preventDefault(); dz.classList.remove("over");
+  const card=dz.closest(".step");
+  const f=e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) handleImage(f,card.dataset.id);
+});
+document.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && e.target.classList && e.target.classList.contains("dropzone")){
+    e.target.closest(".step").querySelector('[data-role="filepick"]').click();
+  }
+  if((e.metaKey||e.ctrlKey) && e.key==="s"){ e.preventDefault(); saveFile(); }
+});
+
+/* ============================================================
+   5. Outputfilen
+   ============================================================ */
+
+function autoDc(){
+  const d=Object.assign({},state.dc);
+  if(!d.title)   d.title=state.title;
+  if(!d.creator) d.creator=state.author;
+  if(!d.date)    d.date=state.date;
+  if(!d.type)    d.type="Text";
+  if(!d.format)  d.format="text/html";
+  if(!d.language)d.language="da";
+  if(!d.description) d.description=state.ingress;
+  return d;
+}
+
+function renderStepOut(st,i){
+  const n=i+1;
+  const id="trin-"+n;
+  const heading = st.heading || "Trin "+n;
+  let media="";
+
+  if(st.kind==="image" && st.image){
+    media='<figure class="shot"><img src="'+st.image+'" alt="'+esc(st.alt||heading)+'"'+
+          (st.imageW?' width="'+st.imageW+'" height="'+st.imageH+'"':"")+' loading="lazy">'+
+          (st.caption?'<figcaption>'+esc(st.caption)+'</figcaption>':"")+'</figure>';
+  } else if(st.kind==="video"){
+    const v=embedInfo(st.video);
+    if(v && v.raw){
+      media='<figure class="video"><div class="frame">'+v.raw+'</div>'+
+            (st.caption?'<figcaption>'+esc(st.caption)+'</figcaption>':"")+'</figure>';
+    } else if(v && v.src){
+      media='<figure class="video"><div class="frame" style="padding-top:'+v.ratio+'%">'+
+            '<iframe src="'+esc(v.src)+'" title="'+esc(heading)+'" allowfullscreen '+
+            'allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture" '+
+            'frameborder="0"></iframe></div>'+
+            '<figcaption>'+(st.caption?esc(st.caption)+' · ':"")+
+            '<a href="'+esc(v.link)+'" target="_blank" rel="noopener">Åbn videoen hos '+esc(v.label)+'</a>'+
+            '</figcaption></figure>';
+    } else if(v && v.link){
+      media='<p class="videolink"><a href="'+esc(v.link)+'" target="_blank" rel="noopener">▶ '+
+            esc(st.caption||"Se videoen")+'</a></p>';
+    }
+  }
+
+  return '<li class="step" id="'+id+'">'+
+    '<div class="step-head">'+
+      (state.numbered?'<span class="num" aria-hidden="true">'+n+'</span>':"")+
+      '<h2>'+esc(heading)+'</h2>'+
+    '</div>'+
+    media+
+    (st.body ? '<div class="body">'+md(st.body)+'</div>' : "")+
+  '</li>';
+}
+
+function buildOutput(){
+  const t = THEMES[state.theme]||THEMES.neutral;
+  const d = autoDc();
+  const title = state.title || "Vejledning";
+  const metaLine = [state.author, danskDato(state.date), state.version?("version "+state.version):""]
+      .filter(Boolean).map(esc).join(" &middot; ");
+
+  const dcTags = DC_FIELDS.filter(f=>d[f[0]])
+      .map(f=>'  <meta name="DC.'+f[0]+'" content="'+esc(d[f[0]])+'">').join("\n");
+
+  const toc = state.showToc && state.steps.length>1
+    ? '<nav class="toc" aria-label="Indhold"><h2>Indhold</h2><ol>'+
+      state.steps.map((st,i)=>'<li><a href="#trin-'+(i+1)+'">'+esc(st.heading||("Trin "+(i+1)))+'</a></li>').join("")+
+      '</ol></nav>' : "";
+
+  const source = JSON.stringify(state).replace(/</g,"\\u003c");
+
+  const zoomScript = state.zoom ? [
+'<script>',
+'(function(){',
+'  var ov=document.createElement("div"); ov.className="zoom"; ov.setAttribute("hidden","");',
+'  ov.innerHTML="<img alt=\\"\\">"; document.body.appendChild(ov);',
+'  var img=ov.querySelector("img");',
+'  document.addEventListener("click",function(e){',
+'    var t=e.target;',
+'    if(t.tagName==="IMG" && t.closest(".shot")){ img.src=t.src; img.alt=t.alt; ov.removeAttribute("hidden"); }',
+'    else if(!ov.hasAttribute("hidden")){ ov.setAttribute("hidden",""); }',
+'  });',
+'  document.addEventListener("keydown",function(e){ if(e.key==="Escape") ov.setAttribute("hidden",""); });',
+'})();',
+'<\/script>'].join("\n") : "";
+
+  return `<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${esc(title)}</title>
+<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">
+${dcTags}
+<meta name="generator" content="Vejledningsbygger 1.0">
+<style>
+  :root{
+    --ink:${t.ink}; --soft:${t.soft}; --line:${t.line};
+    --accent:${t.accent}; --accent-soft:${t.accentSoft}; --on-accent:${t.onAccent};
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--soft);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:18px;line-height:1.65;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px 70px}
+  a{color:var(--accent)}
+  a:focus-visible,button:focus-visible{outline:3px solid #ffb703;outline-offset:2px}
+
+  header.doc{background:#fff;border-bottom:6px solid var(--accent);margin-bottom:26px}
+  header.doc .inner{max-width:860px;margin:0 auto;padding:34px 20px 26px}
+  header.doc h1{margin:0 0 8px;font-size:33px;line-height:1.2;letter-spacing:-.3px}
+  header.doc .ingress{font-size:19px;color:var(--ink);opacity:.9;margin:0 0 14px;max-width:60ch}
+  header.doc .meta{font-size:15px;opacity:.65}
+  .actions{margin-top:16px}
+  .actions button{
+    border:1px solid var(--line);background:#fff;color:var(--ink);
+    padding:8px 14px;border-radius:8px;cursor:pointer;font-size:15px;font-family:inherit
+  }
+  .actions button:hover{background:var(--accent-soft)}
+
+  .toc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 22px;margin:0 0 30px}
+  .toc h2{font-size:15px;text-transform:uppercase;letter-spacing:.6px;margin:0 0 8px;opacity:.6}
+  .toc ol{margin:0;padding-left:22px}
+  .toc li{margin:3px 0}
+  .toc a{text-decoration:none}
+  .toc a:hover{text-decoration:underline}
+
+  ol.steps{list-style:none;margin:0;padding:0}
+  li.step{background:#fff;border:1px solid var(--line);border-radius:10px;
+    padding:22px 26px 26px;margin:0 0 22px;scroll-margin-top:16px}
+  .step-head{display:flex;align-items:baseline;gap:14px;margin-bottom:14px}
+  .step-head .num{
+    flex:none;width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--on-accent);
+    display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:19px;
+    align-self:flex-start
+  }
+  .step-head h2{margin:0;font-size:23px;line-height:1.3}
+
+  figure{margin:0 0 16px}
+  figure.shot img{
+    display:block;max-width:100%;height:auto;border:1px solid var(--line);border-radius:6px;
+    box-shadow:0 2px 10px rgba(0,0,0,.18);background:#fff;cursor:zoom-in
+  }
+  figcaption{font-size:15px;opacity:.7;margin-top:7px}
+  figure.video .frame{position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:6px;overflow:hidden}
+  figure.video .frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .videolink a{display:inline-block;background:var(--accent-soft);border:1px solid var(--line);
+    padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600}
+
+  .body>*:first-child{margin-top:0}
+  .body>*:last-child{margin-bottom:0}
+  .body h3{font-size:19px;margin:20px 0 6px}
+  .body h4,.body h5{font-size:17px;margin:18px 0 6px}
+  .body ul,.body ol{padding-left:24px}
+  .body li{margin:4px 0}
+  .body code{background:var(--accent-soft);padding:1px 6px;border-radius:4px;font-size:.9em}
+  .body blockquote{margin:16px 0;padding:12px 18px;background:var(--accent-soft);
+    border-left:5px solid var(--accent);border-radius:0 8px 8px 0}
+  .body blockquote p{margin:0}
+  .body hr{border:0;border-top:1px solid var(--line);margin:22px 0}
+
+  footer.doc{max-width:860px;margin:0 auto;padding:24px 20px 0;border-top:1px solid var(--line);
+    font-size:15px;opacity:.65}
+
+  .zoom{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;
+    justify-content:center;padding:24px;z-index:99;cursor:zoom-out}
+  .zoom[hidden]{display:none}
+  .zoom img{max-width:100%;max-height:100%;box-shadow:0 4px 30px rgba(0,0,0,.5)}
+
+  @media print{
+    body{background:#fff;font-size:12pt}
+    header.doc{border-bottom-width:3px}
+    .actions,.zoom{display:none !important}
+    li.step{break-inside:avoid;page-break-inside:avoid;border:1px solid #ccc;box-shadow:none}
+    figure.shot img{box-shadow:none;max-height:12cm;width:auto}
+    figure.video .frame{display:none}
+    .toc{break-after:page}
+    a{color:inherit;text-decoration:none}
+  }
+  @media (max-width:620px){
+    body{font-size:17px}
+    header.doc h1{font-size:26px}
+    li.step{padding:18px 16px 20px}
+    .step-head h2{font-size:20px}
+  }
+</style>
+</head>
+<body>
+<header class="doc">
+  <div class="inner">
+    <h1>${esc(title)}</h1>
+    ${state.ingress?'<p class="ingress">'+esc(state.ingress).replace(/\n/g,"<br>")+"</p>":""}
+    ${metaLine?'<p class="meta">'+metaLine+"</p>":""}
+    <div class="actions"><button type="button" onclick="window.print()">Print eller gem som PDF</button></div>
+  </div>
+</header>
+
+<div class="wrap">
+  ${toc}
+  <ol class="steps">
+${state.steps.map(renderStepOut).join("\n")}
+  </ol>
+</div>
+
+<footer class="doc">
+  ${esc(title)}${state.version?" &middot; version "+esc(state.version):""}${state.date?" &middot; "+esc(danskDato(state.date)):""}
+  &middot; én selvstændig HTML-fil
+</footer>
+
+<script type="application/json" id="builder-source-data">${source}<\/script>
+${zoomScript}
+</body>
+</html>`;
+}
+
+/* ============================================================
+   6. Forhåndsvisning, gem og åbn
+   ============================================================ */
+
+let previewTimer=null, lastHtml="";
+function schedulePreview(){
+  clearTimeout(previewTimer);
+  previewTimer=setTimeout(()=>{
+    lastHtml=buildOutput();
+    $("#preview").srcdoc=lastHtml;
+    $("#filesize").textContent="Filstørrelse: "+humanSize(new Blob([lastHtml]).size);
+  },250);
+}
+
+function saveFile(){
+  if(!state.title.trim()){ toast("Giv vejledningen en titel først."); $("#f-title").focus(); return; }
+  const html=buildOutput();
+  const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=slug(state.title)+".html";
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000);
+  toast("Vejledningen er hentet.");
+}
+$("#btnSave").addEventListener("click",saveFile);
+
+$("#btnNewTab").addEventListener("click",()=>{
+  const w=window.open("","_blank");
+  w.document.write(buildOutput()); w.document.close();
+});
+
+$("#btnOpen").addEventListener("click",()=>$("#fileOpen").click());
+$("#fileOpen").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const doc=new DOMParser().parseFromString(r.result,"text/html");
+      const tag=doc.querySelector("#builder-source-data");
+      if(!tag) throw new Error("ingen data");
+      const data=JSON.parse(tag.textContent);
+      if(!data.steps) throw new Error("forkert format");
+      state=Object.assign(blankState(),data);
+      state.steps.forEach(s=>{ s.id="s"+(seq++); });
+      activeStepId=null;
+      renderAll();
+      toast("Vejledningen er åbnet og kan redigeres.");
+    }catch(err){
+      alert("Filen kunne ikke læses som en vejledning fra denne bygger.\n\nDen skal være en HTML-fil, der er lavet med Vejledningsbyggeren.");
+    }
+  };
+  r.readAsText(f);
+  e.target.value="";
+});
+
+$("#btnReset").addEventListener("click",()=>{
+  if(confirm("Ryd alle felter og begynd forfra?")){ state=blankState(); activeStepId=null; renderAll(); }
+});
+
+$("#btnExample").addEventListener("click",()=>{
+  state.title="Sådan bruger du Vejledningsbyggeren";
+  state.ingress="En kort gennemgang af, hvordan du laver en trin-for-trin vejledning og gemmer den som én selvstændig HTML-fil.";
+  state.author=state.author||"";
+  state.steps=[
+    Object.assign(newStep(),{heading:"Udfyld titel og indledning",kind:"text",
+      body:"Titlen står øverst i den færdige fil. Indledningen fortæller læseren, **hvad vejledningen dækker**, og hvem den er skrevet til.\n\n> Skriv indledningen, som om læseren aldrig har set programmet før."}),
+    Object.assign(newStep(),{heading:"Lav et skærmbillede i Screenpal",kind:"text",
+      body:"- Tag billedet, og sæt pile, tal og korte tekster på\n- Kopiér billedet til udklipsholderen\n- Klik i trinnet her i byggeren, og tryk ⌘V"}),
+    Object.assign(newStep(),{heading:"Hent den færdige fil",kind:"text",
+      body:"Klik på **Hent vejledning**. Du får én HTML-fil med billeder og tekst indeni. Den kan lægges på nettet, sendes som vedhæftet fil eller ligge på en USB-nøgle.\n\nFilen kan åbnes i byggeren igen, hvis du vil rette i den senere."})
+  ];
+  activeStepId=null;
+  renderAll();
+  toast("Eksemplet er sat ind.");
+});
+
+/* ---------- Start ---------- */
+buildDcFields();
+renderAll();
+</script>
+</body>
+</html>

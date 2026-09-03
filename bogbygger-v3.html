@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BogbygBygger</title>
+<style>
+  :root{
+    --paper:#EDE7D8;
+    --paper-dim:#E2DBC8;
+    --ink:#211E19;
+    --rust:#9A4630;
+    --moss:#47543C;
+    --hint:#5F5A4B;
+    --line:#cbc2a8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;
+  }
+
+  /* ---------- Topbar ---------- */
+  header.top{
+    padding:1.6rem 1.2rem 1.3rem;
+    border-bottom:1px solid var(--line);
+  }
+  header.top h1{
+    font-family:Georgia,"Iowan Old Style",Palatino,serif;
+    font-size:1.85rem;
+    margin:0 0 .3rem;
+    color:var(--rust);
+  }
+  header.top p{
+    margin:0;
+    color:var(--hint);
+    font-size:14.5px;
+    line-height:1.55;
+    max-width:70ch;
+  }
+
+  /* ---------- To-rudet layout ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns:1fr 380px;
+    gap:1.6rem;
+    align-items:start;
+    padding:1.4rem 1.2rem 4rem;
+  }
+  .formpane{max-width:640px;}
+  .previewpane{position:sticky;top:1rem;}
+  .previewpane h2{
+    font-size:13.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--moss);margin:0 0 .5rem;
+  }
+  .previewpane iframe{
+    width:100%;height:min(78vh,760px);
+    border:1px solid var(--line);border-radius:8px;
+    background:var(--paper-dim);
+  }
+  .previewpane .note{font-size:13px;color:var(--hint);line-height:1.55;margin:.5rem 0 0;}
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;}
+    .previewpane{position:static;}
+    .previewpane iframe{height:60vh;}
+  }
+
+  /* ---------- Felter ---------- */
+  .block{
+    border-top:1px solid var(--line);
+    padding:1.2rem 0 .3rem;
+  }
+  .block:first-child{border-top:none;padding-top:.2rem;}
+  .block > h2{
+    font-size:13.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--moss);margin:0 0 .6rem;
+  }
+  label.f{
+    display:block;
+    font-size:13.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--moss);
+    margin:1rem 0 .3rem;
+  }
+  .hint{font-size:13.5px;line-height:1.55;color:var(--hint);margin:.25rem 0 0;}
+  input[type=text],input[type=url],textarea,select{
+    width:100%;padding:.62rem .7rem;
+    border:1px solid var(--line);border-radius:7px;
+    background:#FBF8F1;color:var(--ink);
+    font-size:15.5px;font-family:inherit;line-height:1.5;
+    min-height:44px;
+  }
+  textarea{min-height:120px;resize:vertical;}
+  input:focus,textarea:focus,select:focus,button:focus,summary:focus,.filebtn:focus-within{
+    outline:2px solid var(--rust);outline-offset:2px;
+  }
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+  @media (max-width:560px){.row2{grid-template-columns:1fr;}}
+
+  .filebtn{
+    display:flex;align-items:center;gap:.6rem;
+    border:1.5px dashed var(--rust);border-radius:8px;
+    padding:.75rem;background:#FBF8F1;cursor:pointer;
+    font-size:14.5px;color:var(--ink);min-height:44px;
+  }
+  .filebtn input{display:none;}
+  .filebtn:hover{background:var(--paper-dim);}
+  .filestatus{font-size:13.5px;color:var(--moss);margin-top:.35rem;word-break:break-word;}
+  .filestatus.err{color:var(--rust);}
+
+  /* ---------- Temavælger ---------- */
+  .themes{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.2rem;}
+  .themes label{
+    display:flex;align-items:center;gap:.5rem;
+    border:2px solid var(--line);border-radius:9px;
+    padding:.6rem .85rem;cursor:pointer;
+    font-size:14.5px;min-height:44px;background:#FBF8F1;
+  }
+  .themes label:has(input:checked){border-color:var(--rust);background:#fff;}
+  .themes input{width:auto;min-height:auto;}
+  .dot{width:17px;height:17px;border-radius:50%;border:1px solid rgba(0,0,0,.25);flex-shrink:0;}
+
+  .modes{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.2rem;}
+  .modes label{
+    display:flex;align-items:center;gap:.45rem;
+    border:2px solid var(--line);border-radius:9px;padding:.55rem .8rem;
+    cursor:pointer;font-size:14.5px;min-height:44px;background:#FBF8F1;
+  }
+  .modes label:has(input:checked){border-color:var(--rust);background:#fff;}
+  .modes input{width:auto;min-height:auto;}
+
+  /* ---------- Dublin Core ---------- */
+  details.dc{
+    border:1px solid var(--line);border-radius:9px;
+    padding:.7rem .9rem;margin-top:1.2rem;background:#FBF8F1;
+  }
+  details.dc > summary{
+    cursor:pointer;font-size:14.5px;font-weight:600;color:var(--rust);
+    padding:.35rem 0;min-height:44px;display:flex;align-items:center;
+  }
+  details.dc .dc-intro{font-size:13px;color:var(--hint);line-height:1.55;margin:.2rem 0 .8rem;}
+  details.dc label.f{font-size:14px;text-transform:none;letter-spacing:0;}
+  details.dc .hint{font-size:13px;}
+
+  /* ---------- Handling ---------- */
+  .actions{margin-top:1.6rem;}
+  button.primary{
+    width:100%;
+    background:var(--rust);color:#fff;border:none;border-radius:9px;
+    padding:.95rem 1rem;font-size:17px;font-weight:700;cursor:pointer;
+    min-height:52px;font-family:inherit;
+  }
+  button.primary:hover{background:#823A27;}
+  button.secondary{
+    background:#fff;color:var(--rust);border:2px solid var(--rust);
+    border-radius:9px;padding:.6rem 1rem;font-size:14.5px;font-weight:600;
+    cursor:pointer;min-height:44px;font-family:inherit;margin-top:.5rem;
+  }
+  button.secondary:hover{background:var(--paper-dim);}
+  #status{
+    font-size:14.5px;line-height:1.55;color:var(--moss);
+    margin-top:.8rem;min-height:1.4em;
+  }
+  #status.err{color:var(--rust);font-weight:600;}
+  footer{
+    padding:0 1.2rem 3rem;font-size:13.5px;color:var(--hint);
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>BogbygBygger</h1>
+  <p>Lav en e-bog som én selvstændig HTML-fil. Tekst, forside og metadata ligger i samme fil, som kan læses uden internet — også om mange år.</p>
+</header>
+
+<main class="layout">
+
+<div class="formpane">
+
+  <!-- 1. Indlæs eksisterende fil -->
+  <div class="block">
+    <h2>Indlæs eksisterende bog (valgfri)</h2>
+    <label class="filebtn" for="f-load">
+      <span aria-hidden="true">📖</span>
+      <span>Vælg en bog, du har lavet før…</span>
+      <input type="file" id="f-load" accept=".html,text/html">
+    </label>
+    <div class="filestatus" id="load-status"></div>
+    <p class="hint">Alle felter bliver fyldt ud igen, så du kan rette og gemme på ny. Forsidebilledet følger med.</p>
+  </div>
+
+  <!-- 2. Tema -->
+  <div class="block">
+    <h2>Tema</h2>
+    <div class="themes" id="theme-picker">
+      <label><input type="radio" name="theme" value="original" checked><span class="dot" style="background:#9A4630"></span> Oprindeligt</label>
+      <label><input type="radio" name="theme" value="rodekors"><span class="dot" style="background:#E30A0B"></span> Røde Kors</label>
+      <label><input type="radio" name="theme" value="bordeaux"><span class="dot" style="background:#9E2453"></span> Lokalhistorisk</label>
+    </div>
+  </div>
+
+  <!-- 3. Bogens indhold -->
+  <div class="block">
+    <h2>Bogen</h2>
+
+    <label class="f" for="f-label">Mærkat (valgfri)</label>
+    <input type="text" id="f-label" placeholder="F.eks. Lokalhistorisk fortælling">
+    <p class="hint">En kort linje over titlen på forsiden.</p>
+
+    <label class="f" for="f-title">Titel</label>
+    <input type="text" id="f-title" placeholder="F.eks. Butikkerne i bymidten">
+
+    <label class="f" for="f-place">Sted</label>
+    <input type="text" id="f-place" placeholder="F.eks. Roskilde, Syd for Banen">
+    <p class="hint">Vises på forsiden og udfylder samtidig feltet Dækning under metadata.</p>
+
+    <label class="f" for="f-desc">Kort forklaring</label>
+    <textarea id="f-desc" style="min-height:80px;" placeholder="En kort tekst om bogens indhold…"></textarea>
+    <p class="hint">Vises på bogens forside og udfylder feltet Beskrivelse under metadata.</p>
+
+    <label class="f" for="f-cover">Forsidebillede</label>
+    <label class="filebtn" for="f-cover">
+      <span aria-hidden="true">📷</span>
+      <span>Vælg billede…</span>
+      <input type="file" id="f-cover" accept="image/*">
+    </label>
+    <div class="filestatus" id="cover-status"></div>
+    <p class="hint">Billedet skaleres automatisk ned til 1100 px og lægges ind i filen. Der er intet at indstille.</p>
+
+    <label class="f" for="f-share">Webadresse til delingsbillede (valgfri)</label>
+    <input type="url" id="f-share" placeholder="https://…/forside.jpg">
+    <p class="hint">Facebook og LinkedIn kan ikke læse det indlejrede billede. Læg samme billede op som en almindelig fil et sted på nettet, og skriv adressen her, hvis bogen skal deles.</p>
+
+    <label class="f" for="f-md">Manuskript (Markdown)</label>
+    <label class="filebtn" for="f-md">
+      <span aria-hidden="true">📄</span>
+      <span>Vælg .md-fil…</span>
+      <input type="file" id="f-md" accept=".md,.markdown,text/markdown,text/plain">
+    </label>
+    <div class="filestatus" id="md-status"></div>
+    <p class="hint">Kapitler laves automatisk ud fra linjer der starter med <code>##</code>. Har filen YAML-frontmatter med <code>dc.</code>-felter øverst, udfyldes metadata nedenfor af sig selv.</p>
+
+    <label class="f" for="f-mdtext">Eller skriv teksten her</label>
+    <textarea id="f-mdtext" placeholder="## Kapitel 1&#10;Her starter fortællingen…"></textarea>
+    <p class="hint">Du kan skrive: <code>**fed**</code>, <code>*kursiv*</code>, <code>## Overskrift</code>, <code>### Underoverskrift</code>, <code>- punkt</code>, <code>1. punkt</code>, <code>&gt; citat</code>, <code>[tekst](https://…)</code>, <code>---</code> for en streg og <code>`kode`</code>.</p>
+
+    <label class="f">Standardvisning når bogen åbnes</label>
+    <div class="modes" id="mode-picker">
+      <label><input type="radio" name="defmode" value="light" checked> Lyst</label>
+      <label><input type="radio" name="defmode" value="sepia"> Sepia</label>
+      <label><input type="radio" name="defmode" value="dark"> Mørkt</label>
+    </div>
+    <p class="hint">Læseren kan altid selv skifte visning og skriftstørrelse i bogens egen menu — og valget huskes til næste gang.</p>
+  </div>
+
+  <!-- 4. Knap i bunden -->
+  <div class="block">
+    <h2>Knap i bunden (valgfri)</h2>
+    <div class="row2">
+      <div>
+        <label class="f" for="f-cta-text">Knaptekst</label>
+        <input type="text" id="f-cta-text" placeholder="Læs mere om foreningen">
+      </div>
+      <div>
+        <label class="f" for="f-cta-url">Webadresse</label>
+        <input type="url" id="f-cta-url" placeholder="https://…">
+      </div>
+    </div>
+    <p class="hint">Udfyld begge felter, hvis der skal være en knap nederst i bogen. Ellers lad dem stå tomme.</p>
+  </div>
+
+  <!-- 5. Dublin Core -->
+  <details class="dc">
+    <summary>Dublin Core-metadata</summary>
+    <p class="dc-intro">Til arkivering. Alle felter er valgfrie — udfyld dem der giver mening.</p>
+
+    <label class="f" for="dc-title">Titel</label>
+    <input type="text" id="dc-title">
+    <p class="hint">udfyldes automatisk fra titlen</p>
+
+    <label class="f" for="dc-creator">Ophav / skaber</label>
+    <input type="text" id="dc-creator">
+    <p class="hint">fortæller, optager eller den der har skabt materialet</p>
+
+    <label class="f" for="dc-subject">Emne / nøgleord</label>
+    <input type="text" id="dc-subject">
+    <p class="hint">adskil med semikolon</p>
+
+    <label class="f" for="dc-description">Beskrivelse</label>
+    <textarea id="dc-description" style="min-height:70px;"></textarea>
+    <p class="hint">udfyldes automatisk fra beskrivelsen</p>
+
+    <label class="f" for="dc-publisher">Udgiver</label>
+    <input type="text" id="dc-publisher">
+    <p class="hint">foreningen eller arkivet</p>
+
+    <label class="f" for="dc-contributor">Bidragyder</label>
+    <input type="text" id="dc-contributor">
+    <p class="hint">den der har interviewet, redigeret eller registreret</p>
+
+    <label class="f" for="dc-date">Dato</label>
+    <input type="text" id="dc-date">
+    <p class="hint">helst ÅÅÅÅ-MM-DD, men fx "ca. 1955" er også i orden</p>
+
+    <label class="f" for="dc-type">Type</label>
+    <select id="dc-type">
+      <option value="Sound">Sound</option>
+      <option value="InteractiveResource">InteractiveResource</option>
+      <option value="Text" selected>Text</option>
+      <option value="Image">Image</option>
+      <option value="Collection">Collection</option>
+      <option value="Event">Event</option>
+      <option value="">(ingen)</option>
+    </select>
+    <p class="hint">DCMI-typeordforråd</p>
+
+    <label class="f" for="dc-format">Format</label>
+    <input type="text" id="dc-format" value="text/html">
+    <p class="hint">filens tekniske format</p>
+
+    <label class="f" for="dc-identifier">Identifikator</label>
+    <input type="text" id="dc-identifier">
+    <p class="hint">arkivnummer, URL eller lignende</p>
+
+    <label class="f" for="dc-source">Kilde</label>
+    <input type="text" id="dc-source">
+    <p class="hint">hvor materialet stammer fra</p>
+
+    <label class="f" for="dc-language">Sprog</label>
+    <input type="text" id="dc-language" value="da">
+    <p class="hint">sprogkode, fx da</p>
+
+    <label class="f" for="dc-relation">Relation</label>
+    <input type="text" id="dc-relation">
+    <p class="hint">beslægtet materiale, fx et billedalbum</p>
+
+    <label class="f" for="dc-coverage">Dækning</label>
+    <input type="text" id="dc-coverage">
+    <p class="hint">sted og/eller periode, udfyldes automatisk fra Sted</p>
+
+    <label class="f" for="dc-rights">Rettigheder</label>
+    <input type="text" id="dc-rights">
+    <p class="hint">ophavsret og vilkår for brug</p>
+
+    <button class="secondary" type="button" id="json-btn">Gem metadata som separat JSON-fil</button>
+  </details>
+
+  <!-- 6. Generér -->
+  <div class="actions">
+    <button class="primary" type="button" id="gen-btn">Generér bogen (.html)</button>
+    <div id="status" role="status"></div>
+  </div>
+
+</div>
+
+<aside class="previewpane">
+  <h2>Forhåndsvisning</h2>
+  <iframe id="preview" title="Forhåndsvisning af bogen" sandbox="allow-scripts allow-popups"></iframe>
+  <p class="note">Sådan kommer bogen til at se ud. Forhåndsvisningen bygges med samme kode som den færdige fil.</p>
+</aside>
+
+</main>
+
+<footer>Alt sker lokalt i din browser. Intet bliver sendt nogen steder.</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= Temaer ================= */
+  var THEMES = {
+    original: {accent:'#9A4630', accentSepia:'#9A4630', accentDark:'#E39B82',
+      paper:'#EDE7D8', cardBg:'#1B1A16', cardText:'#F2ECDD', ink:'#211E19', moss:'#47543C',
+      line:'#CBC2A8', timesColor:'#5F5A4B', footerColor:'#4A463C', muted:'#6B6455',
+      footerStrong:'#4A463C', bodyText:'#211E19', quoteText:'#4A463C', codeBg:'#E2DBC8'},
+    rodekors: {accent:'#E30A0B', accentSepia:'#C10809', accentDark:'#FF8A8B',
+      paper:'#FFFFFF', cardBg:'#E30A0B', cardText:'#FFFFFF', ink:'#1A1A1A', moss:'#333333',
+      line:'#D6D6D6', timesColor:'#5A5A5A', footerColor:'#333333', muted:'#5A5A5A',
+      footerStrong:'#333333', bodyText:'#1A1A1A', quoteText:'#333333', codeBg:'#F1F1F1'},
+    bordeaux: {accent:'#9E2453', accentSepia:'#9E2453', accentDark:'#E58AA8',
+      paper:'#FAF9F5', cardBg:'#9E2453', cardText:'#FAF9F5', ink:'#26181D', moss:'#6B5560',
+      line:'#DCD3CE', timesColor:'#6B5560', footerColor:'#3A2630', muted:'#6B5560',
+      footerStrong:'#3A2630', bodyText:'#26181D', quoteText:'#3A2630', codeBg:'#F0EBE7'}
+  };
+
+  var DC_FIELDS = [
+    ['title','Titel'], ['creator','Ophav / skaber'], ['subject','Emne / nøgleord'],
+    ['description','Beskrivelse'], ['publisher','Udgiver'], ['contributor','Bidragyder'],
+    ['date','Dato'], ['type','Type'], ['format','Format'], ['identifier','Identifikator'],
+    ['source','Kilde'], ['language','Sprog'], ['relation','Relation'],
+    ['coverage','Dækning'], ['rights','Rettigheder']
+  ];
+
+  var FORMAT_NAME = 'ebog';
+  var BUILDER_VERSION = 3;
+
+  function $(id){ return document.getElementById(id); }
+
+  /* ================= Markdown → HTML =================
+     Præcis den delmængde standarden beskriver — hverken mere eller mindre. */
+  function escapeHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function inline(text){
+    text = escapeHtml(text);
+    text = text.replace(/`([^`]+)`/g,'<code>$1</code>');
+    text = text.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    text = text.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+    text = text.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,'$1<em>$2</em>');
+    return text;
+  }
+  function mdToHtml(md){
+    var lines = String(md||'').replace(/\r\n/g,'\n').split('\n');
+    var html = '', i = 0, listType = null, listBuf = [];
+    function flushList(){
+      if(listType){ html += '<'+listType+'>'+listBuf.join('')+'</'+listType+'>'; listType=null; listBuf=[]; }
+    }
+    while(i < lines.length){
+      var line = lines[i];
+      if(/^\s*$/.test(line)){ flushList(); i++; continue; }
+      var h = line.match(/^(#{1,6})\s+(.*)$/);
+      if(h){
+        flushList();
+        var lvl = h[1].length <= 2 ? 2 : 3;   /* et enkelt # giver også h2 */
+        html += '<h'+lvl+'>'+inline(h[2].trim())+'</h'+lvl+'>';
+        i++; continue;
+      }
+      if(/^\s*>\s?/.test(line)){
+        flushList();
+        var qbuf = [];
+        while(i < lines.length && /^\s*>\s?/.test(lines[i])){ qbuf.push(lines[i].replace(/^\s*>\s?/,'')); i++; }
+        html += '<blockquote>'+mdToHtml(qbuf.join('\n'))+'</blockquote>';
+        continue;
+      }
+      if(/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)){ flushList(); html += '<hr>'; i++; continue; }
+      var ol = line.match(/^\s*\d+\.\s+(.*)$/);
+      var ul = line.match(/^\s*[-*]\s+(.*)$/);
+      if(ol){ if(listType!=='ol'){flushList(); listType='ol';} listBuf.push('<li>'+inline(ol[1])+'</li>'); i++; continue; }
+      if(ul){ if(listType!=='ul'){flushList(); listType='ul';} listBuf.push('<li>'+inline(ul[1])+'</li>'); i++; continue; }
+      flushList();
+      var pbuf = [line]; i++;
+      while(i < lines.length && !/^\s*$/.test(lines[i]) && !/^#{1,6}\s+/.test(lines[i]) &&
+            !/^\s*[-*]\s+/.test(lines[i]) && !/^\s*\d+\.\s+/.test(lines[i]) &&
+            !/^\s*>\s?/.test(lines[i]) && !/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(lines[i])){
+        pbuf.push(lines[i]); i++;
+      }
+      html += '<p>'+pbuf.map(inline).join('<br>')+'</p>';
+    }
+    flushList();
+    return html;
+  }
+
+  function stripMd(md){
+    return String(md||'')
+      .replace(/^---[\s\S]*?\n---\s*\n/,'')
+      .replace(/^#{1,6}\s+/gm,'')
+      .replace(/[*_`>]/g,'')
+      .replace(/\[([^\]]+)\]\([^)]*\)/g,'$1')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function extractFrontmatter(md){
+    var m = String(md||'').match(/^---\s*\n([\s\S]*?)\n---\s*\n?/);
+    if(!m) return {fm:{}, body: md||''};
+    var fm = {};
+    m[1].split('\n').forEach(function(l){
+      var mm = l.match(/^\s*([\w.]+)\s*:\s*(.*)$/);
+      if(mm){ fm[mm[1]] = mm[2].trim().replace(/^["']|["']$/g,''); }
+    });
+    return {fm: fm, body: String(md).slice(m[0].length)};
+  }
+
+  function splitChapters(body){
+    var lines = String(body||'').split('\n'), chapters = [], current = null;
+    lines.forEach(function(line){
+      var h = line.match(/^#{1,2}\s+(.*)$/);
+      if(h){
+        if(current) chapters.push(current);
+        current = {title: h[1].trim(), md: line+'\n'};
+      } else {
+        if(!current) current = {title: null, md: ''};
+        current.md += line + '\n';
+      }
+    });
+    if(current) chapters.push(current);
+    if(chapters.length && chapters[0].title === null) chapters[0].title = 'Indledning';
+    if(!chapters.length) chapters.push({title:'Bogen', md: body||''});
+    return chapters;
+  }
+
+  function slugify(s){
+    return (s||'').toLowerCase()
+      .replace(/[æä]/g,'ae').replace(/[øö]/g,'oe').replace(/[å]/g,'aa')
+      .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || 'bog';
+  }
+
+  /* ================= Billede ================= */
+  var coverDataUrl = null;
+  function compressImage(file, maxSide, quality){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var img = new Image();
+        img.onload = function(){
+          var scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+          var w = Math.max(1, Math.round(img.width * scale));
+          var h = Math.max(1, Math.round(img.height * scale));
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+  function approxKB(dataUrl){
+    var b64 = (dataUrl||'').split(',')[1] || '';
+    return Math.round(b64.length * 0.75 / 1024);
+  }
+
+  $('f-cover').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var st = $('cover-status');
+    st.className = 'filestatus';
+    st.textContent = 'Behandler billedet…';
+    compressImage(file, 1100, 0.78).then(function(dataUrl){
+      coverDataUrl = dataUrl;
+      st.textContent = 'Billede klar (~' + approxKB(dataUrl) + ' KB efter komprimering)';
+      schedulePreview();
+    }).catch(function(){
+      st.className = 'filestatus err';
+      st.textContent = 'Billedet kunne ikke læses. Prøv et andet.';
+    });
+  });
+
+  /* ================= Markdown-fil ================= */
+  $('f-md').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var txt = ev.target.result;
+      $('f-mdtext').value = txt;
+      $('md-status').className = 'filestatus';
+      $('md-status').textContent = file.name + ' er indlæst';
+      applyFrontmatter(txt);
+      mirror(); schedulePreview();
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  function applyFrontmatter(md){
+    var fm = extractFrontmatter(md).fm;
+    var map = {
+      'dc.title':'f-title', 'dc.creator':'dc-creator', 'dc.subject':'dc-subject',
+      'dc.description':'f-desc', 'dc.publisher':'dc-publisher', 'dc.contributor':'dc-contributor',
+      'dc.date':'dc-date', 'dc.type':'dc-type', 'dc.format':'dc-format',
+      'dc.identifier':'dc-identifier', 'dc.source':'dc-source', 'dc.language':'dc-language',
+      'dc.relation':'dc-relation', 'dc.coverage':'dc-coverage', 'dc.rights':'dc-rights'
+    };
+    Object.keys(map).forEach(function(k){
+      if(fm[k]){
+        var el = $(map[k]);
+        if(el && !el.value) el.value = fm[k];
+      }
+    });
+  }
+
+  /* ================= Spejling af DC-felter ================= */
+  var dcTouched = {title:false, description:false, coverage:false};
+  ['title','description','coverage'].forEach(function(k){
+    $('dc-'+k).addEventListener('input', function(){ dcTouched[k] = true; });
+  });
+  function mirror(){
+    if(!dcTouched.title) $('dc-title').value = $('f-title').value.trim();
+    if(!dcTouched.description){
+      var d = stripMd($('f-desc').value);
+      $('dc-description').value = d.length > 300 ? d.slice(0,300) : d;
+    }
+    if(!dcTouched.coverage) $('dc-coverage').value = $('f-place').value.trim();
+  }
+
+  /* ================= Indsaml data ================= */
+  function collect(){
+    var dc = {};
+    DC_FIELDS.forEach(function(p){ dc[p[0]] = ($('dc-'+p[0]).value || '').trim(); });
+    return {
+      format: FORMAT_NAME,
+      builderVersion: BUILDER_VERSION,
+      theme: document.querySelector('input[name="theme"]:checked').value,
+      defaultMode: document.querySelector('input[name="defmode"]:checked').value,
+      label: $('f-label').value.trim(),
+      title: $('f-title').value.trim(),
+      place: $('f-place').value.trim(),
+      description: $('f-desc').value.trim(),
+      manuscript: $('f-mdtext').value,
+      shareImage: $('f-share').value.trim(),
+      ctaText: $('f-cta-text').value.trim(),
+      ctaUrl: $('f-cta-url').value.trim(),
+      dublinCore: dc
+    };
+  }
+
+  /* ================= Tællerkode ================= */
+  var counterCode = '';
+
+  /* ================= Byg bogen ================= */
+  function themeVars(t){
+    var out = ':root{\n';
+    Object.keys(t).forEach(function(k){ out += '  --' + k + ':' + t[k] + ';\n'; });
+    out += '  --scale:1;\n}\n';
+    return out;
+  }
+
+  function buildBookHtml(d, opts){
+    opts = opts || {};
+    var t = THEMES[d.theme] || THEMES.original;
+    var parsed = extractFrontmatter(d.manuscript);
+    var chapters = splitChapters(parsed.body);
+
+    var chaptersHtml = chapters.map(function(ch, idx){
+      return '<section class="chapter" id="ch-'+idx+'">' + mdToHtml(ch.md) + '</section>';
+    }).join('\n');
+
+    var tocHtml = chapters.map(function(ch, idx){
+      return '<li><a href="#ch-'+idx+'" class="toc-link">'+escapeHtml(ch.title || ('Kapitel '+(idx+1)))+'</a></li>';
+    }).join('\n');
+
+    var dc = d.dublinCore;
+    var lang = dc.language || 'da';
+
+    /* DC-meta i head, i feltrækkefølgen */
+    var metaTags = ['<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">'];
+    DC_FIELDS.forEach(function(p){
+      var key = p[0], val = dc[key];
+      if(!val) return;
+      if(key === 'subject'){
+        val.split(';').map(function(s){return s.trim();}).filter(Boolean).forEach(function(s){
+          metaTags.push('<meta name="DC.subject" content="'+escapeHtml(s)+'">');
+        });
+      } else {
+        metaTags.push('<meta name="DC.'+key+'" content="'+escapeHtml(val)+'">');
+      }
+    });
+
+    /* "Om denne fil" – færdig HTML, læsbar uden JavaScript */
+    var dlRows = DC_FIELDS.filter(function(p){ return dc[p[0]]; }).map(function(p){
+      return '<dt>'+escapeHtml(p[1])+' <span class="tech">dc.'+p[0]+'</span></dt><dd>'+escapeHtml(dc[p[0]])+'</dd>';
+    }).join('\n');
+    var aboutHtml = dlRows
+      ? '<details class="about"><summary>Om denne fil</summary><dl>'+dlRows+'</dl></details>'
+      : '';
+
+    var ogTags =
+      '<meta property="og:type" content="book">\n' +
+      '<meta property="og:title" content="'+escapeHtml(d.title||'Bog')+'">\n' +
+      '<meta property="og:description" content="'+escapeHtml(stripMd(d.description).slice(0,300))+'">\n' +
+      (d.shareImage
+        ? '<meta property="og:image" content="'+escapeHtml(d.shareImage)+'">\n<meta name="twitter:card" content="summary_large_image">\n'
+        : '');
+
+    var sourceData = {
+      format: FORMAT_NAME,
+      builderVersion: BUILDER_VERSION,
+      theme: d.theme,
+      defaultMode: d.defaultMode,
+      label: d.label,
+      title: d.title,
+      place: d.place,
+      description: d.description,
+      manuscript: d.manuscript,
+      shareImage: d.shareImage,
+      ctaText: d.ctaText,
+      ctaUrl: d.ctaUrl,
+      dublinCore: dc
+    };
+
+    var subjectPills = (dc.subject||'').split(';').map(function(s){return s.trim();}).filter(Boolean)
+      .map(function(s){ return '<span class="pill">'+escapeHtml(s)+'</span>'; }).join(' ');
+
+    var ctaHtml = (d.ctaText && d.ctaUrl)
+      ? '<p class="cta"><a class="cta-btn" href="'+escapeHtml(d.ctaUrl)+'" target="_blank" rel="noopener">'+escapeHtml(d.ctaText)+'</a></p>'
+      : '';
+
+    var saveIcon = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" ' +
+      'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M12 3v12"></path><path d="M7 11l5 5 5-5"></path><path d="M4 20h16"></path></svg>';
+
+    var saveHtml =
+      '<div class="savebar">\n' +
+      '  <button type="button" class="save-btn" id="save-file">'+saveIcon+'<span>Gem filen</span></button>\n' +
+      '  <p class="save-note"><em>En e-bog</em></p>\n' +
+      '</div>';
+
+    var head =
+      '<!DOCTYPE html>\n<html lang="'+escapeHtml(lang)+'">\n<head>\n' +
+      '<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+      '<title>'+escapeHtml(d.title||'Bog')+'</title>\n' +
+      metaTags.join('\n')+'\n' +
+      ogTags +
+      (coverDataUrl ? '<link rel="icon" href="'+coverDataUrl+'">\n' : '') +
+      '<style>\n'+themeVars(t)+BOOK_STYLE+'</style>\n' +
+      '</head>\n';
+
+    var body =
+      '<body data-mode="'+escapeHtml(d.defaultMode)+'" data-default-mode="'+escapeHtml(d.defaultMode)+'">\n' +
+
+      '<button id="toc-toggle" class="chrome-btn" aria-label="Kapitler" aria-expanded="false">☰</button>\n' +
+
+      '<div id="topbar" class="topbar">\n' +
+      '  <button id="topbar-handle" aria-expanded="false">⋯ Indstillinger</button>\n' +
+      '  <div class="topbar-panel">\n' +
+      '    <div class="tb-group"><span class="tb-label">Skrift</span>' +
+      '<button id="font-dec" aria-label="Mindre skrift">A−</button>' +
+      '<button id="font-inc" aria-label="Større skrift">A+</button></div>\n' +
+      '    <div class="tb-group"><span class="tb-label">Visning</span>' +
+      '<button data-mode-btn="light">Lyst</button>' +
+      '<button data-mode-btn="sepia">Sepia</button>' +
+      '<button data-mode-btn="dark">Mørkt</button></div>\n' +
+      '  </div>\n</div>\n' +
+
+      '<nav id="toc-drawer" class="toc-drawer" aria-label="Kapiteloversigt">\n' +
+      '  <div class="toc-head"><strong>Kapitler</strong><button id="toc-close" aria-label="Luk kapiteloversigten">✕</button></div>\n' +
+      '  <ul>'+tocHtml+'</ul>\n</nav>\n' +
+      '<div id="toc-overlay" class="toc-overlay"></div>\n' +
+
+      '<div class="pagenav" id="pagenav">\n' +
+      '  <button type="button" id="page-prev" aria-label="Forrige skærmside">\u2191</button>\n' +
+      '  <button type="button" id="page-next" aria-label="Næste skærmside">\u2193</button>\n' +
+      '</div>\n' +
+
+      '<main id="reader">\n' +
+      '<section class="titlepage">\n' +
+      (coverDataUrl ? '<img class="cover-img" src="'+coverDataUrl+'" alt="Forsidebillede">\n' : '') +
+      (d.label ? '<p class="kicker">'+escapeHtml(d.label)+'</p>\n' : '') +
+      '<h1>'+escapeHtml(d.title||'')+'</h1>\n' +
+      (dc.creator ? '<p class="byline">af '+escapeHtml(dc.creator)+'</p>\n' : '') +
+      (d.place ? '<p class="place">'+escapeHtml(d.place)+'</p>\n' : '') +
+      (d.description ? '<div class="blurb">'+mdToHtml(d.description)+'</div>\n' : '') +
+      (subjectPills ? '<p class="pills">'+subjectPills+'</p>\n' : '') +
+      '<button type="button" id="start-reading" class="start-btn">Start læsning</button>\n' +
+      '<p class="colophon">'+[dc.publisher, dc.date].filter(Boolean).map(escapeHtml).join(' · ')+'</p>\n' +
+      '</section>\n' +
+      chaptersHtml + '\n' +
+      ctaHtml + '\n' +
+      saveHtml + '\n' +
+      aboutHtml + '\n' +
+      '</main>\n' +
+
+      '<script type="application/json" id="builder-source-data">\n' +
+      JSON.stringify(sourceData).replace(/</g,'\\u003c') + '\n' +
+      '<' + '/script>\n' +
+
+      (opts.preview ? '' : (counterCode ? counterCode + '\n' : '')) +
+
+      '<' + 'script>\n' + BOOK_SCRIPT + '\n<' + '/script>\n' +
+      '</body>\n</html>';
+
+    return head + body;
+  }
+
+  /* ================= Bogens CSS ================= */
+  var BOOK_STYLE = [
+    '*{box-sizing:border-box;}',
+    'html{-webkit-text-size-adjust:100%;}',
+    'body{margin:0;font-family:Verdana,Arial,"Helvetica Neue",Helvetica,"Segoe UI",sans-serif;line-height:1.7;',
+    'background:var(--bg);color:var(--fg);transition:background .2s,color .2s;}',
+    'body[data-mode="light"]{--bg:var(--paper);--fg:var(--bodyText);--fg-soft:var(--muted);--rule:var(--line);--acc:var(--accent);--code:var(--codeBg);--surface:#fff;}',
+    'body[data-mode="sepia"]{--bg:#EFE3CC;--fg:#33291B;--fg-soft:#6A5B44;--rule:#D3BF9C;--acc:var(--accentSepia);--code:#E5D6B8;--surface:#F7ECD8;}',
+    'body[data-mode="dark"]{--bg:#1C1A18;--fg:#EDE7DD;--fg-soft:#B5AC9E;--rule:#3A3632;--acc:var(--accentDark);--code:#2A2724;--surface:#242220;}',
+
+    'main{max-width:42rem;margin:0 auto;padding:1.2rem 1.2rem 5rem;font-size:calc(17.5px * var(--scale));}',
+    '.chapter{padding-top:2.2rem;border-top:1px solid var(--rule);margin-top:2.2rem;}',
+    '.chapter h2{font-size:calc(21px * var(--scale));color:var(--acc);margin:0 0 .7em;line-height:1.3;}',
+    '.chapter h3{font-size:calc(18px * var(--scale));color:var(--acc);margin:1.4em 0 .5em;line-height:1.35;}',
+    '.chapter p{margin:0 0 1.1em;}',
+    '.chapter ul,.chapter ol{margin:0 0 1.1em;padding-left:1.4em;}',
+    '.chapter li{margin:0 0 .4em;}',
+    '.chapter blockquote{border-left:3px solid var(--acc);margin:1.2em 0;padding:.2em 1em;color:var(--fg-soft);}',
+    '.chapter hr{border:none;border-top:1px solid var(--rule);margin:2em 0;}',
+    '.chapter code{background:var(--code);padding:.1em .35em;border-radius:4px;font-size:.92em;}',
+    '.chapter a{color:var(--acc);}',
+
+    '.titlepage{text-align:center;padding:3.2rem 0 2rem;}',
+    '.titlepage .cover-img{max-width:min(78vw,320px);max-height:60vh;width:auto;border-radius:6px;',
+    'box-shadow:0 10px 30px rgba(0,0,0,.25);margin-bottom:1.6rem;}',
+    '.titlepage .kicker{font-size:calc(14px * var(--scale));letter-spacing:.08em;text-transform:uppercase;',
+    'color:var(--acc);margin:0 0 .5rem;font-weight:700;}',
+    '.titlepage h1{font-size:calc(29px * var(--scale));margin:0 0 .4rem;line-height:1.25;}',
+    '.titlepage .byline{color:var(--fg-soft);font-style:italic;margin:0 0 .3rem;}',
+    '.titlepage .place{color:var(--fg-soft);margin:0 0 1.2rem;font-size:calc(15px * var(--scale));}',
+    '.titlepage .blurb{color:var(--fg-soft);line-height:1.6;max-width:34ch;margin:0 auto 1.2rem;}',
+    '.titlepage .blurb p{margin:0 0 .6em;}',
+    '.titlepage .blurb p:last-child{margin-bottom:0;}',
+    '.titlepage .blurb a{color:var(--acc);}',
+    '.titlepage .pills{margin:0 0 1.6rem;}',
+    '.titlepage .pill{display:inline-block;border:1px solid var(--rule);border-radius:99px;padding:.2em .8em;',
+    'font-size:calc(13px * var(--scale));color:var(--fg-soft);margin:.15em;}',
+    '.start-btn{background:var(--acc);color:#fff;border:none;border-radius:9px;padding:.85rem 1.6rem;',
+    'font-size:calc(16px * var(--scale));font-weight:700;cursor:pointer;min-height:48px;font-family:inherit;}',
+    '.colophon{margin-top:2rem;font-size:calc(14px * var(--scale));color:var(--footerStrong);}',
+    'body[data-mode="dark"] .colophon,body[data-mode="sepia"] .colophon{color:var(--fg-soft);}',
+
+    '.cta{text-align:center;margin:2.6rem 0 0;}',
+    '.cta-btn{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;border-radius:9px;',
+    'padding:.85rem 1.6rem;font-weight:700;font-size:calc(16px * var(--scale));min-height:48px;line-height:1.6;}',
+
+    '.savebar{text-align:center;margin:3rem 0 1rem;}',
+    '.save-btn{display:inline-flex;align-items:center;gap:.55rem;background:none;color:var(--acc);',
+    'border:2px solid var(--acc);border-radius:99px;padding:.7rem 1.4rem;cursor:pointer;',
+    'font-family:inherit;font-size:16.5px;font-weight:700;min-height:48px;}',
+    '.save-btn:hover{background:var(--acc);color:#fff;}',
+    '.save-btn:focus-visible{outline:3px solid var(--acc);outline-offset:3px;}',
+    '.save-note{margin:.6rem 0 0;font-size:14px;color:var(--footerStrong);}',
+    'body[data-mode="dark"] .save-note,body[data-mode="sepia"] .save-note{color:var(--fg-soft);}',
+
+    'details.about{margin-top:2.4rem;border-top:1px solid var(--rule);padding-top:1rem;}',
+    'details.about > summary{cursor:pointer;font-size:15px;font-weight:700;color:var(--fg);min-height:44px;',
+    'display:flex;align-items:center;}',
+    'details.about dl{margin:.6rem 0 0;font-size:14.5px;line-height:1.6;}',
+    'details.about dt{font-weight:700;margin-top:.7rem;color:var(--fg);}',
+    'details.about dt .tech{font-weight:400;font-size:12.5px;color:var(--fg-soft);}',
+    'details.about dd{margin:0;color:var(--fg-soft);}',
+
+    '.chrome-btn{position:fixed;top:.8rem;left:.8rem;z-index:40;border-radius:50%;width:48px;height:48px;',
+    'background:var(--surface);color:var(--fg);border:1px solid var(--rule);',
+    'box-shadow:0 2px 10px rgba(0,0,0,.18);font-size:1.2rem;cursor:pointer;}',
+
+    '.topbar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;flex-direction:column;align-items:center;}',
+    '#topbar-handle{background:var(--surface);color:var(--fg);border:1px solid var(--rule);border-top:none;',
+    'border-radius:0 0 10px 10px;padding:.4rem 1rem;font-size:13.5px;font-family:inherit;cursor:pointer;',
+    'box-shadow:0 2px 6px rgba(0,0,0,.1);min-height:34px;}',
+    '.topbar-panel{max-height:0;overflow:hidden;background:var(--surface);border-bottom:1px solid var(--rule);',
+    'width:100%;transition:max-height .25s ease;display:flex;justify-content:center;flex-wrap:wrap;gap:1.2rem;}',
+    '.topbar.open .topbar-panel{max-height:160px;padding:.9rem 1rem;}',
+    '.tb-group{display:flex;align-items:center;gap:.4rem;}',
+    '.tb-label{font-size:13.5px;color:var(--fg);margin-right:.2rem;}',
+    '.tb-group button{min-height:44px;min-width:44px;border:1px solid var(--rule);background:var(--bg);',
+    'color:var(--fg);border-radius:7px;font-size:14px;cursor:pointer;font-family:inherit;padding:0 .7rem;}',
+    '.tb-group button[aria-pressed="true"]{background:var(--acc);color:#fff;border-color:var(--acc);}',
+
+    '.toc-drawer{position:fixed;top:0;left:0;bottom:0;width:min(80vw,320px);background:var(--surface);',
+    'z-index:60;transform:translateX(-105%);transition:transform .25s ease;box-shadow:2px 0 16px rgba(0,0,0,.25);',
+    'overflow-y:auto;}',
+    '.toc-drawer.open{transform:translateX(0);}',
+    '.toc-head{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.1rem;',
+    'border-bottom:1px solid var(--rule);color:var(--fg);}',
+    '.toc-head button{background:none;border:none;font-size:1.2rem;color:var(--fg);cursor:pointer;min-height:44px;min-width:44px;}',
+    '.toc-drawer ul{list-style:none;margin:0;padding:.4rem 0;}',
+    '.toc-drawer li a{display:block;padding:.75rem 1.1rem;color:var(--fg);text-decoration:none;font-size:15.5px;',
+    'border-left:3px solid transparent;min-height:44px;}',
+    '.toc-drawer li a.active{border-left-color:var(--acc);color:var(--acc);background:var(--bg);font-weight:700;}',
+    '.toc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:55;opacity:0;pointer-events:none;transition:opacity .2s;}',
+    '.toc-overlay.open{opacity:1;pointer-events:auto;}',
+
+    '.pagenav{position:fixed;right:.8rem;bottom:.8rem;z-index:40;display:flex;flex-direction:column;gap:.5rem;}',
+    '.pagenav button{width:48px;height:48px;border-radius:50%;background:var(--surface);color:var(--fg);',
+    'border:1px solid var(--rule);box-shadow:0 2px 10px rgba(0,0,0,.18);font-size:1.2rem;line-height:1;',
+    'cursor:pointer;font-family:inherit;opacity:.8;transition:opacity .2s;}',
+    '.pagenav button:hover{opacity:1;}',
+    '.pagenav button[disabled]{opacity:.3;cursor:default;}',
+
+    'button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--acc);outline-offset:2px;}',
+    '@media (prefers-reduced-motion: reduce){*{transition:none !important;}}',
+    '@media print{.chrome-btn,.topbar,.toc-drawer,.toc-overlay,.savebar,.start-btn,.pagenav{display:none !important;}}'
+  ].join('\n') + '\n';
+
+  /* ================= Bogens JavaScript ================= */
+  var BOOK_SCRIPT = [
+    '(function(){',
+    '  var body = document.body;',
+    '  var BID = "ebog_" + (document.title || "bog");',
+    '  var MODE_KEY = "ebog_mode", SCALE_KEY = "ebog_fontscale", POS_KEY = "ebog_pos_" + BID;',
+    '  function applyMode(m){',
+    '    body.setAttribute("data-mode", m);',
+    '    Array.prototype.forEach.call(document.querySelectorAll("[data-mode-btn]"), function(b){',
+    '      b.setAttribute("aria-pressed", b.getAttribute("data-mode-btn")===m ? "true" : "false");',
+    '    });',
+    '    try{ localStorage.setItem(MODE_KEY, m); }catch(e){}',
+    '  }',
+    '  function applyScale(s){',
+    '    s = Math.min(1.7, Math.max(0.8, s));',
+    '    document.documentElement.style.setProperty("--scale", s);',
+    '    try{ localStorage.setItem(SCALE_KEY, String(s)); }catch(e){}',
+    '  }',
+    '  var savedMode, savedScale;',
+    '  try{ savedMode = localStorage.getItem(MODE_KEY); }catch(e){}',
+    '  try{ savedScale = parseFloat(localStorage.getItem(SCALE_KEY)); }catch(e){}',
+    '  applyMode(savedMode || body.getAttribute("data-default-mode") || "light");',
+    '  applyScale(isNaN(savedScale) ? 1 : savedScale);',
+    '  Array.prototype.forEach.call(document.querySelectorAll("[data-mode-btn]"), function(b){',
+    '    b.addEventListener("click", function(){ applyMode(b.getAttribute("data-mode-btn")); });',
+    '  });',
+    '  document.getElementById("font-inc").addEventListener("click", function(){',
+    '    applyScale(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--scale")) + 0.1);',
+    '  });',
+    '  document.getElementById("font-dec").addEventListener("click", function(){',
+    '    applyScale(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--scale")) - 0.1);',
+    '  });',
+
+    '  var topbar = document.getElementById("topbar");',
+    '  var handle = document.getElementById("topbar-handle");',
+    '  function toggleTopbar(force){',
+    '    var open = typeof force === "boolean" ? force : !topbar.classList.contains("open");',
+    '    topbar.classList.toggle("open", open);',
+    '    handle.setAttribute("aria-expanded", open ? "true" : "false");',
+    '  }',
+    '  handle.addEventListener("click", function(){ toggleTopbar(); });',
+    '  document.addEventListener("keydown", function(e){',
+    '    if(e.key === "Tab" && !topbar.classList.contains("open")){ toggleTopbar(true); }',
+    '    if(e.key === "Escape"){ toggleTopbar(false); closeToc(); }',
+    '  });',
+
+    '  var tocDrawer = document.getElementById("toc-drawer");',
+    '  var tocOverlay = document.getElementById("toc-overlay");',
+    '  var tocToggle = document.getElementById("toc-toggle");',
+    '  function openToc(){ tocDrawer.classList.add("open"); tocOverlay.classList.add("open"); tocToggle.setAttribute("aria-expanded","true"); }',
+    '  function closeToc(){ tocDrawer.classList.remove("open"); tocOverlay.classList.remove("open"); tocToggle.setAttribute("aria-expanded","false"); }',
+    '  tocToggle.addEventListener("click", function(){ tocDrawer.classList.contains("open") ? closeToc() : openToc(); });',
+    '  document.getElementById("toc-close").addEventListener("click", closeToc);',
+    '  tocOverlay.addEventListener("click", closeToc);',
+    '  Array.prototype.forEach.call(document.querySelectorAll(".toc-link"), function(a){',
+    '    a.addEventListener("click", closeToc);',
+    '  });',
+
+    '  /* --- Bladring: én skærmfuld ad gangen --- */',
+    '  var reduceMotion = false;',
+    '  try{ reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){}',
+    '  function pageScroll(dir){',
+    '    var h = window.innerHeight;',
+    '    var step = Math.max(140, Math.round(h * 0.88));',
+    '    try{ window.scrollBy({top: dir*step, left:0, behavior: reduceMotion ? "auto" : "smooth"}); }',
+    '    catch(e){ window.scrollBy(0, dir*step); }',
+    '    setTimeout(updatePagenav, 500);',
+    '  }',
+    '  var pagePrev = document.getElementById("page-prev");',
+    '  var pageNext = document.getElementById("page-next");',
+    '  if(pagePrev) pagePrev.addEventListener("click", function(){ pageScroll(-1); });',
+    '  if(pageNext) pageNext.addEventListener("click", function(){ pageScroll(1); });',
+    '  function updatePagenav(){',
+    '    if(!pagePrev || !pageNext) return;',
+    '    var y = window.pageYOffset;',
+    '    var max = document.documentElement.scrollHeight - window.innerHeight;',
+    '    pagePrev.disabled = y <= 4;',
+    '    pageNext.disabled = y >= max - 4;',
+    '  }',
+    '  document.addEventListener("keydown", function(e){',
+    '    if(e.ctrlKey || e.metaKey || e.altKey) return;',
+    '    if(tocDrawer.classList.contains("open")) return;',
+    '    var t = e.target, tag = (t && t.tagName) ? t.tagName.toUpperCase() : "";',
+    '    if(tag === "INPUT" || tag === "TEXTAREA" || (t && t.isContentEditable)) return;',
+    '    var space = (e.key === " " || e.key === "Spacebar");',
+    '    var onControl = (tag === "BUTTON" || tag === "A" || tag === "SUMMARY");',
+    '    if(e.key === "PageDown" || e.key === "ArrowRight" || (space && !e.shiftKey && !onControl)){',
+    '      pageScroll(1); e.preventDefault();',
+    '    } else if(e.key === "PageUp" || e.key === "ArrowLeft" || (space && e.shiftKey && !onControl)){',
+    '      pageScroll(-1); e.preventDefault();',
+    '    }',
+    '  });',
+
+    '  var startBtn = document.getElementById("start-reading");',
+    '  if(startBtn){ startBtn.addEventListener("click", function(){',
+    '    var first = document.querySelector(".chapter");',
+    '    if(first) first.scrollIntoView({behavior:"smooth", block:"start"});',
+    '  }); }',
+
+    '  var chapters = Array.prototype.slice.call(document.querySelectorAll(".chapter"));',
+    '  var tocLinks = Array.prototype.slice.call(document.querySelectorAll(".toc-link"));',
+    '  var savedPos;',
+    '  try{ savedPos = JSON.parse(localStorage.getItem(POS_KEY) || "null"); }catch(e){}',
+    '  function restorePos(){',
+    '    if(!savedPos || !savedPos.id) return;',
+    '    var target = document.getElementById(savedPos.id);',
+    '    if(!target) return;',
+    '    var frac = (typeof savedPos.frac === "number" && isFinite(savedPos.frac)) ? savedPos.frac : 0;',
+    '    frac = Math.min(0.98, Math.max(0, frac));',
+    '    var top = target.getBoundingClientRect().top + window.pageYOffset;',
+    '    window.scrollTo(0, Math.max(0, Math.round(top + target.offsetHeight * frac - 120)));',
+    '    markActive();',
+    '    updatePagenav();',
+    '  }',
+    '  function onReady(){ restorePos(); updatePagenav(); }',
+    '  if(document.readyState === "complete"){ setTimeout(onReady, 30); }',
+    '  else { window.addEventListener("load", function(){ setTimeout(onReady, 60); }); }',
+    '  function currentChapter(){',
+    '    var found = chapters[0];',
+    '    for(var i=0;i<chapters.length;i++){',
+    '      if(chapters[i].getBoundingClientRect().top <= 120) found = chapters[i]; else break;',
+    '    }',
+    '    return found;',
+    '  }',
+    '  function markActive(){',
+    '    var ch = currentChapter();',
+    '    if(!ch) return;',
+    '    tocLinks.forEach(function(a){ a.classList.toggle("active", a.getAttribute("href") === "#" + ch.id); });',
+    '  }',
+    '  var saveTimer;',
+    '  window.addEventListener("scroll", function(){',
+    '    clearTimeout(saveTimer);',
+    '    saveTimer = setTimeout(function(){',
+    '      var ch = currentChapter();',
+    '      if(window.pageYOffset < 80){',
+    '        try{ localStorage.removeItem(POS_KEY); }catch(e){}',
+    '      } else if(ch){',
+    '        var chTop = ch.getBoundingClientRect().top + window.pageYOffset;',
+    '        var f = ch.offsetHeight > 0 ? (window.pageYOffset + 120 - chTop) / ch.offsetHeight : 0;',
+    '        f = Math.min(0.98, Math.max(0, f));',
+    '        try{ localStorage.setItem(POS_KEY, JSON.stringify({id: ch.id, frac: f})); }catch(e){}',
+    '      }',
+    '      markActive();',
+    '    }, 200);',
+    '    updatePagenav();',
+    '  }, {passive:true});',
+    '  window.addEventListener("resize", updatePagenav, {passive:true});',
+    '  markActive();',
+    '  updatePagenav();',
+
+    '  var saveBtn = document.getElementById("save-file");',
+    '  if(saveBtn){ saveBtn.addEventListener("click", function(){',
+    '    var clone = document.documentElement.cloneNode(true);',
+    '    clone.removeAttribute("style");',
+    '    var b = clone.querySelector("body");',
+    '    b.setAttribute("data-mode", b.getAttribute("data-default-mode") || "light");',
+    '    var tb = clone.querySelector("#topbar"); if(tb) tb.classList.remove("open");',
+    '    var td = clone.querySelector("#toc-drawer"); if(td) td.classList.remove("open");',
+    '    var to = clone.querySelector("#toc-overlay"); if(to) to.classList.remove("open");',
+    '    Array.prototype.forEach.call(clone.querySelectorAll(".toc-link"), function(a){ a.classList.remove("active"); });',
+    '    Array.prototype.forEach.call(clone.querySelectorAll(".pagenav button"), function(b){ b.removeAttribute("disabled"); });',
+    '    var html = "<!DOCTYPE html>\\n" + clone.outerHTML;',
+    '    var blob = new Blob([html], {type:"text/html;charset=utf-8"});',
+    '    var url = URL.createObjectURL(blob);',
+    '    var a = document.createElement("a");',
+    '    a.href = url;',
+    '    a.download = (document.title || "bog").replace(/[^\\wæøåÆØÅ -]+/g, "").trim() + ".html";',
+    '    document.body.appendChild(a); a.click();',
+    '    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);',
+    '  }); }',
+    '})();'
+  ].join('\n');
+
+  /* ================= Forhåndsvisning ================= */
+  var previewTimer;
+  function schedulePreview(){
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(renderPreview, 250);
+  }
+  function renderPreview(){
+    mirror();
+    try{
+      $('preview').srcdoc = buildBookHtml(collect(), {preview:true});
+    }catch(e){ /* forhåndsvisning må aldrig vælte builderen */ }
+  }
+  document.addEventListener('input', function(e){
+    if(e.target && e.target.closest('.formpane')) schedulePreview();
+  });
+  document.addEventListener('change', function(e){
+    if(e.target && (e.target.name === 'theme' || e.target.name === 'defmode')) schedulePreview();
+  });
+
+  /* ================= Indlæs eksisterende bog ================= */
+  $('f-load').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var st = $('load-status');
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      var raw = ev.target.result;
+      var doc;
+      try{ doc = new DOMParser().parseFromString(raw, 'text/html'); }catch(err){ doc = null; }
+      var node = doc && doc.getElementById('builder-source-data');
+      var data = null;
+      if(node){ try{ data = JSON.parse(node.textContent); }catch(err){ data = null; } }
+      if(!data || data.format !== FORMAT_NAME){
+        st.className = 'filestatus err';
+        st.textContent = 'Filen kan ikke indlæses — den er ikke lavet med denne udgave af værktøjet.';
+        return;
+      }
+      restore(data, doc, raw);
+      var msg = file.name + ' er indlæst';
+      if(counterCode) msg += ' — tællerkoden blev fundet og følger med.';
+      st.className = 'filestatus';
+      st.textContent = msg;
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  function restore(data, doc, raw){
+    $('f-label').value = data.label || '';
+    $('f-title').value = data.title || '';
+    $('f-place').value = data.place || '';
+    $('f-desc').value = data.description || '';
+    $('f-mdtext').value = data.manuscript || '';
+    $('f-share').value = data.shareImage || '';
+    $('f-cta-text').value = data.ctaText || '';
+    $('f-cta-url').value = data.ctaUrl || '';
+
+    var themeInput = document.querySelector('input[name="theme"][value="'+(data.theme||'original')+'"]');
+    if(themeInput) themeInput.checked = true;
+    var modeInput = document.querySelector('input[name="defmode"][value="'+(data.defaultMode||'light')+'"]');
+    if(modeInput) modeInput.checked = true;
+
+    var dc = data.dublinCore || {};
+    DC_FIELDS.forEach(function(p){
+      var el = $('dc-'+p[0]);
+      if(el) el.value = dc[p[0]] || '';
+    });
+    dcTouched.title = !!dc.title;
+    dcTouched.description = !!dc.description;
+    dcTouched.coverage = !!dc.coverage;
+
+    /* Forsidebilledet hentes tilbage fra selve dokumentet */
+    var img = doc.querySelector('.cover-img');
+    if(img && /^data:/.test(img.getAttribute('src')||'')){
+      coverDataUrl = img.getAttribute('src');
+      $('cover-status').className = 'filestatus';
+      $('cover-status').textContent = 'Forsidebillede hentet fra filen (~' + approxKB(coverDataUrl) + ' KB)';
+    }
+
+    /* Tællerkode bevares uændret */
+    counterCode = '';
+    var m = raw.match(/<!--\s*TÆLLER\s*-->[\s\S]*?<!--\s*TÆLLER SLUT\s*-->/);
+    if(m) counterCode = m[0];
+
+    schedulePreview();
+  }
+
+  /* ================= JSON-eksport af metadata ================= */
+  function download(filename, content, type){
+    var blob = new Blob([content], {type: type || 'text/html;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+  }
+
+  $('json-btn').addEventListener('click', function(){
+    mirror();
+    var dc = {};
+    DC_FIELDS.forEach(function(p){
+      var v = ($('dc-'+p[0]).value || '').trim();
+      if(v) dc[p[0]] = v;
+    });
+    var payload = {
+      "@context": "http://purl.org/dc/elements/1.1/",
+      "dublinCore": dc,
+      "generated": new Date().toISOString()
+    };
+    download(slugify($('f-title').value) + '-metadata.json',
+             JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
+  });
+
+  /* ================= Generér ================= */
+  $('gen-btn').addEventListener('click', function(){
+    var status = $('status');
+    status.className = ''; status.textContent = '';
+    mirror();
+    var d = collect();
+    if(!d.title){ status.className='err'; status.textContent = 'Udfyld venligst en titel.'; return; }
+    if(!d.manuscript || !d.manuscript.trim()){
+      status.className='err'; status.textContent = 'Tilføj venligst manuskriptet — vælg en .md-fil eller skriv teksten i feltet.';
+      return;
+    }
+    status.textContent = 'Bygger bogen…';
+    setTimeout(function(){
+      try{
+        var html = buildBookHtml(d, {preview:false});
+        var fname = slugify(d.title) + '.html';
+        download(fname, html);
+        status.className = '';
+        status.textContent = 'Færdig. Filen "' + fname + '" er hentet ned på din computer.';
+      }catch(err){
+        status.className = 'err';
+        status.textContent = 'Der gik noget galt: ' + err.message;
+      }
+    }, 30);
+  });
+
+  renderPreview();
+})();
+</script>
+</body>
+</html>

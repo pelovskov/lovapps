@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Musikpakke · Bygger</title>
+<style>
+:root{
+  --b-bg:#f2efe9;
+  --b-panel:#ffffff;
+  --b-ink:#221f1b;
+  --b-ink-soft:#5d5750;
+  --b-line:#d8d2c8;
+  --b-accent:#2c4a63;
+  --b-accent-ink:#ffffff;
+  --b-warn:#8a4b12;
+  --b-radius:10px;
+  --b-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  font-family:var(--b-font);
+  background:var(--b-bg);
+  color:var(--b-ink);
+  font-size:16px;
+  line-height:1.5;
+}
+.wrap{display:flex;height:100vh;overflow:hidden}
+.pane-form{width:52%;min-width:420px;overflow-y:auto;padding:24px 28px 120px;background:var(--b-panel);border-right:1px solid var(--b-line)}
+.pane-prev{flex:1;display:flex;flex-direction:column;background:var(--b-bg)}
+.prev-head{padding:12px 16px;border-bottom:1px solid var(--b-line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.prev-head strong{font-size:15px}
+.prev-frame{flex:1;border:0;width:100%;background:#fff}
+
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--b-ink-soft);margin:0 0 24px;font-size:15px}
+h2{font-size:15px;margin:32px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--b-line);font-weight:650}
+h2:first-of-type{margin-top:20px}
+
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 4px;color:var(--b-ink)}
+.hint{font-size:12.5px;color:var(--b-ink-soft);font-weight:400;margin:2px 0 6px;line-height:1.45}
+input[type=text],input[type=date],textarea,select{
+  width:100%;padding:9px 11px;font:inherit;font-size:15px;
+  border:1px solid var(--b-line);border-radius:var(--b-radius);background:#fdfcfa;color:var(--b-ink);
+}
+textarea{min-height:70px;resize:vertical}
+input:focus,textarea:focus,select:focus,button:focus-visible{outline:3px solid #9db8cd;outline-offset:1px}
+input[type=file]{font-size:13.5px;margin-top:4px}
+
+.row{display:flex;gap:12px}
+.row>*{flex:1;min-width:0}
+
+button{font:inherit;cursor:pointer;border-radius:var(--b-radius);border:1px solid var(--b-line);background:#fff;padding:8px 14px;color:var(--b-ink)}
+button:hover{background:#f6f3ee}
+.btn-primary{background:var(--b-accent);color:var(--b-accent-ink);border-color:var(--b-accent);font-weight:600}
+.btn-primary:hover{background:#22394d}
+.btn-small{padding:4px 9px;font-size:13px}
+.btn-danger{color:#8a1f1f;border-color:#e0c4c4}
+
+.themes{display:flex;gap:10px;margin-top:6px}
+.theme-opt{flex:1;border:2px solid var(--b-line);border-radius:var(--b-radius);padding:10px;cursor:pointer;text-align:center;font-size:13px;background:#fff}
+.theme-opt.on{border-color:var(--b-accent);background:#eef3f7}
+.swatch{height:22px;border-radius:5px;margin-bottom:7px;border:1px solid rgba(0,0,0,.12)}
+
+.mix{border:1px solid var(--b-line);border-radius:var(--b-radius);padding:14px 16px;margin:14px 0;background:#fdfcfa}
+.mix-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mix-head h3{margin:0;font-size:15px}
+.tracks{margin:10px 0 0;padding:0;list-style:none}
+.tracks li{display:flex;gap:8px;align-items:center;padding:5px 0;border-top:1px solid #ece7df}
+.tracks li:first-child{border-top:0}
+.tno{width:26px;text-align:right;color:var(--b-ink-soft);font-size:13px;flex:none}
+.tracks input{padding:5px 8px;font-size:14px}
+.tdur{width:52px;text-align:right;color:var(--b-ink-soft);font-size:13px;flex:none;font-variant-numeric:tabular-nums}
+.tracks .btn-small{flex:none}
+.empty{color:var(--b-ink-soft);font-size:13.5px;padding:8px 0}
+
+.note{background:#fbf6ec;border:1px solid #e6d8bd;border-radius:var(--b-radius);padding:11px 13px;font-size:13.5px;margin:12px 0;color:#5b4a2e}
+.note strong{color:#4a3a1e}
+
+.buildbar{position:fixed;bottom:0;left:0;width:52%;min-width:420px;background:#fff;border-top:1px solid var(--b-line);padding:12px 28px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.buildbar .status{font-size:13px;color:var(--b-ink-soft);flex:1;min-width:140px}
+progress{width:100%;height:6px;margin-top:6px}
+
+.dc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+@media (max-width:1100px){
+  .wrap{flex-direction:column;height:auto;overflow:visible}
+  .pane-form{width:100%;min-width:0;border-right:0}
+  .buildbar{width:100%;min-width:0;padding:12px 16px}
+  .pane-prev{height:640px}
+  .dc-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="pane-form">
+  <h1>Musikpakke · Bygger</h1>
+  <p class="sub">Laver en offline musik-app med 3–5 samlinger. Resultatet er én zip-fil med en færdig PWA, der kan lægges på en telefon eller iPad og bruges uden internet.</p>
+
+  <h2>Pakken</h2>
+
+  <label for="f-titel">Apptitel</label>
+  <div class="hint">Vises øverst i appen og under ikonet på hjemmeskærmen. Hold den kort, fx “Musik til Anna”.</div>
+  <input type="text" id="f-titel" value="Musik til Anna">
+
+  <label for="f-under">Undertekst</label>
+  <div class="hint">Én linje under titlen. Må gerne være tom.</div>
+  <input type="text" id="f-under" value="Vælg en samling og tryk Afspil">
+
+  <label for="f-mappe">Mappenavn</label>
+  <div class="hint">Navnet på zip-filen og mappen indeni. Kun små bogstaver, tal og bindestreg.</div>
+  <input type="text" id="f-mappe" value="musik-til-anna">
+
+  <label for="f-ikon">App-ikon</label>
+  <div class="hint">Et kvadratisk billede. Bruges som ikon på hjemmeskærmen. Vælger du intet, laves et enkelt ikon med appens forbogstav.</div>
+  <input type="file" id="f-ikon" accept="image/*">
+
+  <label>Farver</label>
+  <div class="themes" id="themes"></div>
+
+  <h2>Samlinger</h2>
+  <div class="hint" style="margin-bottom:10px">Hver samling er ét mix på ca. 30 minutter. Tilføj mp3-filerne i den rækkefølge de skal spille — du kan rette titel og kunstner bagefter.</div>
+  <div id="mixes"></div>
+  <button id="add-mix">Tilføj samling</button>
+
+  <h2>Metadata (Dublin Core)</h2>
+  <div class="hint" style="margin-bottom:6px">Skrives ind i pakken, så den kan findes og forstås senere. Titel, dato og udgiver udfyldes automatisk hvis du lader dem stå.</div>
+  <div class="dc-grid" id="dc"></div>
+
+  <div class="note">
+    <strong>Om lydstyrke.</strong> Kør alle numre gennem Lydlab og normalisér til samme niveau, før du lægger dem ind her. Spring i lydstyrke mellem numre er den hyppigste årsag til at en lytter bliver utryg.
+  </div>
+</div>
+
+<div class="pane-prev">
+  <div class="prev-head">
+    <strong>Sådan ser appen ud</strong>
+    <span class="hint" style="margin:0">Lyden virker også her, så du kan prøve pakken igennem inden du bygger.</span>
+    <button class="btn-small" id="refresh">Opdatér</button>
+  </div>
+  <iframe class="prev-frame" id="prev" title="Forhåndsvisning"></iframe>
+</div>
+
+</div>
+
+<div class="buildbar">
+  <div class="status">
+    <span id="status">Ingen samlinger endnu.</span>
+    <progress id="prog" value="0" max="100" hidden></progress>
+  </div>
+  <button id="build-lite">Byg uden lydfiler</button>
+  <button class="btn-primary" id="build">Byg musikpakke</button>
+</div>
+
+
+<!-- ============ AFSPILLEREN (skabelon) ============ -->
+<script type="text/template" id="tpl-player">
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="__THEME_COLOR__">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="__APPTITEL__">
+<link rel="apple-touch-icon" href="ikon-192.png">
+<link rel="manifest" href="manifest.json">
+<title>__APPTITEL__</title>
+__DC_META__
+<style>
+:root{
+  --bg:__C_BG__;
+  --surface:__C_SURFACE__;
+  --ink:__C_INK__;
+  --ink-soft:__C_INKSOFT__;
+  --accent:__C_ACCENT__;
+  --on-accent:__C_ONACCENT__;
+  --line:__C_LINE__;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);color:var(--ink);
+  font-size:19px;line-height:1.45;
+  padding-bottom:150px;
+  -webkit-text-size-adjust:100%;
+}
+header{padding:28px 22px 14px;max-width:900px;margin:0 auto}
+h1{font-size:31px;line-height:1.15;margin:0;letter-spacing:-.01em;font-weight:700}
+header p{margin:8px 0 0;color:var(--ink-soft);font-size:18px}
+
+main{max-width:900px;margin:0 auto;padding:8px 22px 40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
+
+.card{
+  background:var(--surface);border:2px solid var(--line);border-radius:16px;
+  overflow:hidden;display:flex;flex-direction:column;
+}
+.card.playing{border-color:var(--accent)}
+.cover{aspect-ratio:16/10;width:100%;object-fit:cover;display:block;background:var(--line)}
+.cover.none{display:flex;align-items:center;justify-content:center;font-size:52px;color:var(--ink-soft);opacity:.35}
+.card-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.card h2{margin:0;font-size:22px;line-height:1.2;font-weight:650}
+.card .meta{margin:0;color:var(--ink-soft);font-size:16px}
+.card .actions{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+
+button{font:inherit;cursor:pointer;border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink);padding:14px 16px;min-height:56px}
+button:focus-visible{outline:4px solid var(--accent);outline-offset:2px}
+.play{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-size:21px;font-weight:650}
+.queue{font-size:17px;min-height:48px;padding:10px 14px}
+.queue.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+
+#bar{
+  position:fixed;left:0;right:0;bottom:0;background:var(--surface);
+  border-top:2px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  display:none;
+}
+#bar.on{display:block}
+#bar .inner{max-width:900px;margin:0 auto;display:flex;align-items:center;gap:14px}
+#bar-thumb{width:58px;height:58px;border-radius:10px;object-fit:cover;flex:none;background:var(--line)}
+#bar-text{flex:1;min-width:0}
+#bar-title{font-size:19px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bar-sub{font-size:16px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bar button{flex:none;min-width:64px;padding:12px}
+#bar .icon{font-size:22px;line-height:1}
+#bar-stop{border:none;background:none;color:var(--ink-soft);font-size:16px;min-width:0;min-height:0;padding:8px}
+
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:32px;text-align:center;z-index:10}
+#loading .box{max-width:420px}
+#loading h2{font-size:23px;margin:0 0 10px;font-weight:650}
+#loading p{color:var(--ink-soft);margin:0 0 18px}
+#loading progress{width:100%;height:12px}
+#loading.done{display:none}
+
+.err{max-width:900px;margin:24px auto;padding:16px 22px;color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}}
+</style>
+</head>
+<body>
+
+<div id="loading" class="done"><div class="box">
+  <h2>Henter musikken</h2>
+  <p id="load-text">Det sker kun første gang. Bagefter virker appen uden internet.</p>
+  <progress id="load-prog" value="0" max="100"></progress>
+</div></div>
+
+<header>
+  <h1 id="app-title">__APPTITEL__</h1>
+  <p id="app-sub">__UNDERTEKST__</p>
+</header>
+
+<main><div class="grid" id="grid"></div></main>
+
+<div id="bar" role="region" aria-label="Afspiller">
+  <div class="inner">
+    <img id="bar-thumb" alt="">
+    <div id="bar-text">
+      <div id="bar-title" aria-live="polite"></div>
+      <div id="bar-sub"></div>
+    </div>
+    <button id="bar-play" aria-label="Pause"><span class="icon">❚❚</span></button>
+    <button id="bar-next" aria-label="Næste nummer"><span class="icon">▶▶</span></button>
+  </div>
+  <div class="inner" style="justify-content:flex-end;margin-top:2px">
+    <button id="bar-stop">Stop</button>
+  </div>
+</div>
+
+<script>
+const INLINE_DATA = __INLINE_DATA__;
+const CACHE = '__CACHE__';
+
+let data = null, koe = [], pos = -1, aktivMix = [];
+const audio = new Audio();
+audio.preload = 'auto';
+
+const $ = id => document.getElementById(id);
+
+function tid(s){
+  s = Math.round(s||0);
+  const m = Math.floor(s/60), r = s%60;
+  return m + ':' + String(r).padStart(2,'0');
+}
+function mixLaengde(m){
+  const t = m.spor.reduce((a,s)=>a+(s.laengde||0),0);
+  return Math.round(t/60) + ' min · ' + m.spor.length + ' numre';
+}
+
+function tegn(){
+  const grid = $('grid');
+  grid.innerHTML = '';
+  data.mix.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.mix = m.id;
+
+    if (m.cover) {
+      const img = document.createElement('img');
+      img.className = 'cover'; img.src = m.cover; img.alt = '';
+      card.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'cover none'; ph.textContent = '♪';
+      card.appendChild(ph);
+    }
+
+    const body = document.createElement('div');
+    body.className = 'card-body';
+    const h = document.createElement('h2'); h.textContent = m.titel;
+    const meta = document.createElement('p'); meta.className = 'meta'; meta.textContent = mixLaengde(m);
+    const act = document.createElement('div'); act.className = 'actions';
+
+    const bPlay = document.createElement('button');
+    bPlay.className = 'play'; bPlay.textContent = 'Afspil';
+    bPlay.onclick = () => start([m.id]);
+
+    const bQ = document.createElement('button');
+    bQ.className = 'queue'; bQ.textContent = 'Sæt i kø';
+    bQ.onclick = () => saetIKoe(m.id, bQ);
+
+    act.appendChild(bPlay); act.appendChild(bQ);
+    body.appendChild(h); body.appendChild(meta); body.appendChild(act);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+  opdaterKort();
+}
+
+function opdaterKort(){
+  document.querySelectorAll('.card').forEach(c => {
+    const id = c.dataset.mix;
+    const spiller = aktivMix.includes(id);
+    c.classList.toggle('playing', spiller && naaendeMix() === id);
+    const q = c.querySelector('.queue');
+    if (spiller) { q.classList.add('on'); q.textContent = 'I kø'; }
+    else { q.classList.remove('on'); q.textContent = 'Sæt i kø'; }
+  });
+}
+function naaendeMix(){ return pos >= 0 && koe[pos] ? koe[pos].mixId : null; }
+
+function byg(mixIds){
+  const liste = [];
+  mixIds.forEach(id => {
+    const m = data.mix.find(x => x.id === id);
+    if (!m) return;
+    m.spor.forEach(s => liste.push({
+      fil: s.fil, titel: s.titel, kunstner: s.kunstner,
+      mixId: m.id, mixTitel: m.titel, cover: m.cover
+    }));
+  });
+  return liste;
+}
+
+function start(mixIds){
+  aktivMix = mixIds.slice();
+  koe = byg(aktivMix);
+  pos = -1;
+  naeste();
+}
+
+function saetIKoe(id, knap){
+  if (aktivMix.includes(id)) {
+    if (naaendeMix() === id) return;
+    aktivMix = aktivMix.filter(x => x !== id);
+  } else {
+    aktivMix.push(id);
+  }
+  if (pos < 0) { opdaterKort(); return; }
+  const spillerNu = koe[pos];
+  koe = byg(aktivMix);
+  const i = koe.findIndex(s => s.fil === spillerNu.fil);
+  pos = i >= 0 ? i : pos;
+  opdaterKort();
+}
+
+function naeste(){
+  if (pos + 1 >= koe.length) { stop(); return; }
+  pos++;
+  const s = koe[pos];
+  audio.src = s.fil;
+  audio.play().catch(()=>{});
+  visBar(s);
+  opdaterKort();
+}
+
+function visBar(s){
+  $('bar').classList.add('on');
+  $('bar-title').textContent = s.titel;
+  $('bar-sub').textContent = (s.kunstner ? s.kunstner + ' · ' : '') + s.mixTitel;
+  if (s.cover) $('bar-thumb').src = s.cover;
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: s.titel, artist: s.kunstner || '', album: s.mixTitel,
+      artwork: s.cover ? [{src:s.cover, sizes:'512x512', type:'image/jpeg'}] : []
+    });
+  }
+}
+
+function stop(){
+  audio.pause(); audio.removeAttribute('src'); audio.load();
+  pos = -1; koe = []; aktivMix = [];
+  $('bar').classList.remove('on');
+  opdaterKort();
+}
+
+audio.addEventListener('ended', naeste);
+audio.addEventListener('error', () => { if (pos >= 0) naeste(); });
+audio.addEventListener('play',  () => { $('bar-play').innerHTML = '<span class="icon">❚❚</span>'; $('bar-play').setAttribute('aria-label','Pause'); });
+audio.addEventListener('pause', () => { $('bar-play').innerHTML = '<span class="icon">▶</span>';  $('bar-play').setAttribute('aria-label','Afspil'); });
+
+$('bar-play').onclick = () => { audio.paused ? audio.play() : audio.pause(); };
+$('bar-next').onclick = naeste;
+$('bar-stop').onclick = stop;
+
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('play',  () => audio.play());
+  navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+  navigator.mediaSession.setActionHandler('nexttrack', naeste);
+}
+
+async function init(){
+  try {
+    data = INLINE_DATA || await (await fetch('data/playlists.json')).json();
+  } catch (e) {
+    document.querySelector('main').innerHTML =
+      '<div class="err">Musikken kunne ikke indlæses. Filen data/playlists.json mangler i mappen.</div>';
+    return;
+  }
+  if (data.titel) { $('app-title').textContent = data.titel; document.title = data.titel; }
+  if (data.undertekst !== undefined) $('app-sub').textContent = data.undertekst;
+  tegn();
+  if (!INLINE_DATA) hentAlt();
+}
+
+async function hentAlt(){
+  if (!('serviceWorker' in navigator) || !('caches' in window)) return;
+  const filer = [];
+  data.mix.forEach(m => { if (m.cover) filer.push(m.cover); m.spor.forEach(s => filer.push(s.fil)); });
+  const cache = await caches.open(CACHE);
+  const mangler = [];
+  for (const f of filer) { if (!(await cache.match(f))) mangler.push(f); }
+
+  if (mangler.length) {
+    $('loading').classList.remove('done');
+    $('load-prog').max = mangler.length;
+    let n = 0;
+    for (const f of mangler) {
+      try { await cache.add(f); } catch (e) {}
+      n++;
+      $('load-prog').value = n;
+      $('load-text').textContent = 'Henter ' + n + ' af ' + mangler.length + '. Det sker kun første gang.';
+    }
+    $('loading').classList.add('done');
+  }
+  try { await navigator.serviceWorker.register('sw.js'); } catch (e) {}
+}
+
+init();
+<\/script>
+</body>
+</html>
+</script>
+
+
+<!-- ============ SERVICE WORKER (skabelon) ============ -->
+<script type="text/template" id="tpl-sw">
+const CACHE = '__CACHE__';
+const SKAL = ['./','index.html','manifest.json','ikon-192.png','ikon-512.png','data/playlists.json'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SKAL)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys()
+    .then(k => Promise.all(k.filter(x => x !== CACHE).map(x => caches.delete(x))))
+    .then(() => self.clients.claim()));
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.match(e.request).then(svar => svar || fetch(e.request).then(net => {
+      if (net && net.status === 200 && net.type === 'basic') {
+        const kopi = net.clone();
+        caches.open(CACHE).then(c => c.put(e.request, kopi));
+      }
+      return net;
+    }).catch(() => new Response('', {status:503})))
+  );
+});
+</script>
+
+
+<script>
+/* ============================================================
+   Musikpakke · Bygger — version 1
+   ============================================================ */
+
+const TEMAER = {
+  oprindeligt: {
+    navn:'Oprindeligt',
+    bg:'#f4f1eb', surface:'#ffffff', ink:'#221f1b', inkSoft:'#5d5750',
+    accent:'#2c4a63', onAccent:'#ffffff', line:'#d9d3c8'
+  },
+  rodekors: {
+    navn:'Røde Kors',
+    bg:'#f7f4f3', surface:'#ffffff', ink:'#1e1a1a', inkSoft:'#5c5352',
+    accent:'#e30613', onAccent:'#ffffff', line:'#dcd3d2'
+  },
+  bordeaux: {
+    navn:'Bordeaux',
+    bg:'#f5f0ee', surface:'#ffffff', ink:'#231a1c', inkSoft:'#5f5052',
+    accent:'#6e1e2e', onAccent:'#ffffff', line:'#dcd0d0'
+  }
+};
+
+const DC_FELTER = [
+  ['title','Titel','Værkets titel'],
+  ['creator','Ophavsmand','Den der har lavet pakken'],
+  ['subject','Emne','Emneord adskilt af komma'],
+  ['description','Beskrivelse','Hvad pakken indeholder og til hvem'],
+  ['publisher','Udgiver',''],
+  ['contributor','Bidragyder','Andre der har hjulpet'],
+  ['date','Dato',''],
+  ['type','Type',''],
+  ['format','Format',''],
+  ['identifier','Identifikator','Fx PRIV-musik-anna-01'],
+  ['source','Kilde','Hvor musikken kommer fra'],
+  ['language','Sprog',''],
+  ['relation','Relation','Hører sammen med'],
+  ['coverage','Dækning','Tid eller sted'],
+  ['rights','Rettigheder','']
+];
+
+const UDGIVERE = ['Privat','Syd for Banen — Lokalhistorisk Forening','Røde Kors Roskilde'];
+
+const state = {
+  tema: 'oprindeligt',
+  ikon: null,
+  mix: [],
+  dc: {
+    title:'', creator:'', subject:'', description:'',
+    publisher:'Privat', contributor:'',
+    date: new Date().toISOString().slice(0,10),
+    type:'Sound', format:'PWA (HTML + MP3)', identifier:'',
+    source:'', language:'da', relation:'', coverage:'',
+    rights:'Privat brug'
+  }
+};
+
+let mixTeller = 0;
+const urlCache = new WeakMap();
+function objUrl(file){
+  if (!file) return null;
+  if (!urlCache.has(file)) urlCache.set(file, URL.createObjectURL(file));
+  return urlCache.get(file);
+}
+
+const $ = id => document.getElementById(id);
+const val = id => $(id).value.trim();
+
+function slug(s){
+  return (s||'').toLowerCase()
+    .replace(/æ/g,'ae').replace(/ø/g,'oe').replace(/å/g,'aa')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'musikpakke';
+}
+function esc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function tid(s){
+  s = Math.round(s||0);
+  return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+}
+
+/* ---------- temavælger ---------- */
+function tegnTemaer(){
+  const box = $('themes');
+  box.innerHTML = '';
+  Object.entries(TEMAER).forEach(([k,t]) => {
+    const d = document.createElement('div');
+    d.className = 'theme-opt' + (state.tema === k ? ' on' : '');
+    d.tabIndex = 0;
+    d.innerHTML = '<div class="swatch" style="background:' + t.accent + '"></div>' + t.navn;
+    const vaelg = () => { state.tema = k; tegnTemaer(); opdater(); };
+    d.onclick = vaelg;
+    d.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); vaelg(); } };
+    box.appendChild(d);
+  });
+}
+
+/* ---------- Dublin Core ---------- */
+function tegnDC(){
+  const box = $('dc');
+  box.innerHTML = '';
+  DC_FELTER.forEach(([k,label,hint]) => {
+    const wrap = document.createElement('div');
+    const id = 'dc-' + k;
+    let felt;
+    if (k === 'publisher') {
+      felt = '<select id="' + id + '">' + UDGIVERE.map(u =>
+        '<option' + (state.dc.publisher === u ? ' selected' : '') + '>' + esc(u) + '</option>').join('') + '</select>';
+    } else if (k === 'date') {
+      felt = '<input type="date" id="' + id + '" value="' + esc(state.dc.date) + '">';
+    } else if (k === 'description') {
+      felt = '<textarea id="' + id + '">' + esc(state.dc.description) + '</textarea>';
+    } else {
+      felt = '<input type="text" id="' + id + '" value="' + esc(state.dc[k]) + '">';
+    }
+    wrap.innerHTML = '<label for="' + id + '">' + label + '</label>' +
+      (hint ? '<div class="hint">' + hint + '</div>' : '') + felt;
+    box.appendChild(wrap);
+    wrap.querySelector('#' + id).addEventListener('input', e => {
+      state.dc[k] = e.target.value;
+    });
+  });
+}
+
+/* ---------- samlinger ---------- */
+function nytMix(){
+  mixTeller++;
+  state.mix.push({ id:'mix' + mixTeller, titel:'Samling ' + state.mix.length, cover:null, spor:[] });
+  tegnMix(); opdater();
+}
+
+function readDuration(file){
+  return new Promise(res => {
+    const a = new Audio();
+    a.preload = 'metadata';
+    let klar = false;
+    const slut = v => { if (!klar) { klar = true; res(v); } };
+    a.onloadedmetadata = () => slut(isFinite(a.duration) ? a.duration : 0);
+    a.onerror = () => slut(0);
+    setTimeout(() => slut(0), 8000);
+    a.src = objUrl(file);
+  });
+}
+
+function pænTitel(navn){
+  return navn.replace(/\.[^.]+$/,'')
+    .replace(/^[\s\d]{1,4}[-_.\s]+/,'')
+    .replace(/_/g,' ').trim();
+}
+
+async function tilfoejSpor(m, files){
+  $('status').textContent = 'Læser lydfiler…';
+  for (const f of files) {
+    const d = await readDuration(f);
+    m.spor.push({ file:f, titel:pænTitel(f.name), kunstner:'', laengde:d });
+  }
+  tegnMix(); opdater();
+}
+
+function flyt(arr, fra, til){
+  if (til < 0 || til >= arr.length) return;
+  const [x] = arr.splice(fra,1);
+  arr.splice(til,0,x);
+}
+
+function tegnMix(){
+  const box = $('mixes');
+  box.innerHTML = '';
+  if (!state.mix.length) {
+    box.innerHTML = '<p class="empty">Ingen samlinger endnu. Tryk “Tilføj samling”.</p>';
+    return;
+  }
+  state.mix.forEach((m, mi) => {
+    const el = document.createElement('div');
+    el.className = 'mix';
+
+    const head = document.createElement('div');
+    head.className = 'mix-head';
+    const total = m.spor.reduce((a,s)=>a+(s.laengde||0),0);
+    head.innerHTML = '<h3>Samling ' + (mi+1) + ' · ' + Math.round(total/60) + ' min</h3>';
+    const knapper = document.createElement('div');
+    knapper.innerHTML =
+      '<button class="btn-small" data-op="up">↑</button> ' +
+      '<button class="btn-small" data-op="down">↓</button> ' +
+      '<button class="btn-small btn-danger" data-op="del">Fjern</button>';
+    knapper.querySelector('[data-op=up]').onclick   = () => { flyt(state.mix, mi, mi-1); tegnMix(); opdater(); };
+    knapper.querySelector('[data-op=down]').onclick = () => { flyt(state.mix, mi, mi+1); tegnMix(); opdater(); };
+    knapper.querySelector('[data-op=del]').onclick  = () => { state.mix.splice(mi,1); tegnMix(); opdater(); };
+    head.appendChild(knapper);
+    el.appendChild(head);
+
+    const felter = document.createElement('div');
+    felter.className = 'row';
+    felter.innerHTML =
+      '<div><label>Titel på samlingen</label><input type="text" class="m-titel" value="' + esc(m.titel) + '"></div>' +
+      '<div><label>Billede</label><input type="file" class="m-cover" accept="image/*"></div>';
+    felter.querySelector('.m-titel').addEventListener('input', e => { m.titel = e.target.value; opdater(); });
+    felter.querySelector('.m-cover').addEventListener('change', e => { m.cover = e.target.files[0] || null; opdater(); });
+    el.appendChild(felter);
+
+    const lab = document.createElement('label');
+    lab.textContent = 'Numre';
+    el.appendChild(lab);
+
+    const ul = document.createElement('ul');
+    ul.className = 'tracks';
+    if (!m.spor.length) {
+      ul.innerHTML = '<li class="empty">Ingen numre valgt endnu.</li>';
+    } else {
+      m.spor.forEach((s, si) => {
+        const li = document.createElement('li');
+        li.innerHTML =
+          '<span class="tno">' + (si+1) + '.</span>' +
+          '<input type="text" class="s-titel" value="' + esc(s.titel) + '" aria-label="Titel">' +
+          '<input type="text" class="s-kunst" value="' + esc(s.kunstner) + '" placeholder="Kunstner" aria-label="Kunstner">' +
+          '<span class="tdur">' + tid(s.laengde) + '</span>' +
+          '<button class="btn-small" data-op="up" aria-label="Flyt op">↑</button>' +
+          '<button class="btn-small" data-op="down" aria-label="Flyt ned">↓</button>' +
+          '<button class="btn-small btn-danger" data-op="del" aria-label="Fjern">×</button>';
+        li.querySelector('.s-titel').addEventListener('input', e => { s.titel = e.target.value; opdater(); });
+        li.querySelector('.s-kunst').addEventListener('input', e => { s.kunstner = e.target.value; opdater(); });
+        li.querySelector('[data-op=up]').onclick   = () => { flyt(m.spor, si, si-1); tegnMix(); opdater(); };
+        li.querySelector('[data-op=down]').onclick = () => { flyt(m.spor, si, si+1); tegnMix(); opdater(); };
+        li.querySelector('[data-op=del]').onclick  = () => { m.spor.splice(si,1); tegnMix(); opdater(); };
+        ul.appendChild(li);
+      });
+    }
+    el.appendChild(ul);
+
+    const add = document.createElement('input');
+    add.type = 'file'; add.multiple = true; add.accept = 'audio/*';
+    add.addEventListener('change', e => {
+      const f = Array.from(e.target.files);
+      e.target.value = '';
+      if (f.length) tilfoejSpor(m, f);
+    });
+    el.appendChild(add);
+
+    box.appendChild(el);
+  });
+}
+
+/* ---------- filnavne i pakken ---------- */
+function filnavne(medFiler){
+  const map = { audio:[], img:[] };
+  state.mix.forEach((m, mi) => {
+    const p = 'mix' + (mi+1);
+    m.spor.forEach((s, si) => {
+      const ext = (s.file.name.match(/\.[a-z0-9]+$/i) || ['.mp3'])[0].toLowerCase();
+      const navn = 'audio/' + p + '-' + String(si+1).padStart(2,'0') + ext;
+      s._sti = navn;
+      map.audio.push({ navn, file:s.file });
+    });
+    if (m.cover) {
+      const ext = (m.cover.name.match(/\.[a-z0-9]+$/i) || ['.jpg'])[0].toLowerCase();
+      m._coverSti = 'img/' + p + ext;
+      map.img.push({ navn:m._coverSti, file:m.cover });
+    } else {
+      m._coverSti = null;
+    }
+  });
+  return map;
+}
+
+/* ---------- playlists.json ---------- */
+function byggeData(preview){
+  const dc = Object.assign({}, state.dc);
+  if (!dc.title) dc.title = val('f-titel');
+  return {
+    titel: val('f-titel'),
+    undertekst: val('f-under'),
+    tema: state.tema,
+    dc: dc,
+    mix: state.mix.map(m => ({
+      id: m.id,
+      titel: m.titel || 'Uden titel',
+      cover: preview ? (m.cover ? objUrl(m.cover) : null) : m._coverSti,
+      spor: m.spor.map(s => ({
+        fil: preview ? objUrl(s.file) : s._sti,
+        titel: s.titel || 'Uden titel',
+        kunstner: s.kunstner || '',
+        laengde: Math.round(s.laengde || 0)
+      }))
+    }))
+  };
+}
+
+/* ---------- index.html ---------- */
+let cacheNavn = 'musikpakke-v1';
+
+function kortHash(s){
+  let h = 5381;
+  for (let i=0;i<s.length;i++) h = ((h*33) ^ s.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
+function skabelon(id){
+  return document.getElementById(id).textContent
+    .replace(/<\\\/script>/g, '<\/script>').trim();
+}
+
+function dcMeta(dc){
+  return DC_FELTER.map(([k]) => {
+    const v = k === 'title' ? (dc.title || val('f-titel')) : dc[k];
+    return v ? '<meta name="DC.' + k + '" content="' + esc(v) + '">' : '';
+  }).filter(Boolean).join('\n');
+}
+
+function byggeIndex(preview){
+  const t = TEMAER[state.tema];
+  const d = byggeData(preview);
+  return skabelon('tpl-player')
+    .replace(/__APPTITEL__/g, esc(val('f-titel') || 'Musik'))
+    .replace(/__UNDERTEKST__/g, esc(val('f-under')))
+    .replace(/__THEME_COLOR__/g, t.accent)
+    .replace(/__C_BG__/g, t.bg)
+    .replace(/__C_SURFACE__/g, t.surface)
+    .replace(/__C_INK__/g, t.ink)
+    .replace(/__C_INKSOFT__/g, t.inkSoft)
+    .replace(/__C_ACCENT__/g, t.accent)
+    .replace(/__C_ONACCENT__/g, t.onAccent)
+    .replace(/__C_LINE__/g, t.line)
+    .replace(/__DC_META__/g, preview ? '' : dcMeta(d.dc))
+    .replace(/__CACHE__/g, cacheNavn)
+    .replace(/__INLINE_DATA__/g, preview ? JSON.stringify(d) : 'null');
+}
+
+function byggeManifest(){
+  const t = TEMAER[state.tema];
+  return JSON.stringify({
+    name: val('f-titel') || 'Musik',
+    short_name: (val('f-titel') || 'Musik').slice(0,14),
+    description: state.dc.description || val('f-under'),
+    start_url: './index.html',
+    scope: './',
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: t.bg,
+    theme_color: t.accent,
+    lang: 'da',
+    icons: [
+      { src:'ikon-192.png', sizes:'192x192', type:'image/png', purpose:'any' },
+      { src:'ikon-512.png', sizes:'512x512', type:'image/png', purpose:'any' }
+    ]
+  }, null, 2);
+}
+
+/* ---------- ikoner ---------- */
+function ikonBlob(size){
+  return new Promise(res => {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const ctx = c.getContext('2d');
+    const t = TEMAER[state.tema];
+    if (state.ikon) {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(img.width, img.height);
+        ctx.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, size, size);
+        c.toBlob(res, 'image/png');
+      };
+      img.onerror = () => { flad(); };
+      img.src = objUrl(state.ikon);
+    } else { flad(); }
+
+    function flad(){
+      ctx.fillStyle = t.accent;
+      ctx.fillRect(0,0,size,size);
+      ctx.fillStyle = t.onAccent;
+      ctx.font = '600 ' + Math.round(size*0.5) + 'px -apple-system,Helvetica,Arial,sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const bogstav = (val('f-titel') || 'M').trim()[0].toUpperCase();
+      ctx.fillText(bogstav, size/2, size*0.54);
+      c.toBlob(res, 'image/png');
+    }
+  });
+}
+
+/* ---------- zip (uden komprimering) ---------- */
+const CRC_TAB = (() => {
+  const t = new Uint32Array(256);
+  for (let i=0;i<256;i++){
+    let c = i;
+    for (let k=0;k<8;k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(u8){
+  let c = 0xFFFFFFFF;
+  for (let i=0;i<u8.length;i++) c = CRC_TAB[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+function zipStore(entries){
+  const enc = new TextEncoder();
+  const dele = [], central = [];
+  let offset = 0;
+  for (const e of entries) {
+    const navn = enc.encode(e.navn);
+    const crc = crc32(e.data);
+    const n = e.data.length;
+
+    const lh = new Uint8Array(30 + navn.length);
+    const dv = new DataView(lh.buffer);
+    dv.setUint32(0, 0x04034b50, true);
+    dv.setUint16(4, 20, true);
+    dv.setUint16(6, 0x0800, true);
+    dv.setUint16(8, 0, true);
+    dv.setUint32(14, crc, true);
+    dv.setUint32(18, n, true);
+    dv.setUint32(22, n, true);
+    dv.setUint16(26, navn.length, true);
+    lh.set(navn, 30);
+    dele.push(lh, e.data);
+
+    const cd = new Uint8Array(46 + navn.length);
+    const cv = new DataView(cd.buffer);
+    cv.setUint32(0, 0x02014b50, true);
+    cv.setUint16(4, 20, true);
+    cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0x0800, true);
+    cv.setUint16(10, 0, true);
+    cv.setUint32(16, crc, true);
+    cv.setUint32(20, n, true);
+    cv.setUint32(24, n, true);
+    cv.setUint16(28, navn.length, true);
+    cv.setUint32(42, offset, true);
+    cd.set(navn, 46);
+    central.push(cd);
+
+    offset += lh.length + n;
+  }
+  const cdSize = central.reduce((a,b) => a + b.length, 0);
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, entries.length, true);
+  ev.setUint16(10, entries.length, true);
+  ev.setUint32(12, cdSize, true);
+  ev.setUint32(16, offset, true);
+  return new Blob(dele.concat(central, [eocd]), { type:'application/zip' });
+}
+
+const tekstBytes = s => new TextEncoder().encode(s);
+async function blobBytes(b){ return new Uint8Array(await b.arrayBuffer()); }
+
+/* ---------- byg ---------- */
+async function byg(medLyd){
+  if (!state.mix.length) { alert('Tilføj mindst én samling først.'); return; }
+  const tomme = state.mix.filter(m => !m.spor.length);
+  if (tomme.length) { alert('En eller flere samlinger har ingen numre.'); return; }
+
+  const mappe = slug(val('f-mappe') || val('f-titel'));
+  const map = filnavne(true);
+  cacheNavn = 'musikpakke-' + kortHash(JSON.stringify(byggeData(false)));
+  const prog = $('prog');
+  prog.hidden = false; prog.value = 0;
+  prog.max = 4 + (medLyd ? map.audio.length + map.img.length : 0);
+  let n = 0;
+  const tik = tekst => { prog.value = ++n; $('status').textContent = tekst; };
+
+  const entries = [];
+  const put = (navn, data) => entries.push({ navn: mappe + '/' + navn, data });
+
+  put('index.html', tekstBytes(byggeIndex(false)));            tik('Bygger appen…');
+  put('manifest.json', tekstBytes(byggeManifest()));
+  put('sw.js', tekstBytes(skabelon('tpl-sw').replace(/__CACHE__/g, cacheNavn)));
+  put('data/playlists.json', tekstBytes(JSON.stringify(byggeData(false), null, 2))); tik('Skriver spillelister…');
+
+  put('ikon-192.png', await blobBytes(await ikonBlob(192)));   tik('Laver ikoner…');
+  put('ikon-512.png', await blobBytes(await ikonBlob(512)));
+
+  put('LÆS-MIG.txt', tekstBytes(laesMig(mappe, medLyd, map)));  tik('Skriver vejledning…');
+
+  if (medLyd) {
+    for (const f of map.img)   { put(f.navn, await blobBytes(f.file)); tik('Pakker billeder…'); }
+    for (const f of map.audio) { put(f.navn, await blobBytes(f.file)); tik('Pakker ' + f.navn + '…'); }
+  }
+
+  $('status').textContent = 'Samler zip-filen…';
+  const blob = zipStore(entries);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = mappe + (medLyd ? '' : '-uden-lyd') + '.zip';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+
+  prog.hidden = true;
+  $('status').textContent = 'Færdig: ' + a.download + ' (' + Math.round(blob.size/1048576) + ' MB)';
+}
+
+function laesMig(mappe, medLyd, map){
+  const L = [];
+  L.push(val('f-titel'));
+  L.push('='.repeat(Math.max(3, val('f-titel').length)));
+  L.push('');
+  L.push('Bygget med Musikpakke · Bygger, ' + new Date().toLocaleDateString('da-DK') + '.');
+  L.push('');
+  if (!medLyd) {
+    L.push('DENNE PAKKE MANGLER LYD OG BILLEDER.');
+    L.push('Kopiér filerne ind manuelt med præcis disse navne:');
+    L.push('');
+    map.audio.forEach(f => L.push('  ' + f.navn + '   <-  ' + f.file.name));
+    map.img.forEach(f   => L.push('  ' + f.navn + '   <-  ' + f.file.name));
+    L.push('');
+  }
+  L.push('SÅDAN LÆGGER DU DEN PÅ EN TELEFON ELLER IPAD');
+  L.push('');
+  L.push('1. Læg hele mappen "' + mappe + '" på et webhotel eller i et');
+  L.push('   GitHub Pages-repository, så den har en adresse der starter med https.');
+  L.push('2. Åbn adressen i Safari på iPad eller telefon.');
+  L.push('3. Vent til musikken er hentet. Det står på skærmen.');
+  L.push('4. Tryk Del-knappen og vælg "Føj til hjemmeskærm".');
+  L.push('5. Appen ligger nu som et ikon og virker uden internet.');
+  L.push('');
+  L.push('Appen skal ligge på https for at kunne virke offline.');
+  L.push('Åbner du index.html direkte fra en mappe, spiller musikken fint,');
+  L.push('men den kan ikke lægges på hjemmeskærmen.');
+  L.push('');
+  L.push('SÅDAN OPDATERER DU SENERE');
+  L.push('');
+  L.push('Version: ' + cacheNavn);
+  L.push('');
+  L.push('Byg pakken forfra i byggeren og læg den nye mappe op oven i den gamle.');
+  L.push('Versionsnummeret ændrer sig automatisk, når indholdet ændrer sig.');
+  L.push('');
+  L.push('På iPad eller telefon:');
+  L.push('  1. Sæt enheden på wifi.');
+  L.push('  2. Åbn appen. Den ser den nye version, men viser stadig den gamle.');
+  L.push('  3. Luk appen helt (svirp den væk).');
+  L.push('  4. Åbn den igen. Nu hentes det nye ned.');
+  L.push('');
+  L.push('Udskifter du en mp3-fil uden at ændre noget andet, ændrer');
+  L.push('versionsnummeret sig ikke. Ret da navnet på et nummer i byggeren,');
+  L.push('så pakken tæller som ny.');
+  L.push('');
+  L.push('METADATA');
+  DC_FELTER.forEach(([k,label]) => {
+    const v = k === 'title' ? (state.dc.title || val('f-titel')) : state.dc[k];
+    if (v) L.push('  ' + label + ': ' + v);
+  });
+  return L.join('\n');
+}
+
+/* ---------- forhåndsvisning ---------- */
+let prevTimer = null;
+function opdater(){
+  const antal = state.mix.length;
+  const spor = state.mix.reduce((a,m) => a + m.spor.length, 0);
+  const min = Math.round(state.mix.reduce((a,m) => a + m.spor.reduce((b,s) => b + (s.laengde||0), 0), 0) / 60);
+  $('status').textContent = antal
+    ? antal + ' samlinger · ' + spor + ' numre · ' + min + ' min i alt'
+    : 'Ingen samlinger endnu.';
+  clearTimeout(prevTimer);
+  prevTimer = setTimeout(tegnPreview, 250);
+}
+function tegnPreview(){
+  $('prev').srcdoc = byggeIndex(true);
+}
+
+/* ---------- start ---------- */
+$('add-mix').onclick = nytMix;
+$('refresh').onclick = tegnPreview;
+$('build').onclick = () => byg(true);
+$('build-lite').onclick = () => byg(false);
+$('f-ikon').addEventListener('change', e => { state.ikon = e.target.files[0] || null; opdater(); });
+['f-titel','f-under'].forEach(id => $(id).addEventListener('input', opdater));
+$('f-titel').addEventListener('input', () => {
+  if (!$('f-mappe').dataset.rettet) $('f-mappe').value = slug(val('f-titel'));
+});
+$('f-mappe').addEventListener('input', e => { e.target.dataset.rettet = '1'; });
+
+tegnTemaer();
+tegnDC();
+tegnMix();
+opdater();
+</script>
+</body>
+</html>

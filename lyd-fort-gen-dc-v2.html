@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lydfortælling - Bygger DC</title>
+<style>
+  :root{
+    --paper: #EDE7D8;
+    --paper-dim: #E2DBC8;
+    --ink: #211E19;
+    --rust: #9A4630;
+    --moss: #47543C;
+    --hint: #5F5A4B;
+    --card: #1B1A16;
+    --card-text: #F2ECDD;
+    --line: #cbc2a8;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+  .topbar{
+    padding:22px 28px 18px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .topbar h1{
+    font-family:var(--serif);
+    font-size:25px;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  .topbar span{
+    font-size:14.5px;
+    color:var(--hint);
+    letter-spacing:0.3px;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns: 1fr 380px;
+    gap:0;
+    align-items:start;
+  }
+  @media (max-width: 860px){
+    .layout{ grid-template-columns: 1fr; }
+  }
+  .form-pane{
+    padding:28px;
+    max-width:640px;
+  }
+  .field{
+    margin-bottom:20px;
+  }
+  .field label{
+    display:block;
+    font-size:13.5px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--moss);
+    font-weight:600;
+    margin-bottom:7px;
+  }
+  .field .hint code{
+    background:#e5dfcd; padding:1px 5px; border-radius:3px; font-size:13px;
+  }
+  .field .hint{
+    font-size:13.5px;
+    line-height:1.55;
+    color:var(--hint);
+    margin-top:6px;
+    font-weight:400;
+    text-transform:none;
+    letter-spacing:0;
+  }
+  input[type=text], textarea{
+    width:100%;
+    padding:11px 13px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:3px;
+    font-family:var(--sans);
+    font-size:15.5px;
+    color:var(--ink);
+  }
+  textarea{ min-height:150px; resize:vertical; line-height:1.6;}
+  input[type=text]:focus, textarea:focus{
+    outline:2px solid var(--rust);
+    outline-offset:1px;
+  }
+  .filebox{
+    border:1px dashed var(--line);
+    border-radius:3px;
+    padding:14px;
+    background:#f7f3e7;
+    font-size:14.5px;
+  }
+  .filebox input{ font-size:14px; }
+  .filebox .status{
+    margin-top:9px;
+    font-size:13.5px;
+    color:var(--moss);
+    font-weight:600;
+  }
+  .filebox .status.pending{ color:#7A6522; }
+  .row2{ display:flex; gap:16px; }
+  .row2 > div{ flex:1; }
+
+  .theme-picker{ display:flex; gap:12px; flex-wrap:wrap; }
+  .theme-option{
+    flex:1; min-width:140px;
+    position:relative;
+    border:2px solid var(--line);
+    border-radius:8px;
+    padding:12px 12px 11px;
+    cursor:pointer;
+    background:#fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .theme-option:hover{ border-color:#a89f89; }
+  .theme-option input{
+    position:absolute;
+    top:11px; right:11px;
+    width:19px; height:19px;
+    margin:0;
+    accent-color:var(--rust);
+    cursor:pointer;
+  }
+  .theme-option .swatches{
+    display:flex; gap:6px; margin-bottom:10px;
+  }
+  .theme-option .swatch{
+    width:28px; height:28px;
+    border-radius:50%;
+    border:1px solid rgba(0,0,0,0.12);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35);
+  }
+  .theme-option .tname{
+    font-size:14.5px; font-weight:600; color:var(--ink); padding-right:22px;
+  }
+  .theme-option.selected{
+    border-color:var(--theme-accent, var(--rust));
+    box-shadow: 0 0 0 2px var(--theme-accent, var(--rust)) inset, 0 2px 8px rgba(30,25,15,0.08);
+  }
+  .generate-btn{
+    width:100%;
+    padding:17px;
+    background:var(--rust);
+    color:#fdf8ee;
+    border:none;
+    border-radius:4px;
+    font-size:17px;
+    font-weight:700;
+    letter-spacing:0.02em;
+    cursor:pointer;
+    margin-top:8px;
+  }
+  .generate-btn:disabled{
+    background:#c9beac;
+    cursor:not-allowed;
+  }
+  .generate-btn:hover:not(:disabled){ background:#82392a; }
+  .msg{
+    margin-top:12px;
+    font-size:14.5px;
+    line-height:1.55;
+    padding:10px 12px;
+    border-radius:3px;
+    display:none;
+  }
+  .msg.ok{ display:block; background:#e7ecdf; color:#3f4a34; }
+  .msg.err{ display:block; background:#f4ded9; color:#7d2c1a; }
+
+  /* Dublin Core-panel */
+  details.dc{
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#f7f3e7;
+    padding:14px 16px;
+    margin-bottom:20px;
+  }
+  details.dc summary{
+    cursor:pointer;
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--moss);
+    font-weight:600;
+    padding:2px 0;
+  }
+  details.dc summary::marker{ color:var(--rust); }
+  details.dc[open] summary{ margin-bottom:12px; }
+  details.dc .panel-sub{
+    font-size:13.5px;
+    color:var(--hint);
+    margin:0 0 16px;
+    line-height:1.55;
+  }
+  .field-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:0 16px;
+  }
+  .field-grid .field{ margin-bottom:16px; }
+  .field-grid label{ text-transform:none; letter-spacing:0; font-size:14px; }
+  .field-grid label .hint{
+    display:block; font-size:13px; color:var(--hint);
+    font-weight:400; margin-top:3px; line-height:1.5;
+  }
+  select{
+    width:100%;
+    padding:11px 13px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:3px;
+    font-family:var(--sans);
+    font-size:15.5px;
+    color:var(--ink);
+  }
+  select:focus{ outline:2px solid var(--rust); outline-offset:1px; }
+  .meta-btn{
+    width:100%;
+    padding:12px;
+    background:transparent;
+    color:var(--moss);
+    border:1px solid var(--line);
+    border-radius:4px;
+    font-size:14.5px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:10px;
+  }
+  .meta-btn:hover{ background:#f2ecdd; }
+
+  /* preview pane */
+  .preview-pane{
+    background:var(--paper-dim);
+    border-left:1px solid var(--line);
+    padding:28px 22px;
+    position:sticky;
+    top:0;
+    min-height:100vh;
+  }
+  .preview-pane .label{
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--hint);
+    margin-bottom:14px;
+    font-weight:600;
+  }
+  .phone-frame{
+    background:#fbf8ef;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+    box-shadow: 0 8px 24px rgba(30,25,15,0.10);
+  }
+  #previewFrame{
+    width:100%;
+    height:600px;
+    border:none;
+    border-radius:6px;
+    background:#fbf8ef;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Lydfortælling · Bygger</h1>
+  <span>Lav en afspilbar historiefortæller-side · kører lokalt, ingen server · version 2</span>
+</div>
+
+<div class="layout">
+  <div class="form-pane">
+
+    <div class="field">
+      <label for="loadPlayer">Indlæs eksisterende afspiller (valgfri)</label>
+      <div class="filebox">
+        <input type="file" id="loadPlayer" accept=".html,text/html">
+        <div class="status pending" id="loadStatus">Ingen fil valgt</div>
+      </div>
+      <div class="hint">Vælg en afspiller-fil (.html), som er lavet med denne udgave af værktøjet, for at hente den ind i formularen og redigere den videre. Alt kommer med: tekst, billede, lyd, tema og Dublin Core-felter. Har du selv sat en tællerkode ind nederst i filen, følger den også med over i den nye udgave. Filer fra ældre udgaver kan ikke indlæses.</div>
+    </div>
+
+    <div class="field">
+      <label>Tema</label>
+      <div class="theme-picker" id="themePicker">
+        <label class="theme-option selected" data-theme="original" style="--theme-accent:#9A4630">
+          <input type="radio" name="theme" value="original" checked>
+          <div class="swatches">
+            <span class="swatch" style="background:#9A4630"></span>
+            <span class="swatch" style="background:#EDE7D8"></span>
+          </div>
+          <div class="tname">Oprindeligt</div>
+        </label>
+        <label class="theme-option" data-theme="rodekors" style="--theme-accent:#E30A0B">
+          <input type="radio" name="theme" value="rodekors">
+          <div class="swatches">
+            <span class="swatch" style="background:#E30A0B"></span>
+            <span class="swatch" style="background:#FFFFFF"></span>
+          </div>
+          <div class="tname">Røde Kors</div>
+        </label>
+        <label class="theme-option" data-theme="lokalhistorisk2" style="--theme-accent:#9E2453">
+          <input type="radio" name="theme" value="lokalhistorisk2">
+          <div class="swatches">
+            <span class="swatch" style="background:#9E2453"></span>
+            <span class="swatch" style="background:#FAF9F5"></span>
+          </div>
+          <div class="tname">Lokalhistorisk (bordeaux)</div>
+        </label>
+      </div>
+      <div class="hint">Vælg farvetema for den genererede afspiller.</div>
+    </div>
+
+    <div class="field">
+      <label for="eyebrow">Mærkat (valgfri)</label>
+      <input type="text" id="eyebrow" placeholder="fx SYD FOR BANEN, NØRREGADE, 1970'ERNE">
+      <div class="hint">Vises som lille label øverst. Lad stå tom for at udelade.</div>
+    </div>
+
+    <div class="field">
+      <label for="title">Titel</label>
+      <input type="text" id="title" placeholder="fx Verdens Største FDF Hus">
+    </div>
+
+    <div class="field">
+      <label for="location">Sted (valgfri)</label>
+      <input type="text" id="location" placeholder="fx Køgevej 100">
+      <div class="hint">Vises som en lille adresse-/stedlinje under afspilleren.</div>
+    </div>
+
+    <div class="field">
+      <label for="image">Episodebillede</label>
+      <div class="filebox">
+        <input type="file" id="image" accept="image/*">
+        <div class="status pending" id="imageStatus">Intet billede valgt endnu</div>
+      </div>
+      <div class="hint">Billedet skalares ned og komprimeres automatisk (maks. 1100px bredde, JPEG).</div>
+    </div>
+
+    <div class="field">
+      <label for="imageUrl">Webadresse til delingsbillede (valgfri)</label>
+      <input type="url" id="imageUrl" placeholder="https://filedn.eu/.../vi-koerer.jpg">
+      <div class="hint">Bruges kun til at vise et billede når linket deles på fx Facebook. Skal være det <em>samme</em> billede uploadet som en selvstændig billedfil et sted med sin egen webadresse (fx samme pCloud-mappe som html-filen) — det indlejrede billede i selve afspiller-filen kan ikke læses af Facebook. Lades feltet tomt, vises der bare titel og beskrivelse uden billede ved deling.</div>
+    </div>
+
+    <div class="field">
+      <label for="audio">Lydfil</label>
+      <div class="filebox">
+        <input type="file" id="audio" accept="audio/*">
+        <div class="status pending" id="audioStatus">Ingen lydfil valgt endnu</div>
+      </div>
+      <div class="hint">Op til ca. 8 minutter anbefales. Hold filen komprimeret (mp3, lav bitrate) for at holde den samlede fil lille.</div>
+    </div>
+
+    <div class="field">
+      <label for="descLabel">Overskrift på beskrivelsen (valgfri)</label>
+      <input type="text" id="descLabel" placeholder="Om historien">
+      <div class="hint">Vises lukket med en pil ved siden af. Klik folder hele beskrivelsen ud. Tom felt bruger "Om historien".</div>
+    </div>
+
+    <div class="field">
+      <label for="description">Beskrivelse</label>
+      <textarea id="description" placeholder="Kort tekst om historien, stedet og hvad man hører."></textarea>
+      <div class="hint">Du kan bruge Markdown:<br>
+        <code>**fed**</code> og <code>*kursiv*</code> · <code>## Stor overskrift</code> og <code>### Mindre overskrift</code> · <code>- </code> foran hver linje giver en punktliste · <code>[tekst](https://...)</code> giver et link · en linje med <code>---</code> giver en vandret streg.</div>
+    </div>
+
+    <div class="field">
+      <label for="ctaText">Knap i bunden (valgfri)</label>
+      <div class="row2">
+        <div>
+          <input type="text" id="ctaText" placeholder="fx Se billedalbummet">
+        </div>
+        <div>
+          <input type="text" id="ctaUrl" placeholder="https://...">
+        </div>
+      </div>
+      <div class="hint">Viser en knap i temafarven nederst på afspilleren, fx til et billedalbum eller anden ressource. Udfyld både knaptekst og webadresse — ellers vises knappen ikke.</div>
+    </div>
+
+    <details class="dc" id="dcDetails">
+      <summary>Dublin Core-metadata</summary>
+      <p class="panel-sub">Til arkivering. Alle felter er valgfrie — udfyld dem der giver mening. Felterne skrives både som <code>&lt;meta&gt;</code>-tags i filens hoved og som en oversigt, man kan folde ud nederst i afspilleren.</p>
+
+      <div class="field-grid">
+        <div class="field">
+          <label for="dcTitle">Titel <span class="hint">dc.title — udfyldes automatisk fra titlen</span></label>
+          <input type="text" id="dcTitle">
+        </div>
+        <div class="field">
+          <label for="dcCreator">Ophav / skaber <span class="hint">dc.creator — fortæller, optager eller den der har skabt materialet</span></label>
+          <input type="text" id="dcCreator" placeholder="F.eks. Fortalt af Anders Jensen">
+        </div>
+        <div class="field">
+          <label for="dcSubject">Emne / nøgleord <span class="hint">dc.subject — adskil med semikolon</span></label>
+          <input type="text" id="dcSubject" placeholder="Byvandring; Nørregade; 1970erne">
+        </div>
+        <div class="field">
+          <label for="dcDescription">Beskrivelse <span class="hint">dc.description — udfyldes automatisk fra beskrivelsen</span></label>
+          <input type="text" id="dcDescription">
+        </div>
+        <div class="field">
+          <label for="dcPublisher">Udgiver <span class="hint">dc.publisher — foreningen eller arkivet</span></label>
+          <input type="text" id="dcPublisher" placeholder="F.eks. Lokalhistorisk Forening">
+        </div>
+        <div class="field">
+          <label for="dcContributor">Bidragyder <span class="hint">dc.contributor — den der har interviewet, redigeret eller registreret</span></label>
+          <input type="text" id="dcContributor">
+        </div>
+        <div class="field">
+          <label for="dcDate">Dato <span class="hint">dc.date — helst ÅÅÅÅ-MM-DD, men fx "ca. 1955" er også i orden</span></label>
+          <input type="text" id="dcDate" placeholder="2026-08-04">
+        </div>
+        <div class="field">
+          <label for="dcType">Type <span class="hint">dc.type — DCMI-typeordforråd</span></label>
+          <select id="dcType">
+            <option value="Sound" selected>Sound (lyd)</option>
+            <option value="InteractiveResource">InteractiveResource</option>
+            <option value="Text">Text (tekst)</option>
+            <option value="Image">Image (billede)</option>
+            <option value="Collection">Collection (samling)</option>
+            <option value="Event">Event (begivenhed)</option>
+            <option value="">(ingen)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="dcFormat">Format <span class="hint">dc.format — filens tekniske format</span></label>
+          <input type="text" id="dcFormat" value="text/html">
+        </div>
+        <div class="field">
+          <label for="dcIdentifier">Identifikator <span class="hint">dc.identifier — arkivnummer, URL eller lignende</span></label>
+          <input type="text" id="dcIdentifier" placeholder="F.eks. lyd-noerregade-2026-k4mp">
+        </div>
+        <div class="field">
+          <label for="dcSource">Kilde <span class="hint">dc.source — hvor materialet stammer fra</span></label>
+          <input type="text" id="dcSource" placeholder="F.eks. Optagelse i privateje">
+        </div>
+        <div class="field">
+          <label for="dcLanguage">Sprog <span class="hint">dc.language — sprogkode, fx da</span></label>
+          <input type="text" id="dcLanguage" value="da">
+        </div>
+        <div class="field">
+          <label for="dcRelation">Relation <span class="hint">dc.relation — beslægtet materiale, fx et billedalbum</span></label>
+          <input type="text" id="dcRelation">
+        </div>
+        <div class="field">
+          <label for="dcCoverage">Dækning <span class="hint">dc.coverage — sted og/eller periode, udfyldes automatisk fra Sted</span></label>
+          <input type="text" id="dcCoverage" placeholder="Roskilde, Danmark; 1970-1980">
+        </div>
+        <div class="field">
+          <label for="dcRights">Rettigheder <span class="hint">dc.rights — ophavsret og vilkår for brug</span></label>
+          <input type="text" id="dcRights" placeholder="F.eks. Foreningen ejer rettighederne. Må ikke gengives uden tilladelse.">
+        </div>
+      </div>
+
+      <button class="meta-btn" id="metaJsonBtn" type="button">Gem metadata som separat JSON-fil</button>
+    </details>
+
+    <button class="generate-btn" id="generateBtn" disabled>Generér afspiller (.html)</button>
+    <div class="msg" id="msgBox"></div>
+
+  </div>
+
+  <div class="preview-pane">
+    <div class="label">Forhåndsvisning</div>
+    <div class="phone-frame">
+      <iframe id="previewFrame"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  eyebrow:'', title:'', location:'', description:'', descLabel:'',
+  imageDataUrl:null, audioDataUrl:null, audioType:'', theme:'original', imageUrl:'',
+  ctaText:'', ctaUrl:'', taellerBlock:''
+};
+
+/* ---------- Dublin Core ---------- */
+
+const DC_FIELDS = ['title','creator','subject','description','publisher','contributor',
+  'date','type','format','identifier','source','language','relation','coverage','rights'];
+
+const DC_LABELS = {
+  title:'Titel', creator:'Ophav', subject:'Emne', description:'Beskrivelse',
+  publisher:'Udgiver', contributor:'Bidragyder', date:'Dato', type:'Type',
+  format:'Format', identifier:'Identifikator', source:'Kilde', language:'Sprog',
+  relation:'Relation', coverage:'Dækning', rights:'Rettigheder'
+};
+
+function dcInputId(key){ return 'dc' + key.charAt(0).toUpperCase() + key.slice(1); }
+
+// Felter der spejler formularen ovenfor, indtil man selv skriver i dem.
+const dcTouched = { title:false, description:false, coverage:false };
+
+const THEMES = {
+  original: {
+    label:'Oprindeligt',
+    paper:'#EDE7D8', card:'#1B1A16', cardText:'#F2ECDD', cardBg:'#fbf8ef',
+    ink:'#211E19', rust:'#9A4630', moss:'#5C6B4F', line:'#d8d0ba',
+    timesColor:'#d8d2c4', footerColor:'#6B6455', muted:'#6B6455', footerStrong:'#4A463C',
+    tickBg:'#5a564a', tickPlayed:'#E7A488',
+    bodyText:'#3a362e', quoteText:'#5a5646', codeBg:'#efe9d8'
+  },
+  rodekors: {
+    label:'Røde Kors',
+    paper:'#FFFFFF', card:'#E30A0B', cardText:'#FFFFFF', cardBg:'#FFFFFF',
+    ink:'#1A1A1A', rust:'#E30A0B', moss:'#B00A0B', line:'#EAEAEA',
+    timesColor:'rgba(255,255,255,0.9)', footerColor:'#5A5A5A', muted:'#5A5A5A', footerStrong:'#333333',
+    tickBg:'rgba(255,255,255,0.28)', tickPlayed:'#FFFFFF',
+    bodyText:'#262626', quoteText:'#5a5a5a', codeBg:'#F4F4F4'
+  },
+  lokalhistorisk2: {
+    label:'Lokalhistorisk (bordeaux)',
+    paper:'#FAF9F5', card:'#9E2453', cardText:'#FAF9F5', cardBg:'#FFFFFF',
+    ink:'#2A1620', rust:'#9E2453', moss:'#7A1B40', line:'#EAE2E5',
+    timesColor:'rgba(250,249,245,0.9)', footerColor:'#6B5560', muted:'#6B5560', footerStrong:'#3A2630',
+    tickBg:'rgba(250,249,245,0.28)', tickPlayed:'#FAF9F5',
+    bodyText:'#332028', quoteText:'#5c3b48', codeBg:'#F3E9ED'
+  }
+};
+
+const $ = id => document.getElementById(id);
+
+function compressImage(file, maxDim, quality){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Kunne ikke læse billedfilen'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Kunne ikke afkode billedet'));
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+        else if (h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function fileToDataURL(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Kunne ikke læse filen'));
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+function escapeHtml(str){
+  return (str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function stripMdToPlain(md, maxLen){
+  let t = (md || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/[#>*_`~-]/g, ' ')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (maxLen && t.length > maxLen) t = t.slice(0, maxLen - 1).trim() + '…';
+  return t;
+}
+
+function inlineMd(s){
+  return s
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/(^|[^_])_(.+?)_([^_]|$)/g, '$1<em>$2</em>$3')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+
+function mdToHtml(md){
+  if (!md) return '';
+  const escaped = escapeHtml(md);
+  const lines = escaped.split('\n');
+  let html = '', inUl = false, inOl = false, para = [];
+
+  function flushPara(){
+    if (para.length){ html += '<p>' + inlineMd(para.join('<br>')) + '</p>'; para = []; }
+  }
+  function closeLists(){
+    if (inUl){ html += '</ul>'; inUl = false; }
+    if (inOl){ html += '</ol>'; inOl = false; }
+  }
+
+  for (const line of lines){
+    if (/^\s*$/.test(line)){ flushPara(); closeLists(); continue; }
+    let m;
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)){
+      flushPara(); closeLists();
+      html += '<hr>';
+      continue;
+    }
+    if ((m = line.match(/^(#{1,4})\s+(.*)$/))){
+      flushPara(); closeLists();
+      const level = Math.min(Math.max(m[1].length, 2), 5);
+      html += `<h${level}>${inlineMd(m[2])}</h${level}>`;
+      continue;
+    }
+    if ((m = line.match(/^[-*]\s+(.*)$/))){
+      flushPara();
+      if (inOl){ html += '</ol>'; inOl = false; }
+      if (!inUl){ html += '<ul>'; inUl = true; }
+      html += `<li>${inlineMd(m[1])}</li>`;
+      continue;
+    }
+    if ((m = line.match(/^\d+\.\s+(.*)$/))){
+      flushPara();
+      if (inUl){ html += '</ul>'; inUl = false; }
+      if (!inOl){ html += '<ol>'; inOl = true; }
+      html += `<li>${inlineMd(m[1])}</li>`;
+      continue;
+    }
+    if ((m = line.match(/^>\s?(.*)$/))){
+      flushPara(); closeLists();
+      html += `<blockquote>${inlineMd(m[1])}</blockquote>`;
+      continue;
+    }
+    closeLists();
+    para.push(line);
+  }
+  flushPara(); closeLists();
+  return html;
+}
+
+function collectDublinCore(){
+  const dc = {};
+  DC_FIELDS.forEach(key => {
+    const el = $(dcInputId(key));
+    const val = el ? el.value.trim() : '';
+    if (val) dc[key] = val;
+  });
+  return dc;
+}
+
+// Holder dc.title, dc.description og dc.coverage i sync med formularen,
+// så længe man ikke selv har skrevet noget i dem.
+function syncAutoDc(){
+  if (!dcTouched.title) $('dcTitle').value = state.title.trim();
+  if (!dcTouched.description) $('dcDescription').value = stripMdToPlain(state.description, 300);
+  if (!dcTouched.coverage) $('dcCoverage').value = state.location.trim();
+}
+
+function buildDcMetaTags(dc){
+  const lines = [];
+  DC_FIELDS.forEach(key => {
+    if (!dc[key]) return;
+    if (key === 'subject'){
+      dc[key].split(';').forEach(part => {
+        const v = part.trim();
+        if (v) lines.push(`<meta name="DC.subject" content="${escapeHtml(v)}">`);
+      });
+    } else {
+      lines.push(`<meta name="DC.${key}" content="${escapeHtml(dc[key])}">`);
+    }
+  });
+  if (!lines.length) return '';
+  return '<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">\n' + lines.join('\n');
+}
+
+// Den synlige oversigt nederst i afspilleren. Skrives som færdig HTML,
+// så den også kan læses hvis JavaScript en dag ikke virker.
+function buildDcSection(dc){
+  const rows = DC_FIELDS
+    .filter(key => dc[key])
+    .map(key => `<div class="meta-row"><dt>${DC_LABELS[key]} <span class="dc-tag">dc.${key}</span></dt><dd>${escapeHtml(dc[key])}</dd></div>`);
+  if (!rows.length) return '';
+  return `<details class="meta">
+      <summary><span class="desc-label">Om denne fil</span><span class="chevron" aria-hidden="true">&#9662;</span></summary>
+      <dl class="meta-list">${rows.join('')}</dl>
+    </details>`;
+}
+
+function buildPlayerHTML(s, includeTaeller){
+  const theme = THEMES[s.theme] || THEMES.original;
+  const eyebrowBlock = s.eyebrow ? `<div class="eyebrow">&#10084; ${escapeHtml(s.eyebrow)}</div>` : '';
+  const locationBlock = s.location ? `<div class="location">${escapeHtml(s.location)}</div>` : '';
+  const imageBlock = s.imageDataUrl ? `<div class="cover"><img src="${s.imageDataUrl}" alt=""></div>` : '';
+  const descLabel = (s.descLabel && s.descLabel.trim()) ? s.descLabel.trim() : 'Om historien';
+  const descBlock = s.description ? `<details class="desc">
+      <summary><span class="desc-label">${escapeHtml(descLabel)}</span><span class="chevron" aria-hidden="true">&#9662;</span></summary>
+      <div class="desc-body">${mdToHtml(s.description)}</div>
+    </details>` : '';
+  const ctaBlock = (s.ctaText && s.ctaText.trim() && s.ctaUrl && s.ctaUrl.trim())
+    ? `<div class="cta-wrap"><a class="cta-btn" href="${escapeHtml(s.ctaUrl.trim())}" target="_blank" rel="noopener">${escapeHtml(s.ctaText.trim())}</a></div>`
+    : '';
+  const audioSrc = s.audioDataUrl || '';
+  const pageTitle = s.title || 'Lydfortælling';
+  const safeName = (s.title || 'lydfortaelling').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'lydfortaelling';
+  const dc = collectDublinCore();
+  const dcMeta = buildDcMetaTags(dc);
+  const dcBlock = buildDcSection(dc);
+  const pageLang = (dc.language || 'da').trim() || 'da';
+  const taellerBlock = (includeTaeller && s.taellerBlock) ? '\n' + s.taellerBlock + '\n' : '';
+  const sourceData = {
+    format: 'lydfortaelling-player',
+    builderVersion: 2,
+    eyebrow: s.eyebrow || '', title: s.title || '', location: s.location || '',
+    description: s.description || '', descLabel: s.descLabel || '',
+    theme: s.theme || 'original', imageUrl: s.imageUrl || '',
+    ctaText: s.ctaText || '', ctaUrl: s.ctaUrl || '',
+    dublinCore: dc
+  };
+  const ogDesc = stripMdToPlain(s.description, 200) || (s.location ? `En lydfortælling · ${s.location}` : 'En lydfortælling');
+  const faviconTag = s.imageDataUrl ? `<link rel="icon" href="${s.imageDataUrl}">` : '';
+  const ogImageTags = s.imageUrl ? `<meta property="og:image" content="${escapeHtml(s.imageUrl)}">
+<meta name="twitter:card" content="summary_large_image">` : '';
+  const socialMeta = `<meta property="og:type" content="website">
+<meta property="og:title" content="${escapeHtml(pageTitle)}">
+<meta property="og:description" content="${escapeHtml(ogDesc)}">
+${ogImageTags}
+${s.location ? `<meta name="story:location" content="${escapeHtml(s.location)}">` : ''}`;
+
+  return `<!DOCTYPE html>
+<html lang="${escapeHtml(pageLang)}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(pageTitle)}</title>
+${socialMeta}
+${dcMeta}
+${faviconTag}
+<script type="application/json" id="builder-source-data">${JSON.stringify(sourceData)}<\/script>
+<style>
+  :root{
+    --paper:${theme.paper}; --card:${theme.card}; --card-text:${theme.cardText}; --card-bg:${theme.cardBg};
+    --ink:${theme.ink}; --rust:${theme.rust}; --moss:${theme.moss}; --line:${theme.line};
+    --times-color:${theme.timesColor}; --footer-color:${theme.footerColor};
+    --muted:${theme.muted}; --footer-strong:${theme.footerStrong};
+    --tick-bg:${theme.tickBg}; --tick-played:${theme.tickPlayed};
+    --body-text:${theme.bodyText}; --quote-text:${theme.quoteText}; --code-bg:${theme.codeBg};
+    --serif: Arial, 'Helvetica Neue', Helvetica, 'Liberation Sans', sans-serif;
+    --sans: Arial, 'Helvetica Neue', Helvetica, 'Liberation Sans', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); display:flex; justify-content:center; padding:28px 14px;
+  }
+  .card{
+    width:100%; max-width:420px; background:var(--card-bg); border:1px solid var(--line);
+    border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(30,25,15,0.12);
+  }
+  .eyebrow{
+    text-align:center; font-size:13.5px; letter-spacing:0.1em; font-weight:700;
+    color:var(--moss); text-transform:uppercase; padding:16px 16px 4px;
+  }
+  .cover{ margin:14px 16px 0; border-radius:10px; overflow:hidden; }
+  .cover img{ width:100%; display:block; aspect-ratio:16/10.5; object-fit:cover; }
+  .title{
+    font-family:var(--serif); font-size:26px; line-height:1.3; text-align:center;
+    padding:18px 20px 6px; font-weight:700; margin:0;
+  }
+  .location{
+    text-align:center; font-size:16px; color:var(--muted); padding-bottom:14px;
+  }
+  .player{
+    margin:6px 16px 18px; background:var(--card); color:var(--card-text);
+    border-radius:12px; padding:14px 16px 16px;
+  }
+  .player-row{ display:flex; align-items:center; gap:12px; }
+  .playbtn{
+    width:44px; height:44px; min-width:44px; border-radius:50%; background:var(--card-text);
+    border:none; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .playbtn svg{ width:16px; height:16px; }
+  .scrubwrap{ flex:1; }
+  .ticks{
+    display:flex; align-items:flex-end; gap:2px; height:22px; cursor:pointer; position:relative;
+  }
+  .tick{ flex:1; background:var(--tick-bg); border-radius:1px; min-width:2px; }
+  .tick.played{ background:var(--tick-played); }
+  .times{ display:flex; justify-content:space-between; font-size:13.5px; color:var(--times-color); margin-top:6px; font-variant-numeric:tabular-nums; }
+  .desc{
+    margin:2px 16px 18px; border-top:1px solid var(--line); padding-top:12px;
+  }
+  .desc summary{
+    display:flex; align-items:center; justify-content:space-between;
+    cursor:pointer; list-style:none; padding:6px 6px 6px 20px;
+    font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink);
+  }
+  .desc summary::-webkit-details-marker{ display:none; }
+  .desc summary::marker{ content:''; }
+  .desc .chevron{
+    color:var(--rust); font-size:17px; transition: transform .2s ease; flex-shrink:0; margin-left:10px;
+  }
+  .desc[open] .chevron{ transform:rotate(180deg); }
+  .desc-body{
+    padding:10px 6px 4px 20px; font-size:16.5px; line-height:1.75; color:var(--body-text);
+  }
+  .desc-body p{ margin:0 0 12px; }
+  .desc-body p:last-child{ margin-bottom:0; }
+  .desc-body h2, .desc-body h3, .desc-body h4, .desc-body h5{
+    font-family:var(--serif); color:var(--ink); margin:20px 0 8px; line-height:1.3;
+  }
+  .desc-body h2{ font-size:21px; }
+  .desc-body h3{ font-size:18px; }
+  .desc-body h4, .desc-body h5{ font-size:17px; }
+  .desc-body h2:first-child, .desc-body h3:first-child{ margin-top:2px; }
+  .desc-body hr{
+    border:none; border-top:1px solid var(--line); margin:20px 0;
+  }
+  .desc-body ul, .desc-body ol{ margin:0 0 12px; padding-left:22px; }
+  .desc-body li{ margin-bottom:6px; }
+  .desc-body blockquote{
+    margin:0 0 12px; padding-left:12px; border-left:3px solid var(--rust); color:var(--quote-text); font-style:italic;
+  }
+  .desc-body a{ color:var(--rust); }
+  .desc-body code{
+    background:var(--code-bg); padding:1px 5px; border-radius:3px; font-size:15px;
+  }
+  .meta{
+    margin:2px 16px 16px; border-top:1px solid var(--line); padding-top:10px;
+  }
+  .meta summary{
+    display:flex; align-items:center; justify-content:space-between;
+    cursor:pointer; list-style:none; padding:6px 6px 6px 20px;
+    font-size:15px; font-weight:700; color:var(--footer-strong);
+  }
+  .meta summary::-webkit-details-marker{ display:none; }
+  .meta summary::marker{ content:''; }
+  .meta .chevron{
+    color:var(--rust); font-size:14px; transition: transform .2s ease; flex-shrink:0; margin-left:10px;
+  }
+  .meta[open] .chevron{ transform:rotate(180deg); }
+  .meta-list{ margin:8px 0 4px; padding:0 6px 0 20px; font-size:14.5px; }
+  .meta-row{
+    padding:6px 0; border-bottom:1px solid var(--line);
+  }
+  .meta-row:last-child{ border-bottom:none; }
+  .meta dt{ color:var(--muted); font-size:13.5px; }
+  .meta dd{ margin:2px 0 0; color:var(--body-text); line-height:1.5; }
+  .meta .dc-tag{ opacity:0.7; font-size:12.5px; }
+  .cta-wrap{
+    padding:0 16px 18px; text-align:center;
+  }
+  .cta-btn{
+    display:block; width:100%;
+    background:var(--rust); color:var(--card-text);
+    text-decoration:none; text-align:center;
+    font-size:16px; font-weight:700; letter-spacing:0.02em;
+    padding:14px 18px; border-radius:12px;
+    box-shadow:0 3px 10px rgba(30,25,15,0.15);
+    transition: filter .15s ease, transform .1s ease;
+  }
+  .cta-btn:hover{ filter:brightness(0.92); }
+  .cta-btn:active{ transform:translateY(1px); }
+  .footer{
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+    text-align:center; padding:4px 20px 22px;
+  }
+  .dl-btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    padding:12px 22px; border-radius:999px;
+    border:2px solid var(--rust); background:transparent;
+    color:var(--body-text); font-family:var(--sans);
+    font-size:16.5px; font-weight:700; cursor:pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .dl-btn svg{ width:20px; height:20px; color:var(--rust); flex-shrink:0; }
+  .dl-btn:hover{ background:var(--rust); color:var(--card-text); }
+  .dl-btn:hover svg{ color:var(--card-text); }
+  .dl-btn:focus-visible{ outline:3px solid var(--rust); outline-offset:3px; }
+  .footer-note{
+    font-size:14px; color:var(--footer-strong); font-style:italic;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    ${eyebrowBlock}
+    ${imageBlock}
+    <h1 class="title">${escapeHtml(s.title) || 'Uden titel'}</h1>
+    ${locationBlock}
+    <div class="player">
+      <div class="player-row">
+        <button class="playbtn" id="playBtn" aria-label="Afspil">
+          <svg id="playIcon" viewBox="0 0 24 24" fill="${theme.card}"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="pauseIcon" viewBox="0 0 24 24" fill="${theme.card}" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+        </button>
+        <div class="scrubwrap">
+          <div class="ticks" id="ticks"></div>
+          <div class="times"><span id="curTime">0:00</span><span id="durTime">0:00</span></div>
+        </div>
+      </div>
+    </div>
+    ${descBlock}
+    ${ctaBlock}
+    ${dcBlock}
+    <div class="footer">
+      <button class="dl-btn" id="dlBtn" type="button" title="Gem denne side som en fil på din computer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M6 9.5l6 6 6-6"/><path d="M5 20.5h14"/></svg>
+        <span>Gem filen</span>
+      </button>
+      <div class="footer-note">En lydfortælling</div>
+    </div>
+  </div>
+
+  <audio id="audio" preload="metadata" src="${audioSrc}"></audio>
+
+  <script>
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('playBtn');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const ticksEl = document.getElementById('ticks');
+    const curTimeEl = document.getElementById('curTime');
+    const durTimeEl = document.getElementById('durTime');
+    const TICK_COUNT = 56;
+    let ticks = [];
+
+    for (let i = 0; i < TICK_COUNT; i++){
+      const t = document.createElement('div');
+      t.className = 'tick';
+      t.style.height = (6 + Math.round(Math.abs(Math.sin(i * 0.7)) * 16)) + 'px';
+      ticksEl.appendChild(t);
+      ticks.push(t);
+    }
+
+    function fmt(sec){
+      if (!isFinite(sec)) return '0:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60).toString().padStart(2,'0');
+      return m + ':' + s;
+    }
+
+    function updateTicks(){
+      const dur = audio.duration || 0;
+      const cur = audio.currentTime || 0;
+      const ratio = dur ? cur / dur : 0;
+      const activeCount = Math.floor(ratio * TICK_COUNT);
+      ticks.forEach((t, i) => t.classList.toggle('played', i < activeCount));
+    }
+
+    audio.addEventListener('loadedmetadata', () => { durTimeEl.textContent = fmt(audio.duration); });
+    audio.addEventListener('timeupdate', () => {
+      curTimeEl.textContent = fmt(audio.currentTime);
+      updateTicks();
+    });
+    audio.addEventListener('ended', () => {
+      playIcon.style.display = 'block'; pauseIcon.style.display = 'none';
+    });
+
+    playBtn.addEventListener('click', () => {
+      if (audio.paused){
+        audio.play();
+        playIcon.style.display = 'none'; pauseIcon.style.display = 'block';
+      } else {
+        audio.pause();
+        playIcon.style.display = 'block'; pauseIcon.style.display = 'none';
+      }
+    });
+
+    ticksEl.addEventListener('click', (e) => {
+      const rect = ticksEl.getBoundingClientRect();
+      const ratio = (e.clientX - rect.left) / rect.width;
+      if (audio.duration) audio.currentTime = ratio * audio.duration;
+    });
+
+    const dlBtn = document.getElementById('dlBtn');
+    dlBtn.addEventListener('click', () => {
+      try {
+        const fullHtml = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
+        const blob = new Blob([fullHtml], {type:'text/html'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '${safeName}.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch(e){
+        alert('Kunne ikke downloade filen: ' + e.message);
+      }
+    });
+  <\/script>
+${taellerBlock}</body>
+</html>`;
+}
+
+function renderPreview(){
+  syncAutoDc();
+  // Tællerkoden udelades bevidst i forhåndsvisningen — ellers ville den
+  // registrere en åbning hver gang du taster et bogstav.
+  const html = buildPlayerHTML(state, false);
+  $('previewFrame').srcdoc = html;
+}
+
+function checkReady(){
+  const ok = state.title.trim() && state.imageDataUrl && state.audioDataUrl;
+  $('generateBtn').disabled = !ok;
+}
+
+document.querySelectorAll('#themePicker input[name="theme"]').forEach(radio => {
+  radio.addEventListener('change', e => {
+    state.theme = e.target.value;
+    document.querySelectorAll('#themePicker .theme-option').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.theme === state.theme);
+    });
+    renderPreview();
+  });
+});
+
+$('eyebrow').addEventListener('input', e => { state.eyebrow = e.target.value; renderPreview(); });
+$('title').addEventListener('input', e => { state.title = e.target.value; renderPreview(); checkReady(); });
+$('location').addEventListener('input', e => { state.location = e.target.value; renderPreview(); });
+$('description').addEventListener('input', e => { state.description = e.target.value; renderPreview(); });
+$('descLabel').addEventListener('input', e => { state.descLabel = e.target.value; renderPreview(); });
+$('imageUrl').addEventListener('input', e => { state.imageUrl = e.target.value.trim(); });
+$('ctaText').addEventListener('input', e => { state.ctaText = e.target.value; renderPreview(); });
+$('ctaUrl').addEventListener('input', e => { state.ctaUrl = e.target.value; renderPreview(); });
+
+DC_FIELDS.forEach(key => {
+  const el = $(dcInputId(key));
+  if (!el) return;
+  el.addEventListener('input', () => {
+    if (key in dcTouched) dcTouched[key] = el.value.trim() !== '';
+    renderPreview();
+  });
+  if (el.tagName === 'SELECT') el.addEventListener('change', renderPreview);
+});
+
+$('metaJsonBtn').addEventListener('click', () => {
+  syncAutoDc();
+  const dc = collectDublinCore();
+  const msg = $('msgBox');
+  if (Object.keys(dc).length === 0){
+    msg.textContent = 'Der er ingen Dublin Core-felter udfyldt endnu.';
+    msg.className = 'msg err';
+    return;
+  }
+  const payload = {
+    '@context': 'http://purl.org/dc/elements/1.1/',
+    dublinCore: dc,
+    generated: new Date().toISOString()
+  };
+  const safeName = (state.title || 'lydfortaelling').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'lydfortaelling';
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = safeName + '-metadata.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  msg.textContent = 'Metadatafilen er downloadet.';
+  msg.className = 'msg ok';
+});
+
+$('image').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('imageStatus').textContent = 'Komprimerer billede …';
+  $('imageStatus').className = 'status pending';
+  try {
+    state.imageDataUrl = await compressImage(file, 1100, 0.78);
+    const kb = Math.round(state.imageDataUrl.length * 0.75 / 1024);
+    $('imageStatus').textContent = `Billede klar (~${kb} KB efter komprimering)`;
+    $('imageStatus').className = 'status';
+    renderPreview();
+    checkReady();
+  } catch(err){
+    $('imageStatus').textContent = 'Fejl: ' + err.message;
+    $('imageStatus').className = 'status pending';
+  }
+});
+
+$('audio').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('audioStatus').textContent = 'Indlæser lydfil …';
+  $('audioStatus').className = 'status pending';
+  try {
+    state.audioDataUrl = await fileToDataURL(file);
+    state.audioType = file.type;
+    const kb = Math.round(file.size / 1024);
+    $('audioStatus').textContent = `Lydfil klar (${kb} KB)`;
+    $('audioStatus').className = 'status';
+    renderPreview();
+    checkReady();
+  } catch(err){
+    $('audioStatus').textContent = 'Fejl: ' + err.message;
+    $('audioStatus').className = 'status pending';
+  }
+});
+
+function setField(id, value){
+  const el = $(id);
+  if (el) el.value = value || '';
+}
+
+// Finder en manuelt indsat tællerkode-blok i en eksisterende fil, så den
+// kan sættes tilbage i den nye udgave i stedet for at gå tabt.
+function extractTaellerBlock(text){
+  const startMark = text.indexOf('TÆLLER');
+  if (startMark === -1) return '';
+  const endMark = text.indexOf('TÆLLER SLUT');
+  if (endMark === -1) return '';
+  const start = text.lastIndexOf('<!--', startMark);
+  const end = text.indexOf('-->', endMark);
+  if (start === -1 || end === -1 || end < start) return '';
+  return text.slice(start, end + 3);
+}
+
+function fillDcFields(dc){
+  DC_FIELDS.forEach(key => {
+    const el = $(dcInputId(key));
+    if (!el) return;
+    el.value = (dc && dc[key]) ? dc[key] : (key === 'format' ? 'text/html' : (key === 'language' ? 'da' : (key === 'type' ? 'Sound' : '')));
+    if (key in dcTouched) dcTouched[key] = el.value.trim() !== '';
+  });
+}
+
+function selectTheme(themeKey){
+  state.theme = THEMES[themeKey] ? themeKey : 'original';
+  document.querySelectorAll('#themePicker input[name="theme"]').forEach(r => {
+    r.checked = (r.value === state.theme);
+  });
+  document.querySelectorAll('#themePicker .theme-option').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.theme === state.theme);
+  });
+}
+
+$('loadPlayer').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('loadStatus').textContent = 'Læser fil …';
+  $('loadStatus').className = 'status pending';
+  try {
+    const text = await file.text();
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    const dataScript = doc.getElementById('builder-source-data');
+
+    if (!dataScript){
+      $('loadStatus').textContent = 'Filen kan ikke indlæses — den er ikke lavet med denne udgave af værktøjet.';
+      $('loadStatus').className = 'status pending';
+      e.target.value = '';
+      return;
+    }
+
+    const data = JSON.parse(dataScript.textContent);
+    state.eyebrow = data.eyebrow || '';
+    state.title = data.title || '';
+    state.location = data.location || '';
+    state.description = data.description || '';
+    state.descLabel = data.descLabel || '';
+    state.imageUrl = data.imageUrl || '';
+    state.ctaText = data.ctaText || '';
+    state.ctaUrl = data.ctaUrl || '';
+    selectTheme(data.theme || 'original');
+    fillDcFields(data.dublinCore || {});
+
+    const imgEl = doc.querySelector('.cover img');
+    if (imgEl && imgEl.src && imgEl.src.startsWith('data:')){
+      state.imageDataUrl = imgEl.src;
+      const kb = Math.round(state.imageDataUrl.length * 0.75 / 1024);
+      $('imageStatus').textContent = `Billede indlæst fra fil (~${kb} KB)`;
+      $('imageStatus').className = 'status';
+    }
+    const audioEl = doc.querySelector('#audio');
+    if (audioEl && audioEl.src && audioEl.src.startsWith('data:')){
+      state.audioDataUrl = audioEl.src;
+      state.audioType = state.audioDataUrl.slice(5, state.audioDataUrl.indexOf(';'));
+      const kb = Math.round(state.audioDataUrl.length * 0.75 / 1024);
+      $('audioStatus').textContent = `Lydfil indlæst fra fil (~${kb} KB)`;
+      $('audioStatus').className = 'status';
+    }
+
+    setField('eyebrow', state.eyebrow);
+    setField('title', state.title);
+    setField('location', state.location);
+    setField('description', state.description);
+    setField('descLabel', state.descLabel);
+    setField('imageUrl', state.imageUrl);
+    setField('ctaText', state.ctaText);
+    setField('ctaUrl', state.ctaUrl);
+
+    state.taellerBlock = extractTaellerBlock(text);
+    $('loadStatus').textContent = `Indlæst: ${file.name}`
+      + (state.taellerBlock ? ' · tællerkoden er fundet og følger med i den nye fil' : '');
+    $('loadStatus').className = 'status';
+    renderPreview();
+    checkReady();
+  } catch(err){
+    $('loadStatus').textContent = 'Fejl ved indlæsning: ' + err.message;
+    $('loadStatus').className = 'status pending';
+  }
+});
+
+$('generateBtn').addEventListener('click', () => {
+  const msg = $('msgBox');
+  try {
+    syncAutoDc();
+    const html = buildPlayerHTML(state, true);
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeName = (state.title || 'lydfortaelling').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+    a.href = url;
+    a.download = (safeName || 'lydfortaelling') + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    msg.textContent = 'Filen er genereret og downloadet. Den kan åbnes direkte i browseren uden internet.'
+      + (state.taellerBlock ? ' Tællerkoden fra den indlæste fil står stadig nederst i filen.' : '');
+    msg.className = 'msg ok';
+  } catch(err){
+    msg.textContent = 'Der gik noget galt: ' + err.message;
+    msg.className = 'msg err';
+  }
+});
+
+renderPreview();
+</script>
+</body>
+</html>

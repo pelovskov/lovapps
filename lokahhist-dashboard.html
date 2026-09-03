@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="da"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lokalt Dashboard</title>
+<style>
+  /* ---------------------------------------------------------------
+     Udseende efter de to oversigtssider: papir, bordeaux, serif.
+     Funktionen er uændret — kun farver, skrift og former er skiftet.
+     Alt er i rem, så A / A+ / A++ skalerer hele siden på én gang.
+     --------------------------------------------------------------- */
+  html{ font-size:100%; -webkit-text-size-adjust:100%; }
+  html[data-tekst="stor"]{ font-size:112.5%; }
+  html[data-tekst="storst"]{ font-size:125%; }
+
+  :root{
+    --papir:      #faf6ef;
+    --papir-dyb:  #f2e7ea;
+    --blæk:       #1d1b1a;   /* 15,8:1 mod papir */
+    --blæk-svag:  #4a443f;   /*  8,7:1 mod papir */
+    --bordeaux:   #73202f;   /* 10,0:1 mod papir */
+    --bordeaux-lys:#8f2f42;
+    --streg:      #d3c7bb;
+    --flade:      #ffffff;
+    --fare:       #8E2C22;
+    --ok:         #1F5D3A;
+    --radius: 3px;
+
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+
+    /* Bagudkompatible navne, så ældre regler og egne rettelser ikke knækker */
+    --paper: var(--papir);
+    --paper-dim: var(--papir-dyb);
+    --ink: var(--blæk);
+    --rust: var(--bordeaux);
+    --moss: var(--bordeaux);
+    --hint: var(--blæk-svag);
+    --line: var(--streg);
+    --surface: var(--flade);
+    --accent-soft: var(--papir-dyb);
+    --accent-dark: var(--bordeaux);
+    --danger: var(--fare);
+    --bg: var(--papir);
+    --muted: var(--blæk-svag);
+    --header-bg: var(--papir-dyb);
+    --header-ink: var(--blæk);
+    --accent: var(--bordeaux);
+  }
+  @media (prefers-contrast:more){
+    :root{ --blæk:#000; --blæk-svag:#2b2724; --bordeaux:#5e1a26; --streg:#8d8378; }
+  }
+
+  * { box-sizing: border-box; }
+  html,body{ margin:0; }
+  body{
+    background:var(--papir);
+    color:var(--blæk);
+    font-family:var(--serif);
+    font-size:1.15rem;
+    line-height:1.6;
+  }
+
+  /* Synlig tastaturfokus overalt */
+  :focus-visible{ outline:3px solid var(--bordeaux); outline-offset:3px; border-radius:2px; }
+
+  /* ---------- hoved ---------- */
+  header{
+    background:var(--papir);
+    border-bottom:1px solid var(--streg);
+    padding:1.4rem 0 2.2rem;
+  }
+  .hoved{ max-width:60rem; margin:0 auto; padding:0 1rem; }
+  header h1{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(2rem, 5.5vw, 2.7rem);
+    line-height:1.15;
+    margin:0 0 .7rem;
+    color:var(--blæk);
+  }
+  header p{ margin:0; color:var(--blæk-svag); font-size:1.2rem; max-width:34rem; }
+  .etiket{
+    font-family:var(--mono); font-size:.95rem; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--bordeaux); margin:0 0 .9rem;
+  }
+
+  /* ---------- tekststørrelse ---------- */
+  .tekststr{
+    display:flex; align-items:center; justify-content:flex-end; gap:.5rem;
+    flex-wrap:wrap; margin:0 0 1.6rem;
+  }
+  .tekststr .lbl{ font-family:var(--mono); font-size:.9rem; color:var(--blæk-svag); }
+  .tekststr button{
+    font-family:var(--serif); background:var(--flade); color:var(--blæk);
+    border:2px solid var(--streg); border-radius:6px;
+    min-width:48px; min-height:48px; padding:0 .6rem; cursor:pointer; line-height:1;
+  }
+  .tekststr button:nth-of-type(1){ font-size:1rem; }
+  .tekststr button:nth-of-type(2){ font-size:1.25rem; }
+  .tekststr button:nth-of-type(3){ font-size:1.5rem; }
+  .tekststr button:hover{ border-color:var(--bordeaux); }
+  .tekststr button[aria-pressed="true"]{ background:var(--bordeaux); border-color:var(--bordeaux); color:#fff; }
+
+  /* ---------- søgning ---------- */
+  .search-wrap{ max-width:60rem; margin:0 auto; padding:1.8rem 1rem 0; position:relative; z-index:2; }
+  .search-box{ position:relative; max-width:34rem; }
+  #search{
+    width:100%; padding:.85rem 3rem .85rem 1rem; font-size:1.1rem; font-family:var(--serif);
+    border-radius:var(--radius); border:2px solid var(--streg);
+    background:var(--flade); color:var(--blæk); outline:none; min-height:48px;
+  }
+  #search::placeholder{ color:var(--blæk-svag); }
+  #search:focus{ border-color:var(--bordeaux); }
+  #search-clear{
+    display:none; position:absolute; top:50%; right:6px; transform:translateY(-50%);
+    width:40px; height:40px; border:none; background:transparent; color:var(--blæk-svag);
+    font-size:1.4rem; line-height:1; cursor:pointer; border-radius:4px; font-family:var(--serif);
+  }
+  #search-clear.visible{ display:block; }
+  #search-clear:hover{ background:var(--papir-dyb); color:var(--blæk); }
+  #search-clear:focus-visible{ background:var(--papir-dyb); color:var(--blæk); }
+
+  /* ---------- filtre ---------- */
+  main{ max-width:60rem; margin:0 auto; padding:1.4rem 1rem 6rem; }
+  .filter-row{ display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0; }
+  .filter-row[hidden]{ display:none; }
+  .chip{
+    border:1px solid var(--streg); background:var(--flade); color:var(--blæk);
+    font-family:var(--mono); font-size:.95rem; letter-spacing:.02em;
+    padding:.6rem 1rem; border-radius:var(--radius); cursor:pointer; min-height:44px;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .chip:hover{ border-color:var(--bordeaux); }
+  .chip.active{ background:var(--bordeaux); color:#fff; border-color:var(--bordeaux); }
+  .tag-chip{
+    border:1px dashed var(--streg); background:transparent; color:var(--blæk-svag);
+    font-family:var(--mono); font-size:.9rem;
+    padding:.5rem .9rem; border-radius:var(--radius); cursor:pointer; min-height:40px;
+  }
+  .tag-chip:hover{ border-color:var(--bordeaux); color:var(--blæk); }
+  .tag-chip.active{
+    background:var(--papir-dyb); color:var(--bordeaux);
+    border-color:var(--bordeaux); border-style:solid;
+  }
+  .tag-section{ margin:.3rem 0 .5rem; }
+  .tag-toggle{
+    background:transparent; border:1px dashed var(--streg); color:var(--blæk-svag);
+    font-family:var(--mono); font-size:.95rem;
+    padding:.6rem 1rem; border-radius:var(--radius); cursor:pointer; min-height:44px;
+  }
+  .tag-toggle:hover{ border-color:var(--bordeaux); color:var(--blæk); }
+  .tag-toggle:focus-visible{ border-color:var(--bordeaux); color:var(--blæk); }
+
+  /* ---------- kort ---------- */
+  section.group{ margin-bottom:2.2rem; }
+  .group-title{
+    display:flex; align-items:center; gap:.5rem;
+    font-family:var(--mono); font-size:.95rem; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--bordeaux);
+    margin:0 0 .9rem; padding-bottom:.6rem; border-bottom:1px solid var(--streg);
+  }
+  .cards{ display:grid; grid-template-columns:repeat(auto-fill, minmax(15rem, 1fr)); gap:.9rem; }
+  .card{
+    background:var(--flade); border-radius:var(--radius); padding:1.1rem 1.2rem;
+    text-decoration:none; color:var(--blæk); border:1px solid var(--streg);
+    border-left:4px solid var(--streg);
+    display:flex; flex-direction:column; gap:.6rem; min-height:5.5rem; position:relative;
+    transition: border-color .12s ease, box-shadow .12s ease;
+  }
+  .card:hover{ border-color:var(--bordeaux); border-left-color:var(--bordeaux); box-shadow:0 4px 14px rgba(29,27,26,.08); }
+  .card:focus-visible{ border-color:var(--bordeaux); border-left-color:var(--bordeaux); }
+  .card .titel{ font-weight:600; font-size:1.15rem; line-height:1.35; }
+  .card .tags{ display:flex; flex-wrap:wrap; gap:.35rem; }
+  .card .tags span{
+    font-family:var(--mono); font-size:.82rem; background:var(--papir-dyb); color:var(--blæk-svag);
+    padding:.15rem .55rem; border-radius:var(--radius);
+  }
+  .pin-mark{ position:absolute; top:.7rem; right:.8rem; color:var(--bordeaux); font-size:.95rem; }
+  .titel-row{ display:flex; align-items:flex-start; gap:.4rem; }
+  .card-note-btn{
+    flex:0 0 auto; width:28px; height:28px; border:none; background:transparent; color:var(--blæk-svag);
+    font-size:.95rem; line-height:1; cursor:pointer; border-radius:4px;
+    display:flex; align-items:center; justify-content:center; opacity:.85; padding:0; margin-top:1px;
+  }
+  .card-note-btn:hover{ background:var(--papir-dyb); opacity:1; }
+  .card-note-btn:focus-visible{ background:var(--papir-dyb); opacity:1; }
+  .empty{
+    text-align:center; color:var(--blæk-svag); padding:2.6rem 1.2rem; font-size:1.1rem;
+    font-style:italic; border-top:1px solid var(--streg);
+  }
+
+  /* ---------- flydende knapper ---------- */
+  .fab-row{ position:fixed; right:18px; bottom:18px; display:flex; gap:10px; z-index:6; }
+  .fab{
+    width:56px; height:56px; border-radius:50%; background:var(--bordeaux); color:#fff;
+    display:flex; align-items:center; justify-content:center; border:2px solid var(--bordeaux);
+    font-size:1.3rem; cursor:pointer; box-shadow:0 6px 16px rgba(29,27,26,.28); font-family:var(--serif);
+  }
+  .fab:hover{ background:var(--bordeaux-lys); border-color:var(--bordeaux-lys); }
+  .fab.light{ background:var(--flade); color:var(--bordeaux); border-color:var(--streg); }
+  .fab.light:hover{ background:var(--flade); border-color:var(--bordeaux); }
+  .fab.hidden{ display:none; }
+  .note-btn{ position:fixed; left:18px; bottom:18px; z-index:6; }
+  .fab.dirty{ background:var(--bordeaux); color:#fff; }
+  .fab.dirty::after{
+    content:''; position:absolute; top:0; right:0; width:14px; height:14px;
+    border-radius:50%; background:#D64545; border:2px solid var(--papir);
+  }
+
+  /* ---------- modal og paneler ---------- */
+  .overlay{
+    display:none; position:fixed; inset:0; background:rgba(29,27,26,.58);
+    z-index:20; align-items:center; justify-content:center; padding:20px;
+  }
+  .overlay.open{ display:flex; }
+  .box{
+    background:var(--papir); border-radius:var(--radius); max-width:34rem; width:100%;
+    max-height:80vh; overflow-y:auto; padding:1.6rem; position:relative;
+    border:1px solid var(--streg); border-top:5px solid var(--bordeaux);
+  }
+  .box.wide{ max-width:54rem; max-height:92vh; padding:0; }
+  .box h2{ margin:0 0 .8rem; font-size:1.35rem; font-family:var(--serif); font-weight:600; }
+  #note-text{ white-space:pre-wrap; margin:0; font-size:1.1rem; line-height:1.6; }
+  .modal-close{
+    position:absolute; top:10px; right:10px; width:44px; height:44px; border:none;
+    background:transparent; color:var(--blæk-svag); font-size:1.4rem; line-height:1;
+    cursor:pointer; border-radius:4px; font-family:var(--serif);
+  }
+  .modal-close:hover{ background:var(--papir-dyb); color:var(--blæk); }
+  .modal-close:focus-visible{ background:var(--papir-dyb); color:var(--blæk); }
+
+  .panel-top{
+    position:sticky; top:0; background:var(--papir-dyb); color:var(--blæk);
+    padding:1rem 1.2rem; display:flex; align-items:center; gap:.7rem; flex-wrap:wrap;
+    border-radius:var(--radius) var(--radius) 0 0; z-index:2;
+    border-bottom:1px solid var(--streg);
+  }
+  .panel-top h2{ margin:0; font-size:1.3rem; flex:1 1 auto; color:var(--blæk); font-family:var(--serif); }
+  .panel-body{ padding:1.5rem 1.2rem 2rem; }
+  .panel-body h3{
+    font-family:var(--mono); font-size:.95rem; text-transform:uppercase; letter-spacing:.08em;
+    font-weight:400; color:var(--bordeaux);
+    margin:2rem 0 .8rem; padding-top:1.1rem; border-top:1px solid var(--streg);
+  }
+  .panel-body h3:first-child{ margin-top:0; padding-top:0; border-top:none; }
+
+  label{
+    display:block; font-family:var(--mono); font-size:.85rem; letter-spacing:.07em;
+    text-transform:uppercase; color:var(--bordeaux); margin:1rem 0 .35rem;
+  }
+  input[type=text], input[type=url], textarea, select{
+    width:100%; padding:.7rem .8rem; font-size:1.05rem; font-family:var(--serif);
+    border:1px solid var(--streg); border-radius:var(--radius);
+    background:var(--flade); color:var(--blæk); min-height:48px;
+  }
+  input::placeholder, textarea::placeholder{ color:var(--blæk-svag); }
+  input:focus, textarea:focus, select:focus{
+    outline:2px solid var(--bordeaux); outline-offset:1px; border-color:var(--bordeaux);
+  }
+  textarea{ resize:vertical; line-height:1.55; }
+  .checkline{ display:flex; align-items:center; gap:.7rem; margin:1.1rem 0; min-height:44px; }
+  .checkline input{ width:24px; height:24px; min-height:0; accent-color:var(--bordeaux); }
+  .checkline label{
+    margin:0; color:var(--blæk); font-family:var(--serif); font-size:1.05rem;
+    text-transform:none; letter-spacing:normal;
+  }
+
+  button.btn{
+    font-family:var(--serif); font-size:1.05rem; padding:.7rem 1.2rem; border-radius:var(--radius);
+    border:2px solid var(--bordeaux); background:var(--bordeaux); color:#fff; cursor:pointer;
+    min-height:48px;
+  }
+  button.btn:hover{ background:var(--bordeaux-lys); border-color:var(--bordeaux-lys); }
+  button.btn.secondary{ background:var(--flade); color:var(--blæk); border-color:var(--streg); }
+  button.btn.secondary:hover{ background:var(--papir-dyb); border-color:var(--bordeaux); }
+  button.btn.gem{ font-size:1.1rem; font-weight:600; }
+  button.btn.danger{ background:var(--flade); color:var(--fare); border-color:var(--fare); }
+  button.btn.danger:hover{ background:#F6DAD6; border-color:var(--fare); }
+  button.btn.small{ padding:.5rem .8rem; font-size:.95rem; min-height:44px; }
+  button.btn:disabled{ opacity:.45; cursor:default; }
+  .btn-row{ display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1.2rem; }
+
+  .liste{ display:flex; flex-direction:column; gap:.5rem; }
+  .rk{
+    display:flex; align-items:center; gap:.6rem; padding:.6rem .7rem;
+    border:1px solid var(--streg); border-radius:var(--radius); background:var(--flade);
+  }
+  .rk .nav{ display:flex; flex-direction:column; gap:3px; }
+  .rk .nav button{
+    width:34px; height:26px; font-size:.8rem; line-height:1; padding:0;
+    border:1px solid var(--streg); background:var(--papir); color:var(--blæk);
+    border-radius:4px; cursor:pointer; font-family:var(--mono);
+  }
+  .rk .nav button:hover:not(:disabled){ border-color:var(--bordeaux); }
+  .rk .nav button:disabled{ opacity:.35; cursor:default; }
+  .rk .txt{ flex:1 1 auto; min-width:0; }
+  .rk .txt b{
+    display:block; font-weight:600; font-size:1.05rem;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .rk .txt small{ color:var(--blæk-svag); font-family:var(--mono); font-size:.85rem; }
+  .rk .akt{ display:flex; gap:.4rem; flex-shrink:0; }
+  .rk.redigeres{ border-color:var(--bordeaux); box-shadow:0 0 0 2px var(--papir-dyb); }
+
+  .hint{ font-size:.95rem; line-height:1.55; color:var(--blæk-svag); margin:.5rem 0 0; }
+  .status{
+    padding:.7rem .9rem; border-radius:var(--radius); font-size:1rem; margin:.9rem 0 0;
+    background:var(--papir-dyb); color:var(--bordeaux); display:none;
+    border-left:4px solid var(--bordeaux);
+  }
+  .status.vis{ display:block; }
+  .status.fejl{ background:#F6DAD6; color:var(--fare); border-left-color:var(--fare); }
+  .status.ok{ background:#DCE7D6; color:var(--ok); border-left-color:var(--ok); }
+
+  .toast{
+    position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(30px);
+    background:var(--blæk); color:var(--papir); padding:.8rem 1.4rem; border-radius:var(--radius);
+    font-size:1.05rem; box-shadow:0 8px 24px rgba(29,27,26,.35); opacity:0; pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease; z-index:40; max-width:90vw; text-align:center;
+  }
+  .toast.vis{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (max-width:600px){
+    body{ font-size:1.1rem; }
+    header{ padding:1.2rem 0 1.8rem; }
+    .tekststr{ justify-content:flex-start; margin-bottom:1.2rem; }
+    .box.wide{ max-height:100vh; border-radius:0; }
+    .overlay{ padding:0; }
+    .rk{ flex-wrap:wrap; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .card, .toast{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<script id="app-data" type="application/json">
+{
+  "titel": "Lokalhistorisk ressourcekit",
+  "undertitel": "Her er nogle værktøjer til at lave lyd, tekst og billed materiale.",
+  "note": "Hold dig ikke tilbage - jeg arbejder på højtryk med at lave vejledninger og eksempler.",
+  "links": [
+    {
+      "id": "f07f9686",
+      "titel": "Bogbygger dc",
+      "url": "bogbygger-v3.html",
+      "emne": "Singlefile app",
+      "tags": [],
+      "pinned": true,
+      "kilde": "",
+      "note": "Version med sideskift - vertikalt.",
+      "billede": ""
+    },
+    {
+      "id": "1a7e12d8",
+      "titel": "Lydfortælling dc",
+      "url": "lyd-fort-gen-dc-v2.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "lydfortælling",
+        "dc"
+      ],
+      "pinned": true,
+      "kilde": "",
+      "note": "",
+      "billede": ""
+    },
+    {
+      "id": "c257facc",
+      "titel": "Albumbygger dc",
+      "url": "albumbygger-dc-v2.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "albun"
+      ],
+      "pinned": true,
+      "kilde": "",
+      "note": "",
+      "billede": ""
+    },
+    {
+      "id": "378bf213",
+      "titel": "Piwigo Albumbygger dc",
+      "url": "https://sfbbilleder.eu/piwigo-albumbygger.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "piwigo",
+        "album"
+      ],
+      "pinned": true,
+      "kilde": "",
+      "note": "Dette værktøj virker kun med albums fra Syd for Banens Piwigogalleri.",
+      "billede": ""
+    },
+    {
+      "id": "ce922892",
+      "titel": "Enkeltbillede bygger - dc",
+      "url": "enkeltbillede-gen-dc.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "billede",
+        "dc",
+        "exif"
+      ],
+      "pinned": true,
+      "kilde": "",
+      "note": "",
+      "billede": ""
+    },
+    {
+      "id": "4115b733",
+      "titel": "Lokalhistorisk søgeindeks",
+      "url": "../eksempler/soegeside.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "søgeindeks"
+      ],
+      "pinned": true,
+      "kilde": "",
+      "note": "",
+      "billede": ""
+    },
+    {
+      "id": "ef388c9e",
+      "titel": "Samlingbygger",
+      "url": "samlingsbygger.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "kurateret samling"
+      ],
+      "pinned": true,
+      "kilde": "",
+      "note": "En builder til at lave en kurateret samling af singlefile apps.",
+      "billede": ""
+    },
+    {
+      "id": "1d91f122",
+      "titel": "Lydlab Standalone",
+      "url": "lydlab-standalone-v-1.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "lyd",
+        "tool"
+      ],
+      "pinned": false,
+      "kilde": "",
+      "note": "Værktøj som kan trimme en lydfil til mono - compressor - LUFS indstilling o gwxport -> mp3",
+      "billede": ""
+    },
+    {
+      "id": "8885ab0b",
+      "titel": "Lydudtrækker (base64)",
+      "url": "lydudtraekker.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "tool."
+      ],
+      "pinned": false,
+      "kilde": "",
+      "note": "Med denne smarte lille tink kan man trække base64 kodet lyd ud af en mp3 fil.",
+      "billede": ""
+    },
+    {
+      "id": "3c3fb05d",
+      "titel": "Fotolab",
+      "url": "fotolab-standalone-v-4.html",
+      "emne": "Singlefile app",
+      "tags": [],
+      "pinned": false,
+      "kilde": "",
+      "note": "",
+      "billede": ""
+    },
+    {
+      "id": "6c4c051d",
+      "titel": "Dropshadow",
+      "url": "skyggeramme.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "tool"
+      ],
+      "pinned": false,
+      "kilde": "",
+      "note": "Smart app til at lave dropshadow på et billede. Virker med copy-paste.",
+      "billede": ""
+    },
+    {
+      "id": "d67bfbb5",
+      "titel": "Snippet for tællerkode",
+      "url": "taellerkode.html",
+      "emne": "Webtool",
+      "tags": [
+        "tæller",
+        "tool"
+      ],
+      "pinned": false,
+      "kilde": "",
+      "note": "Denne kan kun bruges med en særlig adgang til systemet for statistik.",
+      "billede": ""
+    },
+    {
+      "id": "a9f7f618",
+      "titel": "Præsentation 01",
+      "url": "presentation-01.html",
+      "emne": "Singlefile app",
+      "tags": [],
+      "pinned": false,
+      "kilde": "",
+      "note": "Præsentation af konceptet",
+      "billede": ""
+    },
+    {
+      "id": "d7465f06",
+      "titel": "Præsentation  02",
+      "url": "presentation-02.html",
+      "emne": "Singlefile app",
+      "tags": [],
+      "pinned": false,
+      "kilde": "",
+      "note": "Præsentation af konceptet",
+      "billede": ""
+    },
+    {
+      "id": "82b21e25",
+      "titel": "Poloraidbillede fra Fotolab v.4",
+      "url": "../eksempler/indsaml_original_polaroid.jpg",
+      "emne": "Webtool",
+      "tags": [
+        "poloraid",
+        "eksempel"
+      ],
+      "pinned": false,
+      "kilde": "",
+      "note": "Et billede som har fået tilføjet tekst.",
+      "billede": ""
+    },
+    {
+      "id": "e5783289",
+      "titel": "Dublin Core vejledning",
+      "url": "../eksempler/dublin-core-vejledning.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "dublin core",
+        "metadata"
+      ],
+      "pinned": false,
+      "kilde": "",
+      "note": "",
+      "billede": ""
+    },
+    {
+      "id": "1dd34484",
+      "titel": "Vejledningsbygger",
+      "url": "vejledningsbygger.html",
+      "emne": "Singlefile app",
+      "tags": [],
+      "pinned": false,
+      "kilde": "",
+      "note": "",
+      "billede": ""
+    },
+    {
+      "id": "b4697596",
+      "titel": "Feltoptager",
+      "url": "feltoptager-v1.html",
+      "emne": "Singlefile app",
+      "tags": [],
+      "pinned": true,
+      "kilde": "",
+      "note": "",
+      "billede": ""
+    },
+    {
+      "id": "027d8abf",
+      "titel": "PWA Bygger",
+      "url": "pwa-gen-dc.html",
+      "emne": "Singlefile app",
+      "tags": [
+        "pwb"
+      ],
+      "pinned": true,
+      "kilde": "",
+      "note": "",
+      "billede": ""
+    },
+    {
+      "id": "3e361519",
+      "titel": "lyd-fort-gen-dc-v3",
+      "url": "lyd-fort-gen-dc-v3.html",
+      "emne": "Singlefile app",
+      "tags": [],
+      "pinned": true,
+      "kilde": "",
+      "note": "Sætte automatisk hjem knap hvis det er en del af en PWA",
+      "billede": ""
+    },
+    {
+      "id": "ca8d9a17",
+      "titel": "Musik pakke bygger",
+      "url": "musikpakke-bygger-v1.html",
+      "emne": "PWA",
+      "tags": [],
+      "pinned": true,
+      "kilde": "",
+      "note": "",
+      "billede": ""
+    },
+    {
+      "titel": "Digital Tidskapsel",
+      "url": "digital-tidskapsel.pdf",
+      "emne": "Lokalhistorie",
+      "tags": [],
+      "note": "En præsentation af hele singlefile konceptet",
+      "kilde": "",
+      "pinned": false,
+      "id": "7cb782b5",
+      "billede": ""
+    }
+  ]
+}
+</script>
+
+<header>
+  <div class="hoved">
+
+    <div class="tekststr" role="group" aria-label="Tekststørrelse">
+      <span class="lbl" aria-hidden="true">Tekst</span>
+      <button type="button" data-str="normal" aria-pressed="true" aria-label="Normal tekststørrelse">A</button>
+      <button type="button" data-str="stor" aria-pressed="false" aria-label="Større tekst">A+</button>
+      <button type="button" data-str="storst" aria-pressed="false" aria-label="Størst tekst">A++</button>
+    </div>
+
+    <!-- Fast linje. Ret teksten her i filen, hvis den skal hedde noget andet. -->
+    <p class="etiket">Værktøjskassen</p>
+
+    <h1 id="h-titel">Lokalt Dashboard</h1>
+    <p id="h-under">Alle links, ét sted</p>
+  </div>
+</header>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <input type="text" id="search" placeholder="Søg efter titel eller tag …" autocomplete="off">
+    <button type="button" id="search-clear" aria-label="Ryd søgning">×</button>
+  </div>
+</div>
+
+<main>
+  <div class="filter-row" id="emne-filter"></div>
+  <div class="tag-section">
+    <button type="button" id="tag-toggle" class="tag-toggle" aria-expanded="false">+ Tags</button>
+    <div class="filter-row" id="tag-filter" hidden=""></div>
+  </div>
+
+  <section class="group" id="pinned-group" style="display:none;">
+    <div class="group-title">📌 Fastgjort</div>
+    <div class="cards" id="pinned-cards"></div>
+  </section>
+
+  <div id="results"></div>
+</main>
+
+<button type="button" id="note-btn" class="fab light note-btn hidden" title="Fælles note">📝</button>
+
+<div class="fab-row">
+  <button type="button" id="save-fab" class="fab hidden" title="Gem til fil">💾</button>
+  <button type="button" id="edit-fab" class="fab" title="Rediger">⚙️</button>
+</div>
+
+<!-- Note-visning -->
+<div class="overlay" id="note-overlay">
+  <div class="box">
+    <button type="button" class="modal-close" id="note-close" aria-label="Luk">×</button>
+    <h2 id="note-titel">Note</h2>
+    <p id="note-text"></p>
+  </div>
+</div>
+
+<!-- Redigeringspanel -->
+<div class="overlay" id="edit-overlay">
+  <div class="box wide">
+    <div class="panel-top">
+      <h2>Rediger dashboard</h2>
+      <button type="button" class="btn gem" id="gem-btn">Gem til fil</button>
+      <button type="button" class="btn secondary" id="edit-close">Luk</button>
+    </div>
+    <div class="panel-body">
+
+      <h3 id="form-overskrift">Tilføj link</h3>
+      <label for="f-titel">Titel</label>
+      <input type="text" id="f-titel" autocomplete="off">
+      <label for="f-url">URL eller filsti</label>
+      <input type="text" id="f-url" autocomplete="off" placeholder="https://… eller ../mappe/index.html">
+      <label for="f-emne">Emne</label>
+      <input type="text" id="f-emne" list="emne-liste" autocomplete="off">
+      <datalist id="emne-liste"></datalist>
+      <label for="f-tags">Tags (adskilt med komma)</label>
+      <input type="text" id="f-tags" autocomplete="off">
+      <label for="f-note">Note</label>
+      <textarea id="f-note" rows="3"></textarea>
+      <label for="f-kilde">Kilde (kun til dig selv)</label>
+      <input type="text" id="f-kilde" autocomplete="off">
+      <div class="checkline">
+        <input type="checkbox" id="f-pinned">
+        <label for="f-pinned">Fastgør øverst</label>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="f-gem">Tilføj link</button>
+        <button type="button" class="btn secondary" id="f-annuller" style="display:none;">Annullér</button>
+      </div>
+      <div class="status" id="f-status"></div>
+
+      <h3>Links (<span id="antal">0</span>)</h3>
+      <div class="liste" id="liste"></div>
+
+      <h3>Dashboardets tekster</h3>
+      <label for="s-titel">Overskrift</label>
+      <input type="text" id="s-titel">
+      <label for="s-under">Undertekst</label>
+      <input type="text" id="s-under">
+      <label for="s-note">Fælles note (vises via 📝 nederst til venstre)</label>
+      <textarea id="s-note" rows="4"></textarea>
+
+      <h3>Data</h3>
+      <div class="btn-row">
+        <button type="button" class="btn secondary" id="eksport-btn">Hent links.json</button>
+        <button type="button" class="btn secondary" id="import-btn">Indlæs links.json …</button>
+        <input type="file" id="import-fil" accept=".json,application/json" style="display:none;">
+      </div>
+      <p class="hint">links.json bruger samme format som PHP-udgaven, så du kan flytte data begge veje.</p>
+      <div class="status" id="d-status"></div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* Tekststørrelse: A / A+ / A++. Indstillingen deles med intro- og søgesiderne.
+   Skal stå FØR hovedscriptet, ellers ryger den ud, når filen gemmer sig selv. */
+(function(){
+  var knapper = document.querySelectorAll(".tekststr button");
+  function saet(v, gem){
+    if(v && v !== "normal"){ document.documentElement.setAttribute("data-tekst", v); }
+    else { document.documentElement.removeAttribute("data-tekst"); v = "normal"; }
+    knapper.forEach(function(k){ k.setAttribute("aria-pressed", String(k.dataset.str === v)); });
+    if(gem){ try{ localStorage.setItem("lokalhist-tekst", v); }catch(e){} }
+  }
+  var gemt = null;
+  try{ gemt = localStorage.getItem("lokalhist-tekst"); }catch(e){}
+  saet(gemt || "normal", false);
+  knapper.forEach(function(k){ k.addEventListener("click", function(){ saet(k.dataset.str, true); }); });
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+
+  /* Skabelonen fanges FØR siden ændres, så filen kan gendannes 1:1 ved gem */
+  var TEMPLATE = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+  var LS_KEY = "lokalt-dashboard-kladde";
+
+  /* Redigering er kun mulig, når filen åbnes lokalt fra disken.
+     Ligger filen på et websted (fx GitHub Pages), er den ren opslagsside.
+     Undtagelse: sæt #rediger bag adressen, hvis du selv vil rette online. */
+  var LOKAL = (location.protocol === "file:") ||
+              /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  var REDIGERBAR = LOKAL || location.hash.toLowerCase() === "#rediger";
+
+  var data = { titel:"Lokalt Dashboard", undertitel:"Alle links, ét sted", note:"", links:[] };
+  var dirty = false;
+  var redigerId = null;
+  var activeEmne = "Alle";
+  var activeTag = null;
+  var tagsUdfoldet = false;
+  var filHandle = null;
+
+  /* ---------- hjælpere ---------- */
+  function esc(s){
+    return String(s == null ? "" : s)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  }
+  function nyId(){
+    return Math.random().toString(16).slice(2,10);
+  }
+  function normTags(s){
+    if (Array.isArray(s)) s = s.join(",");
+    return String(s||"").split(",").map(function(t){ return t.trim().toLowerCase(); })
+      .filter(function(t,i,a){ return t && a.indexOf(t)===i; });
+  }
+  function toast(besked){
+    var t = document.getElementById("toast");
+    t.textContent = besked;
+    t.classList.add("vis");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ t.classList.remove("vis"); }, 2600);
+  }
+  function vis(elId, besked, type){
+    var e = document.getElementById(elId);
+    e.textContent = besked;
+    e.className = "status vis" + (type ? " " + type : "");
+    clearTimeout(e._t);
+    e._t = setTimeout(function(){ e.className = "status"; }, 6000);
+  }
+  function saetDirty(v){
+    dirty = v;
+    var f = document.getElementById("save-fab");
+    f.classList.toggle("hidden", !v);
+    f.classList.toggle("dirty", v);
+    document.getElementById("gem-btn").textContent = v ? "Gem til fil •" : "Gem til fil";
+    if (v) gemKladde();
+  }
+  function gemKladde(){
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ tid: Date.now(), data: data })); } catch(e){}
+  }
+  function rydKladde(){
+    try { localStorage.removeItem(LS_KEY); } catch(e){}
+  }
+
+  /* ---------- indlæsning ---------- */
+  function laesIndlejret(){
+    try {
+      var raw = document.getElementById("app-data").textContent;
+      var d = JSON.parse(raw);
+      if (Array.isArray(d)) d = { titel:"Lokalt Dashboard", undertitel:"Alle links, ét sted", note:"", links:d };
+      data.titel = d.titel || "Lokalt Dashboard";
+      data.undertitel = d.undertitel || "";
+      data.note = d.note || "";
+      data.links = (d.links||[]).map(ryd);
+    } catch(e){
+      alert("Kunne ikke læse data i filen. Den indbyggede datablok ser forkert ud.");
+    }
+  }
+  function ryd(l){
+    l = l || {};
+    return {
+      id: l.id || nyId(),
+      titel: l.titel || "",
+      url: l.url || "",
+      emne: l.emne || "",
+      tags: normTags(l.tags),
+      pinned: !!l.pinned,
+      kilde: l.kilde || "",
+      note: l.note || "",
+      billede: l.billede || ""
+    };
+  }
+  function tjekKladde(){
+    var raw = null;
+    try { raw = localStorage.getItem(LS_KEY); } catch(e){ return; }
+    if (!raw) return;
+    try {
+      var k = JSON.parse(raw);
+      if (!k || !k.data || JSON.stringify(k.data) === JSON.stringify(data)) { rydKladde(); return; }
+      var tid = new Date(k.tid).toLocaleString("da-DK");
+      if (confirm("Der ligger ugemte ændringer fra " + tid + " i denne browser.\n\nVil du hente dem frem?\n\nOK = hent ændringerne\nAnnullér = kassér dem og brug filens indhold")) {
+        data = k.data;
+        data.links = (data.links||[]).map(ryd);
+        saetDirty(true);
+      } else {
+        rydKladde();
+      }
+    } catch(e){ rydKladde(); }
+  }
+
+  /* ---------- visning ---------- */
+  function tegnHoved(){
+    document.getElementById("h-titel").textContent = data.titel;
+    document.getElementById("h-under").textContent = data.undertitel;
+    document.title = data.titel;
+    document.getElementById("note-btn").classList.toggle("hidden", !(data.note||"").trim());
+  }
+  function tegnEmner(){
+    var emner = ["Alle"];
+    data.links.forEach(function(l){ if (l.emne && emner.indexOf(l.emne) < 0) emner.push(l.emne); });
+    emner = [emner[0]].concat(emner.slice(1).sort(function(a,b){ return a.localeCompare(b,"da"); }));
+    if (emner.indexOf(activeEmne) < 0) activeEmne = "Alle";
+    var wrap = document.getElementById("emne-filter");
+    wrap.innerHTML = "";
+    emner.forEach(function(e){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (e === activeEmne ? " active" : "");
+      b.textContent = e;
+      b.onclick = function(){ activeEmne = e; tegnEmner(); tegnKort(); };
+      wrap.appendChild(b);
+    });
+  }
+  function tegnTags(){
+    var tags = [];
+    data.links.forEach(function(l){ l.tags.forEach(function(t){ if (tags.indexOf(t) < 0) tags.push(t); }); });
+    tags.sort(function(a,b){ return a.localeCompare(b,"da"); });
+    if (activeTag && tags.indexOf(activeTag) < 0) activeTag = null;
+    var wrap = document.getElementById("tag-filter");
+    wrap.innerHTML = "";
+    tags.forEach(function(t){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tag-chip" + (t === activeTag ? " active" : "");
+      b.textContent = "#" + t;
+      b.onclick = function(){ activeTag = (activeTag === t) ? null : t; tegnTags(); tegnKort(); };
+      wrap.appendChild(b);
+    });
+  }
+  function passer(l, q){
+    if (activeEmne !== "Alle" && l.emne !== activeEmne) return false;
+    if (activeTag && l.tags.indexOf(activeTag) < 0) return false;
+    if (q){
+      var h = (l.titel + " " + l.tags.join(" ") + " " + (l.note||"")).toLowerCase();
+      if (h.indexOf(q) < 0) return false;
+    }
+    return true;
+  }
+  function kortHTML(l){
+    var tags = l.tags.map(function(t){ return "<span>#" + esc(t) + "</span>"; }).join("");
+    var pin = l.pinned ? '<span class="pin-mark">📌</span>' : "";
+    var nb = (l.note||"").trim()
+      ? '<button type="button" class="card-note-btn" data-note-id="' + esc(l.id) + '" title="Vis note" aria-label="Vis note">📝</button>'
+      : "";
+    return '<a class="card" href="' + esc(l.url) + '" target="_blank" rel="noopener">' +
+      pin +
+      '<div class="titel-row">' + nb + '<span class="titel">' + esc(l.titel) + "</span></div>" +
+      '<div class="tags">' + tags + "</div></a>";
+  }
+  function tegnKort(){
+    var q = document.getElementById("search").value.trim().toLowerCase();
+    var synlige = data.links.filter(function(l){ return passer(l, q); });
+    var pinned = synlige.filter(function(l){ return l.pinned; });
+    var rest = synlige.filter(function(l){ return !l.pinned; });
+
+    var pg = document.getElementById("pinned-group");
+    if (pinned.length){
+      pg.style.display = "";
+      document.getElementById("pinned-cards").innerHTML = pinned.map(kortHTML).join("");
+    } else { pg.style.display = "none"; }
+
+    var r = document.getElementById("results");
+    if (!synlige.length){
+      r.innerHTML = data.links.length
+        ? '<p class="empty">Intet matcher din søgning.</p>'
+        : (REDIGERBAR
+            ? '<p class="empty">Ingen links endnu. Tryk på ⚙️ nederst til højre for at tilføje det første.</p>'
+            : '<p class="empty">Ingen links.</p>');
+      return;
+    }
+    r.innerHTML = rest.length ? '<div class="cards">' + rest.map(kortHTML).join("") + "</div>" : "";
+  }
+  function tegnAlt(){ tegnHoved(); tegnEmner(); tegnTags(); tegnKort(); }
+
+  /* ---------- redigering ---------- */
+  function tegnListe(){
+    var liste = document.getElementById("liste");
+    document.getElementById("antal").textContent = data.links.length;
+    liste.innerHTML = "";
+    if (!data.links.length){
+      liste.innerHTML = '<p class="hint">Listen er tom. Udfyld felterne ovenfor og tryk “Tilføj link”.</p>';
+      return;
+    }
+    data.links.forEach(function(l, i){
+      var rk = document.createElement("div");
+      rk.className = "rk" + (l.id === redigerId ? " redigeres" : "");
+      var under = [l.emne || "uden emne"];
+      if (l.tags.length) under.push(l.tags.map(function(t){ return "#" + t; }).join(" "));
+      if (l.pinned) under.push("📌");
+      rk.innerHTML =
+        '<div class="nav">' +
+          '<button type="button" data-op="up" ' + (i === 0 ? "disabled" : "") + ' title="Flyt op">▲</button>' +
+          '<button type="button" data-op="down" ' + (i === data.links.length-1 ? "disabled" : "") + ' title="Flyt ned">▼</button>' +
+        "</div>" +
+        '<div class="txt"><b>' + esc(l.titel || "(uden titel)") + "</b><small>" + esc(under.join(" · ")) + "</small></div>" +
+        '<div class="akt">' +
+          '<button type="button" class="btn secondary small" data-op="edit">Rediger</button>' +
+          '<button type="button" class="btn danger small" data-op="del">Slet</button>' +
+        "</div>";
+      rk.addEventListener("click", function(ev){
+        var b = ev.target.closest("button[data-op]");
+        if (!b) return;
+        var op = b.dataset.op;
+        if (op === "up" && i > 0){ byt(i, i-1); }
+        else if (op === "down" && i < data.links.length-1){ byt(i, i+1); }
+        else if (op === "edit"){ hentTilForm(l); }
+        else if (op === "del"){
+          if (confirm("Slet “" + (l.titel||"linket") + "”?")){
+            data.links.splice(i,1);
+            if (redigerId === l.id) nulstilForm();
+            saetDirty(true); tegnListe(); tegnAlt();
+          }
+        }
+      });
+      liste.appendChild(rk);
+    });
+  }
+  function byt(a,b){
+    var t = data.links[a]; data.links[a] = data.links[b]; data.links[b] = t;
+    saetDirty(true); tegnListe(); tegnAlt();
+  }
+  function hentTilForm(l){
+    redigerId = l.id;
+    document.getElementById("f-titel").value = l.titel;
+    document.getElementById("f-url").value = l.url;
+    document.getElementById("f-emne").value = l.emne;
+    document.getElementById("f-tags").value = l.tags.join(", ");
+    document.getElementById("f-note").value = l.note;
+    document.getElementById("f-kilde").value = l.kilde;
+    document.getElementById("f-pinned").checked = l.pinned;
+    document.getElementById("form-overskrift").textContent = "Rediger link";
+    document.getElementById("f-gem").textContent = "Gem link";
+    document.getElementById("f-annuller").style.display = "";
+    tegnListe();
+    document.getElementById("f-titel").focus();
+    document.querySelector("#edit-overlay .box").scrollTop = 0;
+  }
+  function nulstilForm(){
+    redigerId = null;
+    ["f-titel","f-url","f-emne","f-tags","f-note","f-kilde"].forEach(function(id){ document.getElementById(id).value = ""; });
+    document.getElementById("f-pinned").checked = false;
+    document.getElementById("form-overskrift").textContent = "Tilføj link";
+    document.getElementById("f-gem").textContent = "Tilføj link";
+    document.getElementById("f-annuller").style.display = "none";
+    tegnListe();
+  }
+  function gemForm(){
+    var titel = document.getElementById("f-titel").value.trim();
+    var url = document.getElementById("f-url").value.trim();
+    if (!titel){ vis("f-status","Skriv en titel.","fejl"); return; }
+    if (!url){ vis("f-status","Skriv en URL eller filsti.","fejl"); return; }
+    var felter = {
+      titel: titel,
+      url: url,
+      emne: document.getElementById("f-emne").value.trim(),
+      tags: normTags(document.getElementById("f-tags").value),
+      note: document.getElementById("f-note").value.trim(),
+      kilde: document.getElementById("f-kilde").value.trim(),
+      pinned: document.getElementById("f-pinned").checked
+    };
+    if (redigerId){
+      var l = data.links.filter(function(x){ return x.id === redigerId; })[0];
+      if (l) for (var k in felter) l[k] = felter[k];
+      vis("f-status","Linket er rettet. Husk “Gem til fil”.","ok");
+    } else {
+      felter.id = nyId(); felter.billede = "";
+      data.links.push(felter);
+      vis("f-status","Linket er tilføjet. Husk “Gem til fil”.","ok");
+    }
+    saetDirty(true);
+    nulstilForm();
+    opdaterEmneListe();
+    tegnAlt();
+  }
+  function opdaterEmneListe(){
+    var dl = document.getElementById("emne-liste");
+    var set = [];
+    data.links.forEach(function(l){ if (l.emne && set.indexOf(l.emne) < 0) set.push(l.emne); });
+    dl.innerHTML = set.sort().map(function(e){ return '<option value="' + esc(e) + '">'; }).join("");
+  }
+
+  /* ---------- gem til fil ---------- */
+  function byggFil(){
+    var json = JSON.stringify({
+      titel: data.titel, undertitel: data.undertitel, note: data.note, links: data.links
+    }, null, 2).replace(/<\//g, "<\\/");
+    return TEMPLATE.replace(
+      /(<script id="app-data" type="application\/json">)[\s\S]*?(<\/script>)/,
+      function(m, a, b){ return a + "\n" + json + "\n" + b; }
+    );
+  }
+  function filnavn(){
+    var n = (location.pathname.split("/").pop() || "").split("?")[0];
+    try { n = decodeURIComponent(n); } catch(e){}
+    return n || "dashboard.html";
+  }
+  async function gemTilFil(){
+    var html = byggFil();
+    if (html.indexOf('id="app-data"') < 0){
+      vis("d-status","Kunne ikke bygge filen. Gem i stedet dine data med “Hent links.json”.","fejl");
+      return;
+    }
+    var blob = new Blob([html], {type:"text/html;charset=utf-8"});
+
+    if (window.showSaveFilePicker){
+      try {
+        if (!filHandle){
+          filHandle = await window.showSaveFilePicker({
+            suggestedName: filnavn(),
+            types: [{ description:"HTML-fil", accept:{"text/html":[".html"]} }]
+          });
+        }
+        var w = await filHandle.createWritable();
+        await w.write(blob);
+        await w.close();
+        saetDirty(false); rydKladde();
+        toast("Gemt i filen");
+        return;
+      } catch(e){
+        if (e && e.name === "AbortError") return;
+        filHandle = null;
+      }
+    }
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filnavn();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    saetDirty(false); rydKladde();
+    vis("d-status","Filen er hentet til din Overførsler-mappe. Læg den oven i den gamle fil, så er ændringerne permanente.","ok");
+    toast("Fil hentet — læg den oven i den gamle");
+  }
+
+  /* ---------- import / eksport ---------- */
+  function eksporter(){
+    var json = JSON.stringify(data.links, null, 4);
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([json], {type:"application/json"}));
+    a.download = "links.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    vis("d-status","links.json er hentet.","ok");
+  }
+  function importer(fil){
+    var r = new FileReader();
+    r.onload = function(){
+      var d;
+      try { d = JSON.parse(r.result); }
+      catch(e){ vis("d-status","Filen kunne ikke læses som JSON.","fejl"); return; }
+      var nye = Array.isArray(d) ? d : (d && Array.isArray(d.links) ? d.links : null);
+      if (!nye){ vis("d-status","Filen indeholder ikke en liste af links.","fejl"); return; }
+      nye = nye.map(ryd);
+      var svar = confirm(nye.length + " links fundet.\n\nOK = erstat de nuværende " + data.links.length + " links\nAnnullér = læg dem til i stedet");
+      if (svar) data.links = nye;
+      else {
+        var kendte = data.links.map(function(l){ return l.id; });
+        nye.forEach(function(l){ if (kendte.indexOf(l.id) >= 0) l.id = nyId(); data.links.push(l); });
+      }
+      if (!Array.isArray(d) && d){
+        if (d.titel) data.titel = d.titel;
+        if (d.undertitel) data.undertitel = d.undertitel;
+        if (d.note) data.note = d.note;
+        laesIndstillingerTilForm();
+      }
+      saetDirty(true); opdaterEmneListe(); tegnListe(); tegnAlt();
+      vis("d-status","Indlæst. Husk “Gem til fil”.","ok");
+    };
+    r.readAsText(fil);
+  }
+  function laesIndstillingerTilForm(){
+    document.getElementById("s-titel").value = data.titel;
+    document.getElementById("s-under").value = data.undertitel;
+    document.getElementById("s-note").value = data.note;
+  }
+
+  /* ---------- hændelser ---------- */
+  var soeg = document.getElementById("search");
+  var ryd_ = document.getElementById("search-clear");
+  function opdaterRyd(){ ryd_.classList.toggle("visible", soeg.value.length > 0); }
+  soeg.addEventListener("input", function(){ opdaterRyd(); tegnKort(); });
+  ryd_.addEventListener("click", function(){ soeg.value = ""; opdaterRyd(); soeg.focus(); tegnKort(); });
+
+  var tagToggle = document.getElementById("tag-toggle");
+  tagToggle.addEventListener("click", function(){
+    tagsUdfoldet = !tagsUdfoldet;
+    document.getElementById("tag-filter").hidden = !tagsUdfoldet;
+    tagToggle.textContent = tagsUdfoldet ? "− Tags" : "+ Tags";
+    tagToggle.setAttribute("aria-expanded", String(tagsUdfoldet));
+  });
+
+  var noteOverlay = document.getElementById("note-overlay");
+  document.getElementById("note-btn").addEventListener("click", function(){
+    document.getElementById("note-titel").textContent = "Note";
+    document.getElementById("note-text").textContent = data.note;
+    noteOverlay.classList.add("open");
+  });
+  document.getElementById("note-close").addEventListener("click", function(){ noteOverlay.classList.remove("open"); });
+  noteOverlay.addEventListener("click", function(e){ if (e.target === noteOverlay) noteOverlay.classList.remove("open"); });
+  document.addEventListener("click", function(e){
+    var b = e.target.closest(".card-note-btn");
+    if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var l = data.links.filter(function(x){ return x.id === b.dataset.noteId; })[0];
+    if (l){
+      document.getElementById("note-titel").textContent = l.titel;
+      document.getElementById("note-text").textContent = l.note;
+      noteOverlay.classList.add("open");
+    }
+  });
+
+  var editOverlay = document.getElementById("edit-overlay");
+  function aabnEdit(){
+    if (!REDIGERBAR) return;
+    laesIndstillingerTilForm();
+    opdaterEmneListe();
+    tegnListe();
+    editOverlay.classList.add("open");
+  }
+  document.getElementById("edit-fab").addEventListener("click", aabnEdit);
+  document.getElementById("edit-close").addEventListener("click", function(){ editOverlay.classList.remove("open"); });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape"){
+      noteOverlay.classList.remove("open");
+      editOverlay.classList.remove("open");
+    }
+  });
+
+  document.getElementById("f-gem").addEventListener("click", gemForm);
+  document.getElementById("f-annuller").addEventListener("click", nulstilForm);
+
+  ["s-titel","s-under","s-note"].forEach(function(id){
+    document.getElementById(id).addEventListener("input", function(){
+      data.titel = document.getElementById("s-titel").value.trim() || "Lokalt Dashboard";
+      data.undertitel = document.getElementById("s-under").value;
+      data.note = document.getElementById("s-note").value;
+      saetDirty(true); tegnHoved();
+    });
+  });
+
+  document.getElementById("gem-btn").addEventListener("click", gemTilFil);
+  document.getElementById("save-fab").addEventListener("click", gemTilFil);
+  document.getElementById("eksport-btn").addEventListener("click", eksporter);
+  document.getElementById("import-btn").addEventListener("click", function(){ document.getElementById("import-fil").click(); });
+  document.getElementById("import-fil").addEventListener("change", function(e){
+    if (e.target.files && e.target.files[0]) importer(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  window.addEventListener("beforeunload", function(e){
+    if (dirty && REDIGERBAR){ e.preventDefault(); e.returnValue = ""; }
+  });
+
+  /* ---------- start ---------- */
+  laesIndlejret();
+  if (REDIGERBAR){
+    tjekKladde();
+  } else {
+    document.getElementById("edit-fab").classList.add("hidden");
+  }
+  tegnAlt();
+  opdaterRyd();
+})();
+</script></body></html>
