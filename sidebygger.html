@@ -113,7 +113,7 @@
 
 <div class="topbar">
   <h1>Sidebygger</h1>
-  <span>Lav en artikelside om en gade, et sted eller et menneske · kører lokalt, ingen server · version 1</span>
+  <span>Lav en artikelside om en gade, et sted eller et menneske · kører lokalt, ingen server · version 1.1</span>
 </div>
 
 <div class="layout">
@@ -353,7 +353,7 @@
           <select id="dcPublisher">
             <option value="">(ikke valgt)</option>
             <option value="Privat">Privat</option>
-            <option value="Syd for Banen — Lokalhistorisk Forening">Syd for Banen — Lokalhistorisk Forening</option>
+            <option value="Syd for Banen - Lokalhistorisk Forening">Syd for Banen - Lokalhistorisk Forening</option>
             <option value="Røde Kors Roskilde">Røde Kors Roskilde</option>
           </select>
         </div>
@@ -451,7 +451,7 @@ const DC_LABELS = {
 // Områdepræfikser til dc.identifier, jf. Builder-standarden.
 const AREA_PREFIX = {
   'Privat':'PRIV',
-  'Syd for Banen — Lokalhistorisk Forening':'SFB',
+  'Syd for Banen - Lokalhistorisk Forening':'SFB',
   'Røde Kors Roskilde':'RKR'
 };
 
@@ -639,6 +639,10 @@ function collectDublinCore(){
   // Områdenavnet skal stå som første emneord, jf. Builder-standarden.
   if (dc.publisher){
     const area = dc.publisher;
+    if (dc.subject) dc.subject = dc.subject.split(';').map(x => {
+      const t = x.trim(), n = normalizePublisher(t);
+      return AREA_PREFIX[n] ? n : t;
+    }).join('; ');
     const parts = (dc.subject || '').split(';').map(s => s.trim()).filter(Boolean);
     if (parts[0] !== area){
       dc.subject = [area].concat(parts.filter(p => p !== area)).join('; ');
@@ -744,6 +748,10 @@ function buildPageHTML(s, isPreview){
     + ctas.map(c => '<a class="cta-btn" href="' + escapeHtml(c.url.trim()) + '" target="_blank" rel="noopener">' + escapeHtml(c.text.trim()) + '</a>').join('')
     + '</div>' : '';
 
+  const saveBlock = '<div class="save-wrap"><button class="save-btn" id="dlBtn">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4 20h16"/></svg>'
+    + '<span>Gem filen</span></button></div>'
+    + '<p class="save-note">Gemmer hele siden som én fil på din egen computer - tekst, billeder og lyd følger med.</p>';
   const hasInfo = s.infoBtnText.trim() && s.infoContent.trim();
   const infoBtn = hasInfo ? '<button class="tool infotool" id="infoBtn">' + escapeHtml(s.infoBtnText.trim()) + '</button>' : '';
   const infoModal = hasInfo ? '<div class="overlay" id="infoModal" hidden><div class="modal">'
@@ -870,6 +878,12 @@ function buildPageHTML(s, isPreview){
 + '.cta-wrap{display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:40px 0 10px;}\n'
 + '.cta-btn{background:var(--accent); color:var(--on-accent); text-decoration:none; font-weight:700; font-size:1.02em; padding:14px 26px; border-radius:8px; box-shadow:0 3px 10px var(--shadow);}\n'
 + '.cta-btn:hover{background:var(--accent-dark);}\n'
++ '.save-wrap{display:flex; justify-content:center; margin:34px 0 6px;}\n'
++ '.save-btn{display:inline-flex; align-items:center; gap:10px; background:transparent; color:var(--accent); border:2px solid var(--accent); border-radius:8px; font-family:var(--sans); font-size:1em; font-weight:700; padding:13px 24px; cursor:pointer;}\n'
++ '.save-btn:hover{background:var(--accent); color:var(--on-accent);}\n'
++ '.save-btn:focus-visible{outline:3px solid var(--accent); outline-offset:3px;}\n'
++ '.save-btn svg{width:20px; height:20px;}\n'
++ '.save-note{text-align:center; font-size:0.85em; color:var(--muted); margin:10px 0 0;}\n'
 + '.meta{margin:40px 0 10px; border:1px solid var(--line); border-radius:8px; background:var(--surface); padding:14px 18px; scroll-margin-top:78px;}\n'
 + '.meta summary{cursor:pointer; font-weight:700; color:var(--ink); font-size:0.98em; display:flex; justify-content:space-between; align-items:center; list-style:none;}\n'
 + '.meta summary::-webkit-details-marker{display:none;}\n'
@@ -892,7 +906,7 @@ function buildPageHTML(s, isPreview){
 + '#toTop{position:fixed; right:18px; bottom:18px; z-index:30; background:var(--accent); color:var(--on-accent); border:none; border-radius:50%; width:48px; height:48px; cursor:pointer; box-shadow:0 4px 14px var(--shadow); opacity:0; pointer-events:none; transition:opacity .2s ease;}\n'
 + '#toTop.show{opacity:1; pointer-events:auto;}\n'
 + '#toTop svg{width:22px; height:22px; margin:0 auto; display:block;}\n'
-+ '@media print{ .site-head, #toTop, .overlay{display:none !important;} body{background:#fff;} }\n'
++ '@media print{ .site-head, #toTop, .overlay, .save-wrap, .save-note{display:none !important;} body{background:#fff;} }\n'
 + '</style>\n</head>\n<body>\n'
 + '<header class="site-head">\n<div class="head-inner">\n'
 + homeBlock
@@ -909,7 +923,7 @@ function buildPageHTML(s, isPreview){
 + '<h1>' + escapeHtml(pageTitle) + '</h1>'
 + (s.subtitle ? '<p class="subtitle">' + escapeHtml(s.subtitle) + '</p>' : '')
 + (s.location ? '<p class="location">' + escapeHtml(s.location) + '</p>' : '')
-+ topBlock + audioBlock + factBlock + articleBlock + galleryBlock + ctaBlock + dcBlock
++ topBlock + audioBlock + factBlock + articleBlock + galleryBlock + ctaBlock + saveBlock + dcBlock
 + '\n</main>\n' + footBlock
 + '<button id="toTop" aria-label="Til toppen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 14l6-6 6 6"/></svg></button>\n'
 + '<div class="overlay" id="lightbox" hidden><div class="modal">'
@@ -968,6 +982,36 @@ function buildPageHTML(s, isPreview){
 + '    if (e.key !== "Escape") return;\n'
 + '    closeLb();\n'
 + '    if (infoModal) infoModal.setAttribute("hidden","");\n'
++ '  });\n'
++ '  /* --- Gem filen: en kopi af siden som den var, da den blev lavet --- */\n'
++ '  var dlBtn = document.getElementById("dlBtn");\n'
++ '  dlBtn.addEventListener("click", function(){\n'
++ '    var bar2 = document.getElementById("topbar");\n'
++ '    if (bar2 && bar2.getAttribute("data-mode") !== "auto") bar2 = null;\n'
++ '    var barWasShown = bar2 && bar2.classList.contains("show");\n'
++ '    var wasDark = document.body.classList.contains("dark");\n'
++ '    var fsWas = document.documentElement.style.getPropertyValue("--fs");\n'
++ '    var topWasShown = toTop.classList.contains("show");\n'
++ '    var menuWasOpen = menu && !menu.hasAttribute("hidden");\n'
++ '    if (bar2) bar2.classList.remove("show");\n'
++ '    document.body.classList.remove("dark");\n'
++ '    document.documentElement.style.removeProperty("--fs");\n'
++ '    toTop.classList.remove("show");\n'
++ '    if (menu) menu.setAttribute("hidden", "");\n'
++ '    var full = "<!DOCTYPE html>\\n" + document.documentElement.outerHTML;\n'
++ '    if (bar2 && barWasShown) bar2.classList.add("show");\n'
++ '    if (wasDark) document.body.classList.add("dark");\n'
++ '    if (fsWas) document.documentElement.style.setProperty("--fs", fsWas);\n'
++ '    if (topWasShown) toTop.classList.add("show");\n'
++ '    if (menuWasOpen && menu) menu.removeAttribute("hidden");\n'
++ '    try {\n'
++ '      var blob = new Blob([full], {type:"text/html"});\n'
++ '      var url = URL.createObjectURL(blob);\n'
++ '      var a = document.createElement("a");\n'
++ '      a.href = url; a.download = ' + JSON.stringify(safeName + '.html') + ';\n'
++ '      document.body.appendChild(a); a.click(); document.body.removeChild(a);\n'
++ '      URL.revokeObjectURL(url);\n'
++ '    } catch(e){ alert("Filen kunne ikke gemmes her i browseren."); }\n'
 + '  });\n'
 + '  /* --- Hjem-knappen: i "automatisk" vises den kun, hvis filen er del af noget større --- */\n'
 + '  var bar = document.getElementById("topbar");\n'
@@ -1166,11 +1210,18 @@ function extractTaellerBlock(text){
   return text.slice(start, end + 3);
 }
 
+// Ældre sider kan have tankestreg i udgivernavnet. De rettes til bindestreg,
+// så de passer med rullelisten og med resten af samlingen.
+function normalizePublisher(v){
+  return (v || '').replace(/\s*[—–]\s*/g, ' - ').trim();
+}
+
 function fillDcFields(dc){
   DC_FIELDS.forEach(key => {
     const el = $(dcInputId(key));
     if (!el) return;
     let v = (dc && dc[key]) ? dc[key] : '';
+    if (key === 'publisher') v = normalizePublisher(v);
     if (!v){
       if (key === 'format') v = 'text/html';
       else if (key === 'language') v = 'da';
