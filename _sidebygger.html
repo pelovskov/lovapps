@@ -113,7 +113,7 @@
 
 <div class="topbar">
   <h1>Sidebygger</h1>
-  <span>Lav en artikelside om en gade, et sted eller et menneske · kører lokalt, ingen server · version 1.2</span>
+  <span>Lav en artikelside om en gade, et sted eller et menneske · kører lokalt, ingen server · version 1.1</span>
 </div>
 
 <div class="layout">
@@ -152,15 +152,9 @@
     <div class="sectionhead">Sidens hoved</div>
 
     <div class="field">
-      <label for="eyebrowSelect">Mærkat / serie (valgfri)</label>
-      <select id="eyebrowSelect">
-        <option value="" selected>(ingen)</option>
-        <option value="Gader og veje">Gader og veje</option>
-        <option value="Steder, institutioner og mennesker">Steder, institutioner og mennesker</option>
-        <option value="__custom__">Anden tekst — skriv selv</option>
-      </select>
-      <input type="text" id="eyebrow" placeholder="Skriv din egen mærkat" style="margin-top:10px; display:none">
-      <div class="hint">Vises som lille tekst over titlen. Vælger du en af de to serier, sættes den samtidig ind som andet emneord i <code>dc.subject</code>, lige efter området. Så kan siderne filtreres på både område og serie i søgeindekset. Egen tekst vises på siden, men bliver ikke sat ind i metadata.</div>
+      <label for="eyebrow">Mærkat (valgfri)</label>
+      <input type="text" id="eyebrow" placeholder="fx Gader og veje">
+      <div class="hint">Lille tekst over titlen. God til at markere, hvilken serie siden hører til.</div>
     </div>
 
     <div class="field">
@@ -461,9 +455,6 @@ const AREA_PREFIX = {
   'Røde Kors Roskilde':'RKR'
 };
 
-// Faste serier. Vælges en af dem, står den som andet emneord efter området.
-const SERIES = ['Gader og veje', 'Steder, institutioner og mennesker'];
-
 function dcInputId(key){ return 'dc' + key.charAt(0).toUpperCase() + key.slice(1); }
 
 // Felter der spejler formularen ovenfor, indtil man selv skriver i dem.
@@ -646,18 +637,16 @@ function collectDublinCore(){
     if (val) dc[key] = val;
   });
   // Områdenavnet skal stå som første emneord, jf. Builder-standarden.
-  const series = SERIES.indexOf(state.eyebrow.trim()) !== -1 ? state.eyebrow.trim() : '';
-  if (dc.publisher || series){
-    const area = dc.publisher || '';
+  if (dc.publisher){
+    const area = dc.publisher;
     if (dc.subject) dc.subject = dc.subject.split(';').map(x => {
       const t = x.trim(), n = normalizePublisher(t);
       return AREA_PREFIX[n] ? n : t;
     }).join('; ');
     const parts = (dc.subject || '').split(';').map(s => s.trim()).filter(Boolean);
-    const head = [area, series].filter(Boolean);
-    const rest = parts.filter(p => head.indexOf(p) === -1);
-    const merged = head.concat(rest).join('; ');
-    if (merged !== (dc.subject || '')) dc.subject = merged;
+    if (parts[0] !== area){
+      dc.subject = [area].concat(parts.filter(p => p !== area)).join('; ');
+    }
   }
   return dc;
 }
@@ -1090,9 +1079,7 @@ function updateSizeBar(){
 }
 
 function readForm(){
-  const eb = $('eyebrowSelect').value;
-  $('eyebrow').style.display = (eb === '__custom__') ? 'block' : 'none';
-  state.eyebrow = (eb === '__custom__') ? $('eyebrow').value : eb;
+  state.eyebrow = $('eyebrow').value;
   state.title = $('title').value;
   state.subtitle = $('subtitle').value;
   state.location = $('location').value;
@@ -1128,7 +1115,7 @@ function renderPreview(){
   $('previewFrame').srcdoc = buildPageHTML(state, true);
 }
 
-['eyebrowSelect','eyebrow','title','subtitle','location','top1caption','top1alt','top2caption','top2alt',
+['eyebrow','title','subtitle','location','top1caption','top1alt','top2caption','top2alt',
  'audioTitle','factTitle','factText','articleText',
  'gal1caption','gal1alt','gal1desc','gal2caption','gal2alt','gal2desc','gal3caption','gal3alt','gal3desc',
  'cta1text','cta1url','cta2text','cta2url','cta3text','cta3url',
@@ -1312,13 +1299,7 @@ $('loadPage').addEventListener('change', async (e) => {
       $('audioStatus').textContent = 'Lydfil indlæst fra fil (~' + Math.round(state.audioData.length * 0.75 / 1024) + ' KB)';
     }
 
-    if (SERIES.indexOf(state.eyebrow) !== -1 || state.eyebrow === ''){
-      $('eyebrowSelect').value = state.eyebrow;
-      setField('eyebrow', '');
-    } else {
-      $('eyebrowSelect').value = '__custom__';
-      setField('eyebrow', state.eyebrow);
-    }
+    setField('eyebrow', state.eyebrow);
     setField('title', state.title);
     setField('subtitle', state.subtitle);
     setField('location', state.location);
