@@ -12,15 +12,16 @@
      2) Kontaktlinjen i bunden.
      Ingen webfonte, ingen scripts udefra: siden virker også offline.
      Samme stilark og samme A / A+ / A++ som startsiden og søgesiden.
+     Version 2 — september 2026: Vejledningsbygger og PWA-bygger tilføjet.
      =================================================================== -->
 
-<meta name="description" content="De fem historiebyggere: små HTML-værktøjer der laver e-bøger, lydfortællinger, billedalbums og enkeltbilleder som selvstændige filer.">
+<meta name="description" content="De syv historiebyggere: små HTML-værktøjer der laver e-bøger, lydfortællinger, billedalbums, enkeltbilleder, vejledninger og samlinger som selvstændige filer.">
 <meta name="dc.title" content="Værktøjerne, der laver historierne">
 <meta name="dc.creator" content="Poul Erik Løvskov">
-<meta name="dc.subject" content="Syd for Banen; lokalhistorie; Roskilde; digital formidling; værktøjer; langtidsholdbarhed">
-<meta name="dc.description" content="Introduktion til historiebyggerne — Bogbygger, Lydfortælling, Albumbygger, Piwigo Albumbygger og Enkeltbillede — der hver laver én selvstændig HTML-fil.">
+<meta name="dc.subject" content="Syd for Banen; lokalhistorie; Roskilde; digital formidling; værktøjer; vejledninger; langtidsholdbarhed">
+<meta name="dc.description" content="Introduktion til historiebyggerne — Bogbygger, Lydfortælling, Albumbygger, Piwigo Albumbygger, Enkeltbillede, Vejledningsbygger og PWA-bygger — der hver laver selvstændige HTML-filer.">
 <meta name="dc.publisher" content="Syd for Banen — Lokalhistorisk Forening">
-<meta name="dc.date" content="2026-08-25">
+<meta name="dc.date" content="2026-09-05">
 <meta name="dc.type" content="Text">
 <meta name="dc.format" content="text/html">
 <meta name="dc.language" content="da">
@@ -132,6 +133,7 @@
   }
   .byggere strong{font-weight:600;display:block;margin-bottom:.25rem}
   .byggere .txt{color:var(--blæk-svag);font-size:1.15rem;display:block;max-width:30rem}
+  .etiket.mellem{margin:2.4rem 0 1rem}
 
   /* ---- det samme i dem alle ---- */
   .punkter{list-style:none;margin:0 0 2.8rem;padding:0}
@@ -220,9 +222,10 @@
     <p class="etiket">Syd for Banen · Lokalhistorisk Forening</p>
     <h1>Værktøjerne, der laver historierne</h1>
     <p class="manchet">
-      Fem små byggere til bøger, lyd og billeder. Du udfylder felterne, og
-      byggeren samler det hele til én fil, du henter ned. Ingen konto, ingen
-      installation — og dine billeder forlader aldrig din egen maskine.
+      Syv små byggere til bøger, lyd, billeder, vejledninger og samlinger. Du
+      udfylder felterne, og byggeren samler det hele til én fil, du henter ned.
+      Ingen konto, ingen installation — og dine billeder forlader aldrig din
+      egen maskine.
     </p>
     <a class="knap" href="lokahhist-dashboard.html">Åbn dashboardet med byggerne</a>
     <p class="knap-note">Byggere · vejledninger · eksempler</p>
@@ -230,7 +233,12 @@
 
   <section class="afsnit">
     <p class="etiket">Værktøjskassen</p>
-    <h2>Fem byggere — én til hver slags stof</h2>
+    <h2>Syv byggere — én til hver slags stof</h2>
+    <p>
+      De fem første laver historierne. De to sidste kom til senere: den ene
+      forklarer, hvordan man bruger de andre, og den anden binder de færdige
+      filer sammen til noget, man kan lægge på hjemmeskærmen.
+    </p>
     <ul class="byggere">
       <li>
         <span class="type">Tekst</span>
@@ -271,6 +279,29 @@
         kan vises, og billedet kan hentes ud igen som billedfil.</span></div>
       </li>
     </ul>
+
+    <p class="etiket mellem">Og to, der binder det hele sammen</p>
+    <ul class="byggere">
+      <li>
+        <span class="type">Vejledning</span>
+        <div><strong>Vejledningsbygger</strong>
+        <span class="txt">Til det, der skal forklares. Et skærmbillede og et par linjer ad gangen, sat op
+        som nummererede trin: sådan gør du. Billedet kan sættes direkte ind fra skærmklipperen, og hvert trin
+        kan være et billede, en video eller bare tekst. Den færdige vejledning kan læses på skærmen eller
+        printes — eller gemmes som PDF, hvis den skal ligge ved siden af kaffekoppen. Den er lidt friere i
+        formen end de andre, for den skal også kunne bruges til noget, der ikke er lokalhistorie.</span></div>
+      </li>
+      <li>
+        <span class="type">Samling</span>
+        <div><strong>PWA-bygger</strong>
+        <span class="txt">Til det, der skal samles. Du peger på de færdige filer — et album, tre
+        lydfortællinger, en lille bog — og giver hver sin knap og en linje om, hvad den er. Ud kommer en
+        forside, der binder dem sammen. Den kan lægges på hjemmeskærmen på en telefon eller en tablet og
+        opfører sig derefter som en app: eget ikon, eget navn, og den virker, selvom der ikke er internet.
+        Det er den eneste af byggerne, der ikke afleverer én fil, men en lille håndfuld, der skal ligge
+        i samme mappe.</span></div>
+      </li>
+    </ul>
   </section>
 
   <section class="afsnit">
@@ -279,7 +310,7 @@
     <p>
       Byggerne er lavet efter den samme skabelon. Felterne står i samme rækkefølge,
       knapperne hedder det samme, og det, der virker i den ene, virker på samme måde
-      i den næste. Det, du kan i alle fem:
+      i den næste. Det, der går igen:
     </p>
     <ul class="punkter">
       <li><span><b>Titel, billede og en kort beskrivelse</b> i toppen — samme sted hver gang.</span></li>
@@ -289,15 +320,23 @@
       <li><span><b>Én færdig HTML-fil</b> til download — billeder, lyd og tekst ligger inde i selve filen.</span></li>
       <li><span><b>Åbn en færdig fil igen</b> i byggeren, ret i den, og gem den på ny.</span></li>
     </ul>
+    <p>
+      De to nyeste falder lidt uden for på hver sin måde. Vejledningsbyggeren har
+      sine egne farver og sin egen opstilling, fordi en vejledning ikke skal ligne
+      en lokalhistorisk fortælling. Og PWA-byggeren afleverer som nævnt flere filer,
+      fordi telefonen skal bruge dem for at kunne lægge forsiden på hjemmeskærmen.
+      Resten — felterne, sedlen med oplysninger og den færdige fil, der klarer sig
+      selv — er det samme.
+    </p>
   </section>
 
   <section class="afsnit">
     <p class="etiket">Sådan gør du</p>
-    <h2>Fire skridt, og filen er færdig</h2>
+    <h2>Fem skridt — og det sidste er valgfrit</h2>
     <ol class="trin">
       <li>
         <div><strong>Vælg byggeren, der passer til stoffet</strong>
-        <span>Tekst, lyd, et album eller det ene store billede.</span></div>
+        <span>Tekst, lyd, et album, det ene store billede — eller en vejledning, hvis det er en fremgangsmåde, der skal beskrives.</span></div>
       </li>
       <li>
         <div><strong>Udfyld felterne</strong>
@@ -310,6 +349,10 @@
       <li>
         <div><strong>Hent filen</strong>
         <span>Den er færdig i samme øjeblik, du gemmer den. Læg den på hjemmesiden, på en USB-nøgle, eller send den til nogen.</span></div>
+      </li>
+      <li>
+        <div><strong>Saml dem, hvis de hører sammen</strong>
+        <span>Hører flere filer til den samme byvandring, gade eller familie, kan PWA-byggeren give dem en fælles forside — og et sted på hjemmeskærmen.</span></div>
       </li>
     </ol>
     <p>
@@ -342,8 +385,8 @@
         <dt>Titel</dt><dd>Værktøjerne, der laver historierne</dd>
         <dt>Ophav</dt><dd>Poul Erik Løvskov</dd>
         <dt>Udgiver</dt><dd>Syd for Banen — Lokalhistorisk Forening</dd>
-        <dt>Dato</dt><dd>2026-08-25</dd>
-        <dt>Emne</dt><dd>Syd for Banen; lokalhistorie; Roskilde; digital formidling; værktøjer; langtidsholdbarhed</dd>
+        <dt>Dato</dt><dd>2026-09-05</dd>
+        <dt>Emne</dt><dd>Syd for Banen; lokalhistorie; Roskilde; digital formidling; værktøjer; vejledninger; langtidsholdbarhed</dd>
         <dt>Type</dt><dd>Text</dd>
         <dt>Sprog</dt><dd>da</dd>
         <dt>Rettigheder</dt><dd>Må frit bruges til lokalhistoriske formål.</dd>
@@ -356,7 +399,7 @@
     <p class="etiket">Kom i gang</p>
     <h2>Byggerne står på dashboardet</h2>
     <p>
-      På dashboardet ligger de fem byggere sammen med vejledningerne. Åbn den, du
+      På dashboardet ligger de syv byggere sammen med vejledningerne. Åbn den, du
       skal bruge, og gå i gang — der er ikke noget at installere.
     </p>
     <p>
