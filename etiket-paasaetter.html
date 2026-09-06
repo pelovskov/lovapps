@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Etiket · Påsætter</title>
+<style>
+/* ---------------------------------------------------------------
+   Etiket · Påsætter — version 1 (sep. 2026)
+   Sætter lette metadata på eksisterende HTML-filer, så de kan
+   komme med på søgesiden. Alt sker i browseren.
+
+   Vigtigt: filerne bliver IKKE tolket som HTML og skrevet ud igen.
+   Der bliver kun indsat en tekstblok i <head>. Resten af filen
+   bliver kopieret uændret, byte for byte.
+   --------------------------------------------------------------- */
+html{font-size:100%}
+html[data-tekst="stor"]{font-size:112.5%}
+html[data-tekst="storst"]{font-size:125%}
+
+:root{
+  --accent:#8E1F49;
+  --paper:#FAF9F5;
+  --paper-dim:#F1E7EC;
+  --ink:#241520;
+  --line:#D9C7CF;
+  --muted:#58424D;
+  --footer-strong:#33202B;
+  --ok:#1F5B3A;
+  --advarsel:#8A4B00;
+}
+@media (prefers-contrast:more){
+  :root{--accent:#6E1638;--ink:#000;--muted:#33202B;--line:#9C8A93}
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:1.2rem;line-height:1.6;
+  -webkit-text-size-adjust:100%;
+}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,
+select:focus-visible,textarea:focus-visible,summary:focus-visible{
+  outline:3px solid var(--accent);outline-offset:2px;
+}
+
+header{max-width:1500px;margin:0 auto;padding:2rem 1.25rem .75rem}
+.topbar{display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:2rem;line-height:1.2;margin:0 0 .25rem}
+.sub{color:var(--muted);font-size:1.05rem;margin:0;max-width:62ch}
+
+.tekststr{display:flex;align-items:center;gap:.5rem;flex:0 0 auto}
+.tekststr .lbl{font-size:.95rem;color:var(--muted)}
+.tekststr button{
+  font-family:inherit;background:#fff;color:var(--ink);
+  border:2px solid var(--line);border-radius:8px;
+  min-width:48px;min-height:48px;padding:0 .6rem;cursor:pointer;line-height:1;
+}
+.tekststr button:nth-of-type(1){font-size:1rem}
+.tekststr button:nth-of-type(2){font-size:1.25rem}
+.tekststr button:nth-of-type(3){font-size:1.5rem}
+.tekststr button:hover{border-color:var(--accent)}
+.tekststr button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+
+main{max-width:1500px;margin:0 auto;padding:.5rem 1.25rem 3rem}
+.panel{background:#fff;border:2px solid var(--line);border-radius:10px;padding:1.25rem;margin-bottom:1.25rem}
+.panel h2{font-size:1.3rem;margin:0 0 .7rem;color:var(--footer-strong)}
+.panel[hidden]{display:none}
+
+.knapraekke{display:flex;gap:.7rem;flex-wrap:wrap}
+button.stor{
+  font-family:inherit;font-size:1.15rem;
+  background:var(--accent);color:#fff;border:2px solid var(--accent);
+  border-radius:8px;min-height:52px;padding:.6rem 1.3rem;cursor:pointer;
+}
+button.stor:hover{background:#7A1A3E;border-color:#7A1A3E}
+button.stor[disabled]{background:#B8A3AC;border-color:#B8A3AC;cursor:not-allowed}
+button.rolig{
+  font-family:inherit;font-size:1.05rem;
+  background:#fff;color:var(--ink);border:2px solid var(--line);
+  border-radius:8px;min-height:48px;padding:.5rem 1rem;cursor:pointer;
+}
+button.rolig:hover{border-color:var(--accent)}
+button.lille{
+  font-family:inherit;font-size:.95rem;background:#fff;color:var(--ink);
+  border:2px solid var(--line);border-radius:8px;min-height:44px;padding:.3rem .7rem;cursor:pointer;
+}
+button.lille:hover{border-color:var(--accent)}
+
+.felter{display:flex;gap:1.1rem;flex-wrap:wrap;align-items:flex-end}
+.felt-gruppe{flex:1 1 15rem;min-width:0}
+label.felt{display:block;font-size:1rem;color:var(--muted);margin:0 0 .25rem}
+input.felt,select.felt,textarea.felt{
+  font-family:inherit;font-size:1.05rem;width:100%;
+  padding:.55rem .7rem;border:2px solid var(--line);border-radius:8px;
+  background:#fff;color:var(--ink);min-height:48px;
+}
+textarea.felt{min-height:3.4rem;line-height:1.45;resize:vertical}
+
+#dropzone{
+  border:3px dashed var(--line);border-radius:10px;
+  padding:1.1rem;text-align:center;color:var(--muted);font-size:1rem;margin-top:.8rem;
+}
+#dropzone.over{border-color:var(--accent);background:var(--paper-dim);color:var(--ink)}
+.hint{font-size:.98rem;color:var(--muted);margin:.5rem 0 0;max-width:70ch}
+
+table{width:100%;border-collapse:collapse;font-size:1rem}
+th{
+  text-align:left;font-size:.98rem;color:var(--muted);font-weight:normal;
+  padding:.4rem .5rem;border-bottom:2px solid var(--line);vertical-align:bottom;
+}
+td{padding:.5rem;border-bottom:1px solid var(--line);vertical-align:top}
+tr.zebra{background:var(--paper-dim)}
+tr.faerdig{color:var(--muted)}
+tr.faerdig input,tr.faerdig select,tr.faerdig textarea{background:var(--paper);color:var(--muted)}
+td input,td select,td textarea{
+  font-family:inherit;font-size:1rem;width:100%;
+  padding:.4rem .5rem;border:2px solid var(--line);border-radius:6px;
+  background:#fff;color:var(--ink);min-height:44px;
+}
+td textarea{min-height:2.9rem;line-height:1.4;resize:vertical}
+td.med{width:3.5rem;text-align:center}
+td.med input{width:26px;height:26px;min-height:26px;accent-color:var(--accent)}
+.filnavn{font-size:.95rem;word-break:break-word;line-height:1.35}
+.filnavn .maerke{display:block;color:var(--advarsel);font-size:.9rem;margin-top:.2rem}
+.col-titel{width:24%}
+.col-besk{width:32%}
+.col-type{width:12rem}
+.col-dato{width:9rem}
+
+@media(max-width:900px){
+  table,thead,tbody,tr,td{display:block;width:100%}
+  thead{display:none}
+  tr{border:2px solid var(--line);border-radius:8px;margin-bottom:1rem;padding:.6rem;background:#fff}
+  tr.zebra{background:var(--paper-dim)}
+  td{border-bottom:0;padding:.4rem 0}
+  td::before{content:attr(data-etiket);display:block;font-size:.95rem;color:var(--muted);margin-bottom:.2rem}
+  td.med{width:auto;text-align:left;display:flex;gap:.6rem;align-items:center}
+  td.med::before{margin-bottom:0}
+}
+
+.status{margin-top:1rem;font-size:1.05rem}
+.status .ok{color:var(--ok);font-weight:bold}
+.status .advarsel{color:var(--advarsel)}
+.status .fejl{color:var(--accent);font-weight:bold}
+.valg{margin:.3rem 0 1rem}
+.valg label{display:flex;gap:.6rem;align-items:flex-start;margin:.5rem 0;cursor:pointer;max-width:70ch}
+.valg input{width:24px;height:24px;margin-top:.3rem;accent-color:var(--accent);flex:0 0 auto}
+.valg .forklaring{display:block;font-size:.98rem;color:var(--muted)}
+
+details{margin-top:.9rem;font-size:1rem}
+summary{cursor:pointer;color:var(--accent);min-height:44px;display:flex;align-items:center}
+details ul{margin:.4rem 0 0;padding-left:1.2rem;color:var(--muted)}
+details li{margin:.25rem 0;word-break:break-word}
+
+footer{max-width:1500px;margin:0 auto;padding:0 1.25rem 3rem;color:var(--muted);font-size:.98rem;line-height:1.7}
+footer p{max-width:72ch}
+.visuelt-skjult{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="topbar">
+  <div>
+    <h1>Etiket · Påsætter</h1>
+    <p class="sub">Sætter lette metadata på HTML-filer, du allerede har liggende, så de
+    kan komme med på søgesiden. Dine originalfiler bliver ikke ændret, medmindre du selv
+    beder om det.</p>
+  </div>
+  <div class="tekststr" role="group" aria-label="Tekststørrelse">
+    <span class="lbl" aria-hidden="true">Tekst</span>
+    <button type="button" data-str="normal" aria-pressed="true" aria-label="Normal tekststørrelse">A</button>
+    <button type="button" data-str="stor" aria-pressed="false" aria-label="Større tekst">A+</button>
+    <button type="button" data-str="storst" aria-pressed="false" aria-label="Størst tekst">A++</button>
+  </div>
+</div>
+</header>
+
+<main>
+
+  <section class="panel" aria-labelledby="h1-mappe">
+    <h2 id="h1-mappe">1. Find filerne</h2>
+    <div class="knapraekke">
+      <button type="button" class="stor" id="vaelgMappe">Vælg mappe</button>
+      <button type="button" class="rolig" id="vaelgFiler">Vælg enkelte filer i stedet</button>
+    </div>
+    <div id="dropzone">eller træk mappen herned</div>
+    <p class="hint" id="mappeHint"></p>
+  </section>
+
+  <section class="panel" id="p-faelles" aria-labelledby="h2-faelles" hidden>
+    <h2 id="h2-faelles">2. Det, der er fælles for alle filerne</h2>
+    <div class="felter">
+      <div class="felt-gruppe">
+        <label class="felt" for="omraade">Område</label>
+        <select class="felt" id="omraade">
+          <option value="">Vælg eller skriv nedenfor</option>
+          <option>Privat</option>
+          <option>Syd for Banen - Lokalhistorisk Forening</option>
+          <option>Røde Kors Roskilde</option>
+        </select>
+      </div>
+      <div class="felt-gruppe">
+        <label class="felt" for="omraadeEgen">Eller et andet område</label>
+        <input class="felt" id="omraadeEgen" type="text" placeholder="fx din forenings navn">
+      </div>
+      <div class="felt-gruppe">
+        <label class="felt" for="ophav">Ophav</label>
+        <input class="felt" id="ophav" type="text" placeholder="dit navn">
+      </div>
+      <div class="felt-gruppe">
+        <label class="felt" for="emne">Emneord, adskilt med komma</label>
+        <input class="felt" id="emne" type="text" placeholder="fx slides, undervisning">
+      </div>
+    </div>
+    <p class="hint">Områdenavnet bliver også lagt ind som det første emneord, sådan som
+    Builder-standarden foreskriver.</p>
+  </section>
+
+  <section class="panel" id="p-tabel" aria-labelledby="h3-tabel" hidden>
+    <h2 id="h3-tabel">3. En linje pr. fil</h2>
+    <div class="knapraekke" style="margin-bottom:.9rem">
+      <button type="button" class="lille" id="saetTypeAlle">Sæt samme type på alle</button>
+      <button type="button" class="lille" id="saetDatoAlle">Sæt samme dato på alle</button>
+      <button type="button" class="lille" id="fravaelgAlle">Fravælg alle</button>
+      <button type="button" class="lille" id="tilvaelgAlle">Vælg alle</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Med</th>
+          <th scope="col">Fil</th>
+          <th scope="col" class="col-titel">Titel</th>
+          <th scope="col" class="col-besk">Beskrivelse</th>
+          <th scope="col" class="col-type">Type</th>
+          <th scope="col" class="col-dato">Dato</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p class="hint">Titel og dato er gættet ud fra filen selv. Ret det, der er forkert,
+    og lad resten stå.</p>
+  </section>
+
+  <section class="panel" id="p-gem" aria-labelledby="h4-gem" hidden>
+    <h2 id="h4-gem">4. Sæt etiketterne på</h2>
+    <div class="valg" role="radiogroup" aria-label="Hvor filerne skal gemmes">
+      <label>
+        <input type="radio" name="gemmaade" value="kopi" checked>
+        <span>Læg kopier i undermappen <strong>med-metadata</strong>
+        <span class="forklaring">Dine oprindelige filer bliver ikke rørt. Anbefales.</span></span>
+      </label>
+      <label>
+        <input type="radio" name="gemmaade" value="overskriv">
+        <span>Skriv direkte i de oprindelige filer
+        <span class="forklaring">Kan ikke fortrydes. Vælg kun dette, hvis du har en kopi et andet sted.</span></span>
+      </label>
+    </div>
+    <button type="button" class="stor" id="gem">Sæt etiketter på</button>
+    <p class="hint" id="gemHint"></p>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div id="resultatliste"></div>
+  </section>
+
+</main>
+
+<footer>
+<p>Etiketten bliver skrevet ind i <em>head</em>-delen af filen i samme format, som
+Bygger-værktøjerne bruger. Filen kan derfor komme med på søgesiden med det samme, og
+den kan senere få fulde metadata, uden at noget skal laves om. Resten af filen bliver
+kopieret uændret.</p>
+</footer>
+
+<script>
+/* =========================================================================
+   Del 1 · Grundtal og hjælpefunktioner
+   ========================================================================= */
+
+const HOVED_BYTES = 500 * 1024;      // hvor meget af filen vi læser som tekst
+const HALE_BYTES  = 200 * 1024;
+const UNDERMAPPE  = "med-metadata";
+
+const DC_FIELDS = [
+  "title","creator","subject","description","publisher","contributor",
+  "date","type","format","identifier","source","language","relation",
+  "coverage","rights"
+];
+
+const TYPER = [
+  ["InteractiveResource", "Infografik, slides, interaktiv side"],
+  ["Text",                "Tekst, artikel, dokument"],
+  ["Image",               "Billeder"],
+  ["Sound",               "Lyd"],
+  ["Collection",          "Oversigt, samling, linkside"],
+  ["Event",               "Begivenhed"]
+];
+
+const HAR_METADATA_RE = /<script[^>]*id="builder-source-data"/i;
+const HEAD_RE   = /<head\b[^>]*>/i;
+const CHARSET_RE = /<meta[^>]*charset[^>]*>/i;
+const TITLE_RE  = /<title[^>]*>([\s\S]*?)<\/title>/i;
+const H1_RE     = /<h1[^>]*>([\s\S]*?)<\/h1>/i;
+const DESC_RE   = /<meta[^>]+name=["']description["'][^>]*content=["']([^"']*)["']/i;
+const DESC2_RE  = /<meta[^>]+content=["']([^"']*)["'][^>]*name=["']description["']/i;
+
+let raekker = [];          // {navn, file, handle, harMetadata, felter…}
+let mappeHandle = null;
+
+function reneTekst(s){
+  return String(s || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"').replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function datoAf(ms){
+  const d = new Date(ms);
+  if (isNaN(d)) return "";
+  return d.getFullYear() + "-" +
+    String(d.getMonth()+1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0");
+}
+
+/* JSON hvor alt uden for ASCII skrives som \\uXXXX. Så er blokken læsbar,
+   uanset hvilket tegnsæt den oprindelige fil er gemt i. */
+function jsonKunAscii(obj){
+  return JSON.stringify(obj)
+    .replace(/[\u0080-\uFFFF]/g, c => "\\u" + c.charCodeAt(0).toString(16).padStart(4,"0"))
+    .replace(/<\/script/gi, "<\\/script");
+}
+
+
+/* =========================================================================
+   Del 2 · Læs filen og gæt det, vi kan
+   ========================================================================= */
+
+async function analyser(navn, file){
+  let hoved = "";
+  try{
+    hoved = await file.slice(0, HOVED_BYTES).text();
+  }catch(e){
+    return {navn, file, fejl: "kunne ikke læses"};
+  }
+
+  let harMetadata = HAR_METADATA_RE.test(hoved);
+  if (!harMetadata && file.size > HOVED_BYTES){
+    try{
+      const hale = await file.slice(Math.max(0, file.size - HALE_BYTES)).text();
+      harMetadata = HAR_METADATA_RE.test(hale);
+    }catch(e){}
+  }
+
+  const mTitle = TITLE_RE.exec(hoved);
+  const mH1    = H1_RE.exec(hoved);
+  const mDesc  = DESC_RE.exec(hoved) || DESC2_RE.exec(hoved);
+
+  let titel = reneTekst(mTitle && mTitle[1]) || reneTekst(mH1 && mH1[1]);
+  if (!titel) titel = navn.replace(/\.html?$/i, "").replace(/[-_]+/g, " ");
+
+  return {
+    navn, file, harMetadata,
+    med: !harMetadata,
+    titel,
+    beskrivelse: reneTekst(mDesc && mDesc[1]),
+    type: "InteractiveResource",
+    dato: datoAf(file.lastModified)
+  };
+}
+
+
+/* =========================================================================
+   Del 3 · Tabellen
+   ========================================================================= */
+
+function tegnTabel(){
+  const tbody = document.getElementById("rows");
+  tbody.innerHTML = "";
+
+  raekker.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    if (i % 2 === 1) tr.classList.add("zebra");
+    if (r.harMetadata) tr.classList.add("faerdig");
+
+    // Med
+    const tdMed = document.createElement("td");
+    tdMed.className = "med"; tdMed.dataset.etiket = "Med";
+    const chk = document.createElement("input");
+    chk.type = "checkbox"; chk.checked = r.med;
+    chk.setAttribute("aria-label", "Tag " + r.navn + " med");
+    chk.addEventListener("change", () => { r.med = chk.checked; });
+    tdMed.appendChild(chk);
+
+    // Filnavn
+    const tdNavn = document.createElement("td");
+    tdNavn.dataset.etiket = "Fil";
+    const nv = document.createElement("span");
+    nv.className = "filnavn"; nv.textContent = r.navn;
+    tdNavn.appendChild(nv);
+    if (r.harMetadata){
+      const m = document.createElement("span");
+      m.className = "maerke"; m.textContent = "Har allerede metadata";
+      nv.appendChild(m);
+    }
+
+    // Titel
+    const tdTitel = document.createElement("td");
+    tdTitel.dataset.etiket = "Titel";
+    const inTitel = document.createElement("input");
+    inTitel.type = "text"; inTitel.value = r.titel;
+    inTitel.setAttribute("aria-label", "Titel for " + r.navn);
+    inTitel.addEventListener("input", () => { r.titel = inTitel.value; });
+    tdTitel.appendChild(inTitel);
+
+    // Beskrivelse
+    const tdBesk = document.createElement("td");
+    tdBesk.dataset.etiket = "Beskrivelse";
+    const taBesk = document.createElement("textarea");
+    taBesk.rows = 2; taBesk.value = r.beskrivelse;
+    taBesk.setAttribute("aria-label", "Beskrivelse af " + r.navn);
+    taBesk.addEventListener("input", () => { r.beskrivelse = taBesk.value; });
+    tdBesk.appendChild(taBesk);
+
+    // Type
+    const tdType = document.createElement("td");
+    tdType.dataset.etiket = "Type";
+    const sel = document.createElement("select");
+    sel.setAttribute("aria-label", "Type for " + r.navn);
+    TYPER.forEach(([v, t]) => {
+      const o = document.createElement("option");
+      o.value = v; o.textContent = t;
+      sel.appendChild(o);
+    });
+    sel.value = r.type;
+    sel.addEventListener("change", () => { r.type = sel.value; });
+    tdType.appendChild(sel);
+
+    // Dato
+    const tdDato = document.createElement("td");
+    tdDato.dataset.etiket = "Dato";
+    const inDato = document.createElement("input");
+    inDato.type = "text"; inDato.value = r.dato;
+    inDato.setAttribute("aria-label", "Dato for " + r.navn);
+    inDato.addEventListener("input", () => { r.dato = inDato.value; });
+    tdDato.appendChild(inDato);
+
+    tr.append(tdMed, tdNavn, tdTitel, tdBesk, tdType, tdDato);
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("p-faelles").hidden = false;
+  document.getElementById("p-tabel").hidden = false;
+  document.getElementById("p-gem").hidden = false;
+
+  const antalNye = raekker.filter(r => !r.harMetadata).length;
+  const antalGamle = raekker.length - antalNye;
+  document.getElementById("gemHint").textContent = mappeHandle
+    ? "Filerne bliver skrevet direkte på din computer."
+    : "Filerne bliver hentet ned én ad gangen. Brug Edge eller Chrome, hvis du hellere vil have dem skrevet direkte i mappen.";
+
+  let s = antalNye + " filer er klar til at få en etiket.";
+  if (antalGamle) s += " " + antalGamle + " har allerede metadata og er fravalgt.";
+  document.getElementById("status").textContent = s;
+}
+
+
+/* =========================================================================
+   Del 4 · Selve indsættelsen
+   ========================================================================= */
+
+function byggBlok(r){
+  const omr = document.getElementById("omraade").value.trim()
+           || document.getElementById("omraadeEgen").value.trim();
+  const ophav = document.getElementById("ophav").value.trim();
+  const emner = document.getElementById("emne").value.trim();
+
+  const emneliste = [];
+  if (omr) emneliste.push(omr);
+  emner.split(",").forEach(e => { const t = e.trim(); if (t) emneliste.push(t); });
+
+  const dc = {};
+  DC_FIELDS.forEach(f => dc[f] = "");
+  dc.title       = r.titel.trim();
+  dc.creator     = ophav;
+  dc.subject     = emneliste.join(", ");
+  dc.description = r.beskrivelse.trim();
+  dc.publisher   = omr;
+  dc.date        = r.dato.trim();
+  dc.type        = r.type;
+  dc.format      = "text/html";
+  dc.language    = "da";
+
+  const konvolut = {
+    format: "etiket",
+    metadataniveau: "let",
+    vaerktoej: "Etiket · Påsætter 1.0",
+    paasat: datoAf(Date.now()),
+    dublinCore: dc
+  };
+
+  return '\n<script type="application/json" id="builder-source-data">'
+       + jsonKunAscii(konvolut)
+       + '<\/script>\n';
+}
+
+/* Finder stedet i filen, hvor blokken skal ind, og returnerer positionen
+   målt i bytes. Vi rører ikke resten af filen. */
+async function findIndsaetPunkt(file){
+  const hoved = await file.slice(0, HOVED_BYTES).text();
+
+  let tegnPos = -1;
+  const mHead = HEAD_RE.exec(hoved);
+  if (mHead){
+    tegnPos = mHead.index + mHead[0].length;
+    // står der et charset-meta lige efter, lægger vi os efter det
+    const efter = hoved.slice(tegnPos, tegnPos + 600);
+    const mCs = CHARSET_RE.exec(efter);
+    if (mCs) tegnPos += mCs.index + mCs[0].length;
+  } else {
+    const mHtml = /<html\b[^>]*>/i.exec(hoved);
+    if (mHtml) tegnPos = mHtml.index + mHtml[0].length;
+    else {
+      const mDoc = /<!DOCTYPE[^>]*>/i.exec(hoved);
+      tegnPos = mDoc ? mDoc.index + mDoc[0].length : 0;
+    }
+  }
+
+  // tegnposition om til byteposition
+  return new TextEncoder().encode(hoved.slice(0, tegnPos)).length;
+}
+
+async function lavNyFil(r){
+  const pos = await findIndsaetPunkt(r.file);
+  const blok = byggBlok(r);
+  return new Blob(
+    [r.file.slice(0, pos), blok, r.file.slice(pos)],
+    {type: "text/html"}
+  );
+}
+
+
+/* =========================================================================
+   Del 5 · Gem
+   ========================================================================= */
+
+document.getElementById("gem").addEventListener("click", async () => {
+  const valgte = raekker.filter(r => r.med);
+  if (!valgte.length){
+    document.getElementById("status").innerHTML =
+      '<span class="fejl">Der er ikke valgt nogen filer.</span>';
+    return;
+  }
+  const udenTitel = valgte.filter(r => !r.titel.trim());
+  if (udenTitel.length){
+    document.getElementById("status").innerHTML =
+      '<span class="fejl">' + udenTitel.length + ' af de valgte filer mangler en titel.</span>';
+    return;
+  }
+
+  const maade = document.querySelector('input[name="gemmaade"]:checked').value;
+  const knap = document.getElementById("gem");
+  knap.disabled = true;
+
+  let maalMappe = null;
+  if (mappeHandle && maade === "kopi"){
+    try{
+      maalMappe = await mappeHandle.getDirectoryHandle(UNDERMAPPE, {create: true});
+    }catch(e){
+      document.getElementById("status").innerHTML =
+        '<span class="fejl">Kunne ikke lave undermappen. Prøv at hente filerne ned i stedet.</span>';
+      knap.disabled = false;
+      return;
+    }
+  }
+
+  const klaret = [];
+  const fejlet = [];
+
+  for (let i = 0; i < valgte.length; i++){
+    const r = valgte[i];
+    document.getElementById("status").textContent =
+      "Arbejder … " + (i+1) + " af " + valgte.length + ": " + r.navn;
+    try{
+      const blob = await lavNyFil(r);
+
+      if (mappeHandle && (maalMappe || maade === "overskriv")){
+        const mappe = maalMappe || mappeHandle;
+        const fh = await mappe.getFileHandle(r.navn, {create: true});
+        const w = await fh.createWritable();
+        await w.write(blob);
+        await w.close();
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = r.navn;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 8000);
+        await new Promise(res => setTimeout(res, 400));
+      }
+
+      r.harMetadata = true; r.med = false;
+      klaret.push(r.navn);
+    }catch(e){
+      fejlet.push({navn: r.navn, grund: (e && e.message) || "ukendt fejl"});
+    }
+  }
+
+  let s = '<span class="ok">' + klaret.length + ' filer har fået en etiket.</span>';
+  if (mappeHandle && maade === "kopi") s += " De ligger i undermappen " + UNDERMAPPE + ".";
+  else if (mappeHandle) s += " De oprindelige filer er opdateret.";
+  else s += " De er hentet ned. Læg dem i mappen sammen med søgesiden.";
+  if (fejlet.length) s += ' <span class="advarsel">' + fejlet.length + ' gik galt.</span>';
+  document.getElementById("status").innerHTML = s;
+
+  const plads = document.getElementById("resultatliste");
+  plads.innerHTML = "";
+  if (fejlet.length){
+    const d = document.createElement("details");
+    const sum = document.createElement("summary");
+    sum.textContent = "Se hvad der gik galt";
+    d.appendChild(sum);
+    const ul = document.createElement("ul");
+    fejlet.forEach(f => {
+      const li = document.createElement("li");
+      li.textContent = f.navn + " — " + f.grund;
+      ul.appendChild(li);
+    });
+    d.appendChild(ul);
+    plads.appendChild(d);
+  }
+
+  tegnTabel();
+  document.getElementById("status").innerHTML = s;
+  knap.disabled = false;
+});
+
+
+/* =========================================================================
+   Del 6 · Indlæsning af filer
+   ========================================================================= */
+
+async function indlaes(filer){
+  document.getElementById("mappeHint").textContent =
+    "Læser " + filer.length + " filer …";
+  raekker = [];
+  for (const f of filer){
+    const r = await analyser(f.navn, f.file);
+    if (r.fejl) continue;
+    r.handle = f.handle || null;
+    raekker.push(r);
+  }
+  raekker.sort((a,b) => a.navn.localeCompare(b.navn, "da"));
+  document.getElementById("mappeHint").textContent =
+    raekker.length + " HTML-filer fundet.";
+  tegnTabel();
+}
+
+document.getElementById("vaelgMappe").addEventListener("click", async () => {
+  if (window.showDirectoryPicker){
+    try{
+      const h = await window.showDirectoryPicker({mode: "readwrite"});
+      mappeHandle = h;
+      const filer = [];
+      for await (const [navn, handle] of h.entries()){
+        if (handle.kind === "file" && /\.html?$/i.test(navn) && navn !== "soegeside.html"){
+          filer.push({navn, file: await handle.getFile(), handle});
+        }
+      }
+      document.getElementById("mappeHint").textContent = "Mappe: " + h.name;
+      await indlaes(filer);
+      return;
+    }catch(e){
+      if (e && e.name === "AbortError") return;
+      mappeHandle = null;
+    }
+  }
+  mappeInput.click();
+});
+
+const mappeInput = document.createElement("input");
+mappeInput.type = "file"; mappeInput.webkitdirectory = true;
+mappeInput.className = "visuelt-skjult";
+document.body.appendChild(mappeInput);
+mappeInput.addEventListener("change", async () => {
+  mappeHandle = null;
+  const alle = Array.from(mappeInput.files);
+  const top = alle.filter(f => {
+    const dele = (f.webkitRelativePath || f.name).split("/");
+    return dele.length <= 2 && /\.html?$/i.test(f.name) && f.name !== "soegeside.html";
+  });
+  await indlaes(top.map(f => ({navn: f.name, file: f})));
+});
+
+const filInput = document.createElement("input");
+filInput.type = "file"; filInput.multiple = true; filInput.accept = ".html,.htm";
+filInput.className = "visuelt-skjult";
+document.body.appendChild(filInput);
+document.getElementById("vaelgFiler").addEventListener("click", () => filInput.click());
+filInput.addEventListener("change", async () => {
+  mappeHandle = null;
+  await indlaes(Array.from(filInput.files).map(f => ({navn: f.name, file: f})));
+});
+
+const zone = document.getElementById("dropzone");
+["dragenter","dragover"].forEach(t => zone.addEventListener(t, e => {
+  e.preventDefault(); zone.classList.add("over");
+}));
+["dragleave","drop"].forEach(t => zone.addEventListener(t, e => {
+  e.preventDefault(); zone.classList.remove("over");
+}));
+zone.addEventListener("drop", async e => {
+  mappeHandle = null;
+  const items = Array.from(e.dataTransfer.items || []);
+  const filer = [];
+  for (const it of items){
+    const entry = it.webkitGetAsEntry && it.webkitGetAsEntry();
+    if (entry && entry.isDirectory){
+      document.getElementById("mappeHint").textContent = "Mappe: " + entry.name;
+      const reader = entry.createReader();
+      const laes = () => new Promise(res => reader.readEntries(res, () => res([])));
+      let batch;
+      do {
+        batch = await laes();
+        for (const ent of batch){
+          if (ent.isFile && /\.html?$/i.test(ent.name) && ent.name !== "soegeside.html"){
+            const f = await new Promise(res => ent.file(res, () => res(null)));
+            if (f) filer.push({navn: ent.name, file: f});
+          }
+        }
+      } while (batch.length);
+    } else if (entry && entry.isFile && /\.html?$/i.test(entry.name)){
+      const f = await new Promise(res => entry.file(res, () => res(null)));
+      if (f) filer.push({navn: entry.name, file: f});
+    }
+  }
+  if (!filer.length){
+    document.getElementById("mappeHint").textContent =
+      "Der var ingen HTML-filer i det, du trak herned.";
+    return;
+  }
+  await indlaes(filer);
+});
+
+
+/* =========================================================================
+   Del 7 · Småting i brugerfladen
+   ========================================================================= */
+
+document.getElementById("omraade").addEventListener("change", () => {
+  if (document.getElementById("omraade").value) document.getElementById("omraadeEgen").value = "";
+});
+document.getElementById("omraadeEgen").addEventListener("input", () => {
+  if (document.getElementById("omraadeEgen").value) document.getElementById("omraade").value = "";
+});
+
+document.getElementById("saetTypeAlle").addEventListener("click", () => {
+  const foerste = raekker.find(r => r.med);
+  if (!foerste) return;
+  raekker.forEach(r => { if (r.med) r.type = foerste.type; });
+  tegnTabel();
+});
+document.getElementById("saetDatoAlle").addEventListener("click", () => {
+  const foerste = raekker.find(r => r.med);
+  if (!foerste) return;
+  raekker.forEach(r => { if (r.med) r.dato = foerste.dato; });
+  tegnTabel();
+});
+document.getElementById("fravaelgAlle").addEventListener("click", () => {
+  raekker.forEach(r => r.med = false); tegnTabel();
+});
+document.getElementById("tilvaelgAlle").addEventListener("click", () => {
+  raekker.forEach(r => { if (!r.harMetadata) r.med = true; }); tegnTabel();
+});
+
+(function(){
+  const knapper = document.querySelectorAll(".tekststr button");
+  function saet(v, gem){
+    if (v && v !== "normal"){ document.documentElement.setAttribute("data-tekst", v); }
+    else { document.documentElement.removeAttribute("data-tekst"); v = "normal"; }
+    knapper.forEach(k => k.setAttribute("aria-pressed", String(k.dataset.str === v)));
+    if (gem){ try{ localStorage.setItem("lokalhist-tekst", v); }catch(e){} }
+  }
+  let gemt = null;
+  try{ gemt = localStorage.getItem("lokalhist-tekst"); }catch(e){}
+  if (gemt) saet(gemt, false);
+  knapper.forEach(k => k.addEventListener("click", () => saet(k.dataset.str, true)));
+})();
+</script>
+</body>
+</html>
