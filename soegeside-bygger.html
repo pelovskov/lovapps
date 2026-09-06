@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Søgeside · Bygger</title>
+<style>
+/* ---------------------------------------------------------------
+   Søgeside · Bygger — version 1 (sep. 2026)
+   Bygger en søgeside ud af en mappe med singlefile-HTML-filer.
+   Alt sker i browseren. Ingen filer sendes nogen steder hen.
+   Farvetokens er de samme som i den genererede søgeside.
+   --------------------------------------------------------------- */
+html{font-size:100%}
+html[data-tekst="stor"]{font-size:112.5%}
+html[data-tekst="storst"]{font-size:125%}
+
+:root{
+  --accent:#8E1F49;
+  --paper:#FAF9F5;
+  --paper-dim:#F1E7EC;
+  --ink:#241520;
+  --line:#D9C7CF;
+  --muted:#58424D;
+  --footer-strong:#33202B;
+  --ok:#1F5B3A;
+  --advarsel:#8A4B00;
+}
+@media (prefers-contrast:more){
+  :root{--accent:#6E1638;--ink:#000;--muted:#33202B;--line:#9C8A93}
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:1.2rem;line-height:1.6;
+  -webkit-text-size-adjust:100%;
+}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,
+select:focus-visible,summary:focus-visible{
+  outline:3px solid var(--accent);outline-offset:2px;
+}
+
+header{max-width:1400px;margin:0 auto;padding:2rem 1.25rem .75rem}
+.topbar{display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:2rem;line-height:1.2;margin:0 0 .25rem}
+.sub{color:var(--muted);font-size:1.05rem;margin:0;max-width:62ch}
+
+.tekststr{display:flex;align-items:center;gap:.5rem;flex:0 0 auto}
+.tekststr .lbl{font-size:.95rem;color:var(--muted)}
+.tekststr button{
+  font-family:inherit;background:#fff;color:var(--ink);
+  border:2px solid var(--line);border-radius:8px;
+  min-width:48px;min-height:48px;padding:0 .6rem;cursor:pointer;line-height:1;
+}
+.tekststr button:nth-of-type(1){font-size:1rem}
+.tekststr button:nth-of-type(2){font-size:1.25rem}
+.tekststr button:nth-of-type(3){font-size:1.5rem}
+.tekststr button:hover{border-color:var(--accent)}
+.tekststr button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.grid{
+  max-width:1400px;margin:0 auto;padding:.5rem 1.25rem 3rem;
+  display:grid;grid-template-columns:minmax(0,26rem) minmax(0,1fr);gap:1.5rem;align-items:start;
+}
+@media(max-width:1000px){ .grid{grid-template-columns:1fr} }
+
+.panel{background:#fff;border:2px solid var(--line);border-radius:10px;padding:1.25rem}
+.panel h2{font-size:1.3rem;margin:0 0 .6rem;color:var(--footer-strong)}
+
+.trin{border-top:1px solid var(--line);padding-top:1.1rem;margin-top:1.1rem}
+.trin:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.trin h3{font-size:1.1rem;margin:0 0 .5rem;color:var(--footer-strong)}
+.hint{font-size:.98rem;color:var(--muted);margin:.4rem 0 0}
+
+button.stor{
+  font-family:inherit;font-size:1.15rem;
+  background:var(--accent);color:#fff;border:2px solid var(--accent);
+  border-radius:8px;min-height:52px;padding:.6rem 1.1rem;cursor:pointer;width:100%;
+}
+button.stor:hover{background:#7A1A3E;border-color:#7A1A3E}
+button.stor[disabled]{background:#B8A3AC;border-color:#B8A3AC;cursor:not-allowed}
+button.rolig{
+  font-family:inherit;font-size:1.05rem;
+  background:#fff;color:var(--ink);border:2px solid var(--line);
+  border-radius:8px;min-height:48px;padding:.5rem 1rem;cursor:pointer;width:100%;margin-top:.6rem;
+}
+button.rolig:hover{border-color:var(--accent)}
+
+label.felt{display:block;font-size:1rem;color:var(--muted);margin:.8rem 0 .25rem}
+input.felt{
+  font-family:inherit;font-size:1.05rem;width:100%;
+  padding:.6rem .7rem;border:2px solid var(--line);border-radius:8px;
+  background:#fff;color:var(--ink);min-height:48px;
+}
+
+#dropzone{
+  border:3px dashed var(--line);border-radius:10px;
+  padding:1.1rem;text-align:center;color:var(--muted);font-size:1rem;margin-top:.7rem;
+}
+#dropzone.over{border-color:var(--accent);background:var(--paper-dim);color:var(--ink)}
+
+.status{margin-top:.9rem;font-size:1.05rem}
+.status .ok{color:var(--ok);font-weight:bold}
+.status .advarsel{color:var(--advarsel)}
+.status .fejl{color:var(--accent);font-weight:bold}
+
+details{margin-top:.8rem;font-size:1rem}
+summary{cursor:pointer;color:var(--accent);min-height:44px;display:flex;align-items:center}
+details ul{margin:.4rem 0 0;padding-left:1.2rem;color:var(--muted)}
+details li{margin:.25rem 0;word-break:break-word}
+
+.previewhead{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:.6rem}
+.previewhead p{margin:0;color:var(--muted);font-size:.98rem}
+iframe{
+  width:100%;height:min(72vh,900px);border:2px solid var(--line);
+  border-radius:8px;background:var(--paper);
+}
+.tom{
+  border:2px dashed var(--line);border-radius:8px;background:var(--paper);
+  min-height:min(60vh,600px);display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:2rem;color:var(--muted);
+}
+footer{max-width:1400px;margin:0 auto;padding:0 1.25rem 3rem;color:var(--muted);font-size:.98rem;line-height:1.7;max-width:1400px}
+footer p{max-width:70ch}
+.visuelt-skjult{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="topbar">
+  <div>
+    <h1>Søgeside · Bygger</h1>
+    <p class="sub">Vælg mappen med dine færdige HTML-filer. Værktøjet laver en søgeside,
+    du kan lægge i samme mappe. Alt foregår på din egen computer.</p>
+  </div>
+  <div class="tekststr" role="group" aria-label="Tekststørrelse">
+    <span class="lbl" aria-hidden="true">Tekst</span>
+    <button type="button" data-str="normal" aria-pressed="true" aria-label="Normal tekststørrelse">A</button>
+    <button type="button" data-str="stor" aria-pressed="false" aria-label="Større tekst">A+</button>
+    <button type="button" data-str="storst" aria-pressed="false" aria-label="Størst tekst">A++</button>
+  </div>
+</div>
+</header>
+
+<main class="grid">
+
+  <section class="panel" aria-labelledby="h-styring">
+    <h2 id="h-styring">Sådan gør du</h2>
+
+    <div class="trin">
+      <h3>1. Find filerne</h3>
+      <button type="button" class="stor" id="vaelgMappe">Vælg mappe</button>
+      <button type="button" class="rolig" id="vaelgFiler">Vælg enkelte filer i stedet</button>
+      <div id="dropzone">eller træk mappen herned</div>
+      <p class="hint" id="mappeHint"></p>
+    </div>
+
+    <div class="trin">
+      <h3>2. Giv siden en titel</h3>
+      <label class="felt" for="titel">Overskrift på søgesiden</label>
+      <input class="felt" id="titel" type="text" value="Lokalhistorisk søgeindeks">
+      <label class="felt" for="undertitel">Linje under overskriften (kan stå tom)</label>
+      <input class="felt" id="undertitel" type="text" placeholder="fx dit navn eller foreningens navn">
+    </div>
+
+    <div class="trin">
+      <h3>3. Gem søgesiden</h3>
+      <button type="button" class="stor" id="gem" disabled>Gem søgeside</button>
+      <p class="hint" id="gemHint">Vælg først en mappe.</p>
+    </div>
+
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div id="listeplads"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-preview">
+    <div class="previewhead">
+      <h2 id="h-preview">Sådan kommer den til at se ud</h2>
+      <p>Links virker først, når filen ligger i mappen.</p>
+    </div>
+    <div class="tom" id="tomPreview">
+      <p>Forhåndsvisningen dukker op her,<br>når du har valgt en mappe.</p>
+    </div>
+    <iframe id="preview" title="Forhåndsvisning af søgesiden" hidden></iframe>
+  </section>
+
+</main>
+
+<footer>
+<p>Søgesiden bliver en helt selvstændig fil. Den indeholder titler, beskrivelser og
+øvrige oplysninger direkte i sig selv og skal ligge i samme mappe som de filer, den
+henviser til. Kør Søgeside · Bygger igen, når du har lagt nye filer i mappen.</p>
+</footer>
+
+<script>
+/* =========================================================================
+   Del 1 · Skabelonen for den færdige søgeside
+   Denne er 1:1 med Byg-soegeside.command, bortset fra at overskrift,
+   undertitel og fodnote nu kan sættes af brugeren.
+   Bemærk: "</script" skrives som "<\/script" og "\d" som "\\d",
+   fordi teksten står inde i et script-element.
+   ========================================================================= */
+
+const MARKER = "lokalt-soegeindeks-genereret";
+const OUTPUT_NAME = "soegeside.html";
+
+const SKABELON = `<!-- __MARKER__ -->
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITEL__</title>
+<style>
+/* Alle størrelser er i rem, så A/A+/A++ kan skalere hele siden på én gang. */
+html{font-size:100%}
+html[data-tekst="stor"]{font-size:112.5%}
+html[data-tekst="storst"]{font-size:125%}
+
+:root{
+  --accent:#8E1F49;        /* 8,3:1 mod papir */
+  --paper:#FAF9F5;
+  --paper-dim:#F1E7EC;
+  --ink:#241520;           /* 15,6:1 */
+  --line:#D9C7CF;
+  --muted:#58424D;         /* 8,0:1 mod papir, 7,5:1 mod zebra */
+  --footer-strong:#33202B;
+}
+@media (prefers-contrast:more){
+  :root{--accent:#6E1638;--ink:#000;--muted:#33202B;--line:#9C8A93}
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:1.25rem;line-height:1.6;
+  -webkit-text-size-adjust:100%;
+}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{
+  outline:3px solid var(--accent);outline-offset:2px;
+}
+
+header{max-width:1100px;margin:0 auto;padding:2rem 1.25rem .5rem}
+.topbar{display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:2.1rem;line-height:1.2;margin:0 0 .25rem}
+.sub{color:var(--muted);font-size:1.05rem;margin:0}
+
+/* ---- tekststørrelse ---- */
+.tekststr{display:flex;align-items:center;gap:.5rem;flex:0 0 auto}
+.tekststr .lbl{font-size:.95rem;color:var(--muted)}
+.tekststr button{
+  font-family:inherit;background:#fff;color:var(--ink);
+  border:2px solid var(--line);border-radius:8px;
+  min-width:48px;min-height:48px;padding:0 .6rem;
+  cursor:pointer;line-height:1;
+}
+.tekststr button:nth-of-type(1){font-size:1rem}
+.tekststr button:nth-of-type(2){font-size:1.25rem}
+.tekststr button:nth-of-type(3){font-size:1.5rem}
+.tekststr button:hover{border-color:var(--accent)}
+.tekststr button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.controls{max-width:1100px;margin:1.2rem auto .3rem;padding:0 1.25rem;display:flex;gap:.75rem;flex-wrap:wrap}
+.controls input,.controls select{
+  font-family:inherit;font-size:1.05rem;padding:.65rem .75rem;
+  border:2px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);
+  min-height:48px;
+}
+.controls input{flex:1 1 16rem}
+.controls select{flex:0 0 auto;max-width:100%}
+.count{max-width:1100px;margin:.9rem auto 0;padding:0 1.25rem;color:var(--muted);font-size:1rem}
+.list{max-width:1100px;margin:.6rem auto 3rem;padding:0 1.25rem}
+a.row{
+  display:flex;gap:1rem;align-items:flex-start;text-decoration:none;color:var(--ink);
+  padding:1rem .9rem;border-radius:8px;
+}
+a.row:hover{outline:2px solid var(--accent)}
+a.row:focus-visible{outline:3px solid var(--accent)}
+.row--a{background:var(--paper)}
+.row--b{background:var(--paper-dim)}
+.icon{font-size:1.4rem;flex:0 0 1.9rem;line-height:1.4}
+.col-main{flex:1 1 auto;min-width:0}
+.col-main .t{font-size:1.25rem;font-weight:bold;color:var(--footer-strong);line-height:1.35}
+.col-main .m{font-size:1rem;color:var(--muted);margin-top:.2rem;display:block}
+.col-main .d{font-size:1.05rem;color:var(--ink);margin-top:.4rem;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.col-type{flex:0 0 auto;font-size:.95rem;color:var(--muted);align-self:center;white-space:nowrap}
+.empty{padding:2rem 0;color:var(--muted)}
+footer{max-width:1100px;margin:0 auto;padding:.6rem 1.25rem 3rem;color:var(--muted);font-size:.95rem;line-height:1.7}
+@media(max-width:640px){
+  .col-type{display:none}
+  header{padding:1.5rem 1rem .5rem}
+  .controls{padding:0 1rem;gap:.6rem}
+  .controls input,.controls select{flex:1 1 100%;width:100%}
+  .count,.list,footer{padding-left:1rem;padding-right:1rem}
+  a.row{padding:1rem .6rem;gap:.75rem}
+  .icon{flex:0 0 1.6rem}
+}
+</style>
+</head>
+<body>
+<header>
+<div class="topbar">
+  <div>
+    <h1>__TITEL__</h1>
+    <p class="sub">__UNDERTITEL____ANTAL__ poster · genereret __GENERERET__</p>
+  </div>
+  <div class="tekststr" role="group" aria-label="Tekststørrelse">
+    <span class="lbl" aria-hidden="true">Tekst</span>
+    <button type="button" data-str="normal" aria-pressed="true" aria-label="Normal tekststørrelse">A</button>
+    <button type="button" data-str="stor" aria-pressed="false" aria-label="Større tekst">A+</button>
+    <button type="button" data-str="storst" aria-pressed="false" aria-label="Størst tekst">A++</button>
+  </div>
+</div>
+</header>
+
+<div class="controls">
+<input id="q" type="search" placeholder="Søg i titel, ophav, emne, udgiver, sted og beskrivelse …" aria-label="Søg">
+<select id="omraadeFilter" aria-label="Filtrér på område"><option value="">Alle områder</option></select>
+<select id="typeFilter" aria-label="Filtrér på type"><option value="">Alle typer</option></select>
+<select id="sortBy" aria-label="Sortér">
+<option value="title">Titel A–Å</option>
+<option value="date-new">Dato, nyeste først</option>
+<option value="date-old">Dato, ældste først</option>
+<option value="type">Type</option>
+<option value="omraade">Område</option>
+</select>
+</div>
+
+<p class="count" id="count" role="status" aria-live="polite"></p>
+<div class="list" id="list"></div>
+
+<footer>
+Denne side er selvstændig og indeholder alt indhold direkte i filen. Byg søgesiden
+igen med <em>Søgeside · Bygger</em>, når der er lagt nye filer i mappen.
+</footer>
+
+<script>
+const DATA = __DATA_JSON__;
+const ICONS = {Sound:"🎧",Image:"🖼️",Text:"📖",Collection:"🗂️",InteractiveResource:"🧩",Event:"📌"};
+
+/* ---- tekststørrelse: A / A+ / A++ ---- */
+(function(){
+  const knapper = document.querySelectorAll(".tekststr button");
+  function saet(v, gem){
+    if(v && v!=="normal"){ document.documentElement.setAttribute("data-tekst", v); }
+    else { document.documentElement.removeAttribute("data-tekst"); v="normal"; }
+    knapper.forEach(k=>k.setAttribute("aria-pressed", String(k.dataset.str===v)));
+    if(gem){ try{ localStorage.setItem("lokalhist-tekst", v); }catch(e){} }
+  }
+  let gemt = null;
+  try{ gemt = localStorage.getItem("lokalhist-tekst"); }catch(e){}
+  if(gemt) saet(gemt, false);
+  knapper.forEach(k=>k.addEventListener("click", ()=>saet(k.dataset.str, true)));
+})();
+
+function yearOf(s){var m=(s||"").match(/\\d{4}/); return m?m[0]:"0000";}
+
+const typeSel = document.getElementById("typeFilter");
+const seen = new Set();
+DATA.forEach(r=>{ if(r.type) seen.add(r.type); });
+Array.from(seen).sort().forEach(t=>{
+  const o=document.createElement("option"); o.value=t; o.textContent=t;
+  typeSel.appendChild(o);
+});
+
+/* Område = dc.publisher. Listen bygges af de udgivere der faktisk findes i mappen. */
+const omrSel = document.getElementById("omraadeFilter");
+const omrSeen = new Set();
+let udenOmraade = 0;
+DATA.forEach(r=>{ if(r.publisher) omrSeen.add(r.publisher); else udenOmraade++; });
+Array.from(omrSeen).sort((a,b)=>a.localeCompare(b,"da")).forEach(p=>{
+  const o=document.createElement("option"); o.value=p; o.textContent=p;
+  omrSel.appendChild(o);
+});
+if(udenOmraade){
+  const o=document.createElement("option");
+  o.value="__uden__"; o.textContent="(uden udgiver — " + udenOmraade + ")";
+  omrSel.appendChild(o);
+}
+
+function render(){
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const type = typeSel.value;
+  const omr = omrSel.value;
+  const sortBy = document.getElementById("sortBy").value;
+
+  let rows = DATA.filter(r=>{
+    if(type && r.type!==type) return false;
+    if(omr === "__uden__"){ if(r.publisher) return false; }
+    else if(omr && r.publisher!==omr) return false;
+    if(!q) return true;
+    const hay = (r.title+" "+r.creator+" "+r.subject+" "+r.publisher+" "+
+                 r.coverage+" "+r.description).toLowerCase();
+    return hay.indexOf(q)!==-1;
+  });
+
+  rows = rows.slice().sort((a,b)=>{
+    if(sortBy==="title") return a.title.localeCompare(b.title,"da");
+    if(sortBy==="type") return (a.type||"").localeCompare(b.type||"","da");
+    if(sortBy==="omraade"){
+      const c=(a.publisher||"ÅÅÅ").localeCompare(b.publisher||"ÅÅÅ","da");
+      return c!==0 ? c : a.title.localeCompare(b.title,"da");
+    }
+    const ya=yearOf(a.date), yb=yearOf(b.date);
+    return sortBy==="date-new" ? yb.localeCompare(ya) : ya.localeCompare(yb);
+  });
+
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  document.getElementById("count").textContent =
+    "Viser " + rows.length + " af " + DATA.length + " poster";
+
+  if(rows.length===0){
+    const p=document.createElement("p");
+    p.className="empty"; p.textContent="Ingen poster matcher søgningen.";
+    list.appendChild(p); return;
+  }
+
+  rows.forEach((r,i)=>{
+    const a=document.createElement("a");
+    a.className="row " + (i%2===0?"row--a":"row--b");
+    a.href=encodeURI(r.filnavn); a.target="_blank"; a.rel="noopener";
+
+    const icon=document.createElement("span");
+    icon.className="icon"; icon.textContent = ICONS[r.type]||"📄";
+    icon.setAttribute("aria-hidden","true");
+
+    const main=document.createElement("span");
+    main.className="col-main";
+    const t=document.createElement("span"); t.className="t"; t.textContent=r.title;
+    const m=document.createElement("span"); m.className="m";
+    m.textContent=[r.creator,r.date,r.publisher].filter(Boolean).join(" · ");
+    const d=document.createElement("span"); d.className="d"; d.textContent=r.description||"";
+    main.appendChild(t); main.appendChild(document.createElement("br"));
+    main.appendChild(m); main.appendChild(d);
+
+    const typ=document.createElement("span");
+    typ.className="col-type"; typ.textContent=r.type||"";
+
+    a.appendChild(icon); a.appendChild(main); a.appendChild(typ);
+    list.appendChild(a);
+  });
+}
+
+document.getElementById("q").addEventListener("input", render);
+omrSel.addEventListener("change", render);
+typeSel.addEventListener("change", render);
+document.getElementById("sortBy").addEventListener("change", render);
+render();
+<\/script>
+</body>
+</html>`;
+
+
+/* =========================================================================
+   Del 2 · Læsning af filerne
+   ========================================================================= */
+
+const DC_FIELDS = [
+  "title","creator","subject","description","publisher","contributor",
+  "date","type","format","identifier","source","language","relation",
+  "coverage","rights"
+];
+
+const SOURCE_RE = /<script[^>]*id="builder-source-data"[^>]*>([\s\S]*?)<\/script>/i;
+
+/* Filerne kan være meget store, fordi billeder og lyd ligger som base64 inde
+   i dem. Derfor læser vi kun begyndelsen og slutningen af hver fil i stedet
+   for at hente hele filen ind i hukommelsen. */
+const HOVED_BYTES = 500 * 1024;
+const HALE_BYTES  = 500 * 1024;
+
+let valgteFiler = [];      // {navn, file}
+let mappeHandle = null;    // sat når File System Access API er brugt
+let poster = [];
+let sprunget = [];
+
+async function laesUdsnit(file){
+  if (file.size <= HOVED_BYTES + HALE_BYTES){
+    return [await file.text()];
+  }
+  const hoved = await file.slice(0, HOVED_BYTES).text();
+  const hale  = await file.slice(file.size - HALE_BYTES).text();
+  return [hoved, hale];
+}
+
+async function laesPost(navn, file){
+  let stykker;
+  try{
+    stykker = await laesUdsnit(file);
+  }catch(e){
+    return {fejl: "kunne ikke læses"};
+  }
+
+  if (stykker[0].slice(0, 4000).includes(MARKER)){
+    return {fejl: null, spring: true};      // det er en søgeside, vi selv har lavet
+  }
+
+  let traef = null;
+  for (const s of stykker){
+    const m = SOURCE_RE.exec(s);
+    if (m){ traef = m[1]; break; }
+  }
+
+  /* Sikkerhedsventil: ligger metadatablokken inde midt i en stor fil, mellem
+     to billeder, er den hverken i begyndelsen eller slutningen. Så læser vi
+     hele filen igennem. Det er langsommere, men det sker kun én gang, og kun
+     for de filer hvor det er nødvendigt. */
+  if (!traef && stykker.length > 1){
+    try{
+      const m = SOURCE_RE.exec(await file.text());
+      if (m) traef = m[1];
+    }catch(e){
+      return {fejl: "filen er for stor til at læses"};
+    }
+  }
+
+  if (!traef) return {fejl: "ingen metadata i filen"};
+
+  let data;
+  try{
+    data = JSON.parse(traef);
+  }catch(e){
+    return {fejl: "metadata kunne ikke tolkes"};
+  }
+
+  const dc = (data && data.dublinCore) || {};
+  const post = {filnavn: navn, appformat: (data && data.format) || ""};
+  DC_FIELDS.forEach(f => post[f] = String(dc[f] || "").trim());
+  if (!post.title) post.title = navn.replace(/\.html?$/i, "");
+  return {post};
+}
+
+async function behandl(filer){
+  saetStatus("Læser filerne …");
+  poster = [];
+  sprunget = [];
+
+  filer.sort((a,b) => a.navn.localeCompare(b.navn, "da"));
+
+  for (const f of filer){
+    if (f.navn === OUTPUT_NAME) continue;
+    const r = await laesPost(f.navn, f.file);
+    if (r.post) poster.push(r.post);
+    else if (r.spring) continue;
+    else sprunget.push({navn: f.navn, grund: r.fejl});
+  }
+
+  visResultat();
+}
+
+
+/* =========================================================================
+   Del 3 · Bygning af siden
+   ========================================================================= */
+
+function escapeHtml(s){
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+function byg(){
+  const titel = document.getElementById("titel").value.trim() || "Lokalhistorisk søgeindeks";
+  const under = document.getElementById("undertitel").value.trim();
+
+  const nu = new Date();
+  const genereret = nu.toLocaleDateString("da-DK", {day:"numeric", month:"long", year:"numeric"})
+    + ", " + nu.toLocaleTimeString("da-DK", {hour:"2-digit", minute:"2-digit"});
+
+  let json = JSON.stringify(poster);
+  json = json.replace(/<\/script/gi, "<\\/script");
+
+  return SKABELON
+    .split("__MARKER__").join(MARKER)
+    .split("__TITEL__").join(escapeHtml(titel))
+    .split("__UNDERTITEL__").join(under ? escapeHtml(under) + " · " : "")
+    .split("__ANTAL__").join(String(poster.length))
+    .split("__GENERERET__").join(genereret)
+    .split("__DATA_JSON__").join(json);
+}
+
+function opdaterForhaandsvisning(){
+  const ramme = document.getElementById("preview");
+  const tom = document.getElementById("tomPreview");
+  if (!poster.length){
+    ramme.hidden = true; tom.hidden = false; return;
+  }
+  tom.hidden = true; ramme.hidden = false;
+  ramme.srcdoc = byg();
+}
+
+
+/* =========================================================================
+   Del 4 · Brugerfladen
+   ========================================================================= */
+
+function saetStatus(html){
+  document.getElementById("status").innerHTML = html;
+}
+
+function visResultat(){
+  const plads = document.getElementById("listeplads");
+  plads.innerHTML = "";
+
+  if (!poster.length){
+    saetStatus('<span class="fejl">Der blev ikke fundet nogen filer med metadata i mappen.</span>');
+    document.getElementById("gem").disabled = true;
+    document.getElementById("gemHint").textContent =
+      "Filerne skal være lavet med et af Bygger-værktøjerne.";
+    opdaterForhaandsvisning();
+    return;
+  }
+
+  let s = '<span class="ok">' + poster.length + ' filer kommer med på søgesiden.</span>';
+  if (sprunget.length){
+    s += ' <span class="advarsel">' + sprunget.length + ' blev sprunget over.</span>';
+  }
+  saetStatus(s);
+
+  const d = document.createElement("details");
+  const sum = document.createElement("summary");
+  sum.textContent = "Se hvad der blev fundet";
+  d.appendChild(sum);
+
+  const ul = document.createElement("ul");
+  poster.forEach(p => {
+    const li = document.createElement("li");
+    li.textContent = p.title + " (" + p.filnavn + ")";
+    ul.appendChild(li);
+  });
+  sprunget.forEach(s2 => {
+    const li = document.createElement("li");
+    li.textContent = "Sprunget over: " + s2.navn + " — " + s2.grund;
+    ul.appendChild(li);
+  });
+  d.appendChild(ul);
+  plads.appendChild(d);
+
+  document.getElementById("gem").disabled = false;
+  document.getElementById("gemHint").textContent = mappeHandle
+    ? "Søgesiden bliver lagt direkte i mappen som soegeside.html."
+    : "Søgesiden bliver hentet ned. Læg den bagefter i den samme mappe som filerne.";
+
+  opdaterForhaandsvisning();
+}
+
+/* --- Vælg mappe --- */
+document.getElementById("vaelgMappe").addEventListener("click", async () => {
+  if (window.showDirectoryPicker){
+    try{
+      const h = await window.showDirectoryPicker({mode: "readwrite"});
+      mappeHandle = h;
+      const filer = [];
+      for await (const [navn, handle] of h.entries()){
+        if (handle.kind === "file" && /\.html?$/i.test(navn)){
+          filer.push({navn, file: await handle.getFile()});
+        }
+      }
+      document.getElementById("mappeHint").textContent = "Mappe: " + h.name;
+      await behandl(filer);
+      return;
+    }catch(e){
+      if (e && e.name === "AbortError") return;   // brugeren fortrød
+      mappeHandle = null;
+    }
+  }
+  mappeInput.click();
+});
+
+/* --- Reserveløsning: mappe via filfelt --- */
+const mappeInput = document.createElement("input");
+mappeInput.type = "file";
+mappeInput.webkitdirectory = true;
+mappeInput.className = "visuelt-skjult";
+document.body.appendChild(mappeInput);
+mappeInput.addEventListener("change", async () => {
+  mappeHandle = null;
+  const alle = Array.from(mappeInput.files);
+  // kun filer der ligger direkte i den valgte mappe, ikke i undermapper
+  const top = alle.filter(f => {
+    const dele = (f.webkitRelativePath || f.name).split("/");
+    return dele.length <= 2 && /\.html?$/i.test(f.name);
+  });
+  if (top.length && alle[0].webkitRelativePath){
+    document.getElementById("mappeHint").textContent =
+      "Mappe: " + alle[0].webkitRelativePath.split("/")[0];
+  }
+  await behandl(top.map(f => ({navn: f.name, file: f})));
+});
+
+/* --- Vælg enkelte filer --- */
+const filInput = document.createElement("input");
+filInput.type = "file";
+filInput.multiple = true;
+filInput.accept = ".html,.htm";
+filInput.className = "visuelt-skjult";
+document.body.appendChild(filInput);
+document.getElementById("vaelgFiler").addEventListener("click", () => filInput.click());
+filInput.addEventListener("change", async () => {
+  mappeHandle = null;
+  document.getElementById("mappeHint").textContent = "Valgte filer: " + filInput.files.length;
+  await behandl(Array.from(filInput.files).map(f => ({navn: f.name, file: f})));
+});
+
+/* --- Træk og slip --- */
+const zone = document.getElementById("dropzone");
+["dragenter","dragover"].forEach(t => zone.addEventListener(t, e => {
+  e.preventDefault(); zone.classList.add("over");
+}));
+["dragleave","drop"].forEach(t => zone.addEventListener(t, e => {
+  e.preventDefault(); zone.classList.remove("over");
+}));
+
+zone.addEventListener("drop", async e => {
+  mappeHandle = null;
+  const items = Array.from(e.dataTransfer.items || []);
+  const filer = [];
+
+  for (const it of items){
+    const entry = it.webkitGetAsEntry && it.webkitGetAsEntry();
+    if (entry && entry.isDirectory){
+      document.getElementById("mappeHint").textContent = "Mappe: " + entry.name;
+      const reader = entry.createReader();
+      const laes = () => new Promise(res => reader.readEntries(res, () => res([])));
+      let batch;
+      do {
+        batch = await laes();
+        for (const ent of batch){
+          if (ent.isFile && /\.html?$/i.test(ent.name)){
+            const f = await new Promise(res => ent.file(res, () => res(null)));
+            if (f) filer.push({navn: ent.name, file: f});
+          }
+        }
+      } while (batch.length);
+    } else if (entry && entry.isFile && /\.html?$/i.test(entry.name)){
+      const f = await new Promise(res => entry.file(res, () => res(null)));
+      if (f) filer.push({navn: entry.name, file: f});
+    }
+  }
+
+  if (!filer.length){
+    saetStatus('<span class="fejl">Der var ingen HTML-filer i det, du trak herned.</span>');
+    return;
+  }
+  await behandl(filer);
+});
+
+/* --- Gem --- */
+document.getElementById("gem").addEventListener("click", async () => {
+  const html = byg();
+
+  if (mappeHandle){
+    try{
+      const fh = await mappeHandle.getFileHandle(OUTPUT_NAME, {create: true});
+      const w = await fh.createWritable();
+      await w.write(html);
+      await w.close();
+      saetStatus('<span class="ok">Søgesiden er gemt i mappen som ' + OUTPUT_NAME + '.</span>');
+      return;
+    }catch(e){
+      saetStatus('<span class="advarsel">Kunne ikke skrive i mappen. Siden hentes ned i stedet.</span>');
+    }
+  }
+
+  const blob = new Blob([html], {type: "text/html;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = OUTPUT_NAME;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  saetStatus('<span class="ok">' + OUTPUT_NAME + ' er hentet ned.</span> Læg den nu i den samme mappe som dine filer.');
+});
+
+/* --- Titel og undertitel opdaterer forhåndsvisningen --- */
+let ventetid = null;
+["titel","undertitel"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    clearTimeout(ventetid);
+    ventetid = setTimeout(opdaterForhaandsvisning, 400);
+  });
+});
+
+/* --- Tekststørrelse i selve værktøjet --- */
+(function(){
+  const knapper = document.querySelectorAll(".tekststr button");
+  function saet(v, gem){
+    if (v && v !== "normal"){ document.documentElement.setAttribute("data-tekst", v); }
+    else { document.documentElement.removeAttribute("data-tekst"); v = "normal"; }
+    knapper.forEach(k => k.setAttribute("aria-pressed", String(k.dataset.str === v)));
+    if (gem){ try{ localStorage.setItem("lokalhist-tekst", v); }catch(e){} }
+  }
+  let gemt = null;
+  try{ gemt = localStorage.getItem("lokalhist-tekst"); }catch(e){}
+  if (gemt) saet(gemt, false);
+  knapper.forEach(k => k.addEventListener("click", () => saet(k.dataset.str, true)));
+})();
+
+/* --- Startbesked --- */
+if (!window.showDirectoryPicker){
+  document.getElementById("gemHint").textContent =
+    "Vælg først en mappe. I denne browser bliver søgesiden hentet ned, og du skal selv lægge den i mappen.";
+}
+</script>
+</body>
+</html>
