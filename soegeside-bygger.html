@@ -533,8 +533,12 @@ async function laesPost(navn, file){
     return {fejl: "metadata kunne ikke tolkes"};
   }
 
-  const dc = (data && data.dublinCore) || {};
-  const post = {filnavn: navn, appformat: (data && data.format) || ""};
+  /* Byggerne er ikke helt enige om nøglenavnet på metadatablokken:
+     nogle skriver "dublinCore", andre skriver "dc". Vi tager imod begge,
+     så gamle og nye filer kan ligge i samme mappe. */
+  const dc = (data && (data.dublinCore || data.dc)) || {};
+  const post = {filnavn: navn,
+                appformat: (data && (data.format || data.builder)) || ""};
   DC_FIELDS.forEach(f => post[f] = String(dc[f] || "").trim());
   if (!post.title) post.title = navn.replace(/\.html?$/i, "");
   return {post};
