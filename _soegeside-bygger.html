@@ -345,7 +345,7 @@ igen med <em>Søgeside · Bygger</em>, når der er lagt nye filer i mappen.
 
 <script>
 const DATA = __DATA_JSON__;
-const ICONS = {Sound:"🎧",Image:"🖼️",Text:"📖",Collection:"🗂️",InteractiveResource:"🧩",Event:"📌",Henvisning:"🔗"};
+const ICONS = {Sound:"🎧",Image:"🖼️",Text:"📖",Collection:"🗂️",InteractiveResource:"🧩",Event:"📌"};
 
 /* ---- tekststørrelse: A / A+ / A++ ---- */
 (function(){
@@ -428,9 +428,7 @@ function render(){
   rows.forEach((r,i)=>{
     const a=document.createElement("a");
     a.className="row " + (i%2===0?"row--a":"row--b");
-    const erEkstern = !!r.link;
-    a.href = erEkstern ? r.link : encodeURI(r.filnavn);
-    a.target="_blank"; a.rel = erEkstern ? "noopener noreferrer" : "noopener";
+    a.href=encodeURI(r.filnavn); a.target="_blank"; a.rel="noopener";
 
     const icon=document.createElement("span");
     icon.className="icon"; icon.textContent = ICONS[r.type]||"📄";
@@ -446,8 +444,7 @@ function render(){
     main.appendChild(m); main.appendChild(d);
 
     const typ=document.createElement("span");
-    typ.className="col-type";
-    typ.textContent=(r.type||"") + (r.link ? " ↗" : "");
+    typ.className="col-type"; typ.textContent=r.type||"";
 
     a.appendChild(icon); a.appendChild(main); a.appendChild(typ);
     list.appendChild(a);
@@ -541,7 +538,6 @@ async function laesPost(navn, file){
      så gamle og nye filer kan ligge i samme mappe. */
   const dc = (data && (data.dublinCore || data.dc)) || {};
   const post = {filnavn: navn,
-                link: String((data && data.link) || "").trim(),
                 appformat: (data && (data.format || data.builder)) || ""};
   DC_FIELDS.forEach(f => post[f] = String(dc[f] || "").trim());
   if (!post.title) post.title = navn.replace(/\.html?$/i, "");
