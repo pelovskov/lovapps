@@ -27,10 +27,6 @@
   .field{ margin-bottom:20px; }
   .field label{ display:block; font-size:13.5px; text-transform:uppercase; letter-spacing:0.09em; color:var(--moss); font-weight:600; margin-bottom:7px; }
   .field .hint{ font-size:13.5px; line-height:1.55; color:var(--hint); margin-top:6px; font-weight:400; text-transform:none; letter-spacing:0; }
-  .check-row{ display:flex; flex-direction:column; gap:10px; margin-top:4px; }
-  .check{ display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-weight:400; text-transform:none; letter-spacing:0; font-size:14.5px; line-height:1.45; }
-  .check input{ width:18px; height:18px; margin:1px 0 0; flex:0 0 18px; accent-color:var(--accent-ui, #385261); cursor:pointer; }
-  .check span strong{ font-weight:650; }
   .field .hint code{ background:#e5dfcd; padding:1px 5px; border-radius:3px; font-size:13px; }
   input[type=text], textarea{
     width:100%; padding:11px 13px; border:1px solid var(--line); background:#fff;
@@ -338,19 +334,6 @@
       <div class="hint"><strong>Automatisk</strong> er det normale valg: filen finder selv ud af, om den ligger sammen med en forside, og viser først da knappen. Åbnes den alene, bliver knappen væk af sig selv. I forhåndsvisningen vises den altid, så du kan se, hvor den sidder.</div>
     </div>
 
-    <div class="field">
-      <label>Nederst på den færdige side</label>
-      <div class="check-row">
-        <label class="check"><input type="checkbox" id="visGem" checked>
-          <span>Vis knappen <strong>Gem filen</strong></span></label>
-        <label class="check"><input type="checkbox" id="visOmFil" checked>
-          <span>Vis den foldede liste <strong>Om denne fil</strong></span></label>
-      </div>
-      <div class="hint">Slår du dem fra, forsvinder de kun fra den synlige side. Dublin Core-oplysningerne
-        følger stadig med som skjulte meta-felter i toppen af filen, så den kan findes og identificeres
-        senere. Brug det, når siden vises inde på et website, hvor de to knapper ikke hører hjemme.</div>
-    </div>
-
     <details class="dc" id="dcDetails">
       <summary>Dublin Core-metadata</summary>
       <p class="panel-sub">De 15 felter følger med ind i den færdige fil — både som skjulte oplysninger i toppen og som en foldet liste nederst på siden. De er det, der gør filen mulig at finde igen om mange år.</p>
@@ -456,7 +439,6 @@ const state = {
   ctas:[{text:'',url:''},{text:'',url:''},{text:'',url:''}],
   infoBtnText:'', infoContent:'',
   homeMode:'auto', homeLabel:'', homeUrl:'',
-  visGem:true, visOmFil:true,
   taellerBlock:''
 };
 
@@ -727,7 +709,7 @@ function buildPageHTML(s, isPreview){
   const t = THEMES[s.theme] || THEMES.original;
   const dc = collectDublinCore();
   const dcMeta = buildDcMetaTags(dc);
-  const dcBlock = (s.visOmFil === false) ? '' : buildDcSection(dc);
+  const dcBlock = buildDcSection(dc);
   const pageLang = (dc.language || 'da').trim() || 'da';
   const pageTitle = s.title || 'Side';
   const safeName = slugify(s.title, 'side');
@@ -777,7 +759,7 @@ function buildPageHTML(s, isPreview){
     + ctas.map(c => '<a class="cta-btn" href="' + escapeHtml(c.url.trim()) + '" target="_blank" rel="noopener">' + escapeHtml(c.text.trim()) + '</a>').join('')
     + '</div>' : '';
 
-  const saveBlock = (s.visGem === false) ? '' : '<div class="save-wrap"><button class="save-btn" id="dlBtn">'
+  const saveBlock = '<div class="save-wrap"><button class="save-btn" id="dlBtn">'
     + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4 20h16"/></svg>'
     + '<span>Gem filen</span></button></div>'
     + '<p class="save-note">Gemmer hele siden som én fil på din egen computer - tekst, billeder og lyd følger med.</p>';
@@ -818,7 +800,6 @@ function buildPageHTML(s, isPreview){
     ctas: s.ctas,
     infoBtnText: s.infoBtnText, infoContent: s.infoContent,
     homeMode: homeMode, homeLabel: s.homeLabel, homeUrl: s.homeUrl,
-    visGem: s.visGem !== false, visOmFil: s.visOmFil !== false,
     dublinCore: dc
   };
 
@@ -1015,7 +996,7 @@ function buildPageHTML(s, isPreview){
 + '  });\n'
 + '  /* --- Gem filen: en kopi af siden som den var, da den blev lavet --- */\n'
 + '  var dlBtn = document.getElementById("dlBtn");\n'
-+ '  if (dlBtn) dlBtn.addEventListener("click", function(){\n'
++ '  dlBtn.addEventListener("click", function(){\n'
 + '    var bar2 = document.getElementById("topbar");\n'
 + '    if (bar2 && bar2.getAttribute("data-mode") !== "auto") bar2 = null;\n'
 + '    var barWasShown = bar2 && bar2.classList.contains("show");\n'
@@ -1133,8 +1114,6 @@ function readForm(){
   state.homeMode = $('homeMode').value;
   state.homeLabel = $('homeLabel').value;
   state.homeUrl = $('homeUrl').value;
-  state.visGem = $('visGem').checked;
-  state.visOmFil = $('visOmFil').checked;
 }
 
 function checkReady(){
@@ -1153,11 +1132,11 @@ function renderPreview(){
  'audioTitle','factTitle','factText','articleText',
  'gal1caption','gal1alt','gal1desc','gal2caption','gal2alt','gal2desc','gal3caption','gal3alt','gal3desc',
  'cta1text','cta1url','cta2text','cta2url','cta3text','cta3url',
- 'infoBtnText','infoContent','homeMode','homeLabel','homeUrl','visGem','visOmFil'].forEach(id => {
+ 'infoBtnText','infoContent','homeMode','homeLabel','homeUrl'].forEach(id => {
   const el = $(id);
   if (!el) return;
   el.addEventListener('input', renderPreview);
-  if (el.tagName === 'SELECT' || el.type === 'checkbox') el.addEventListener('change', renderPreview);
+  if (el.tagName === 'SELECT') el.addEventListener('change', renderPreview);
 });
 
 DC_FIELDS.forEach(key => {
@@ -1301,8 +1280,6 @@ $('loadPage').addEventListener('change', async (e) => {
     state.infoContent = data.infoContent || '';
     state.homeMode = (data.homeMode === 'always' || data.homeMode === 'never') ? data.homeMode : 'auto';
     state.homeLabel = data.homeLabel || '';
-    state.visGem = data.visGem !== false;
-    state.visOmFil = data.visOmFil !== false;
     state.homeUrl = data.homeUrl || '';
     (data.topMeta || []).forEach((m, i) => { if (i < 2){ state.top[i].caption = m.caption || ''; state.top[i].alt = m.alt || ''; } });
     (data.galleryMeta || []).forEach((m, i) => { if (i < 3){ state.gallery[i].caption = m.caption || ''; state.gallery[i].alt = m.alt || ''; state.gallery[i].desc = m.desc || ''; } });
@@ -1354,8 +1331,6 @@ $('loadPage').addEventListener('change', async (e) => {
     setField('homeLabel', state.homeLabel);
     setField('homeUrl', state.homeUrl);
     $('homeMode').value = state.homeMode;
-    $('visGem').checked = state.visGem !== false;
-    $('visOmFil').checked = state.visOmFil !== false;
     for (let i = 0; i < 2; i++){
       setField('top' + (i+1) + 'caption', state.top[i].caption);
       setField('top' + (i+1) + 'alt', state.top[i].alt);
