@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Videokort · Bygger</title>
+<style>
+  :root{
+    --paper:     #EDE7D8;
+    --paper-dim: #E2DBC8;
+    --ink:       #211E19;
+    --rust:      #9A4630;
+    --moss:      #47543C;
+    --hint:      #5F5A4B;
+    --line:      #cbc2a8;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  /* ---------- Topbar ---------- */
+  .topbar{ border-bottom: 1px solid var(--line); padding: 20px 24px 18px; background: var(--paper); }
+  .topbar h1{
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 26px; margin: 0 0 6px; font-weight: 600; color: var(--ink);
+  }
+  .topbar p{ margin: 0; font-size: 14.5px; color: var(--hint); max-width: 78ch; }
+
+  /* ---------- Layout ---------- */
+  .wrap{ display: grid; grid-template-columns: 1fr 380px; gap: 28px; align-items: start; padding: 24px; }
+  .formpane{ max-width: 640px; }
+  .previewpane{ position: sticky; top: 24px; }
+  @media (max-width: 860px){
+    .wrap{ grid-template-columns: 1fr; }
+    .previewpane{ position: static; }
+  }
+
+  /* ---------- Felter ---------- */
+  .block{ border-top: 1px solid var(--line); padding: 18px 0 4px; }
+  .block:first-of-type{ border-top: none; padding-top: 4px; }
+  .block > h2{
+    font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 600; color: var(--moss); margin: 0 0 12px;
+  }
+  .field{ margin-bottom: 18px; }
+  .field > label{
+    display: block; font-size: 13.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--moss); margin-bottom: 5px;
+  }
+  .help{ font-size: 13.5px; line-height: 1.55; color: var(--hint); margin: 5px 0 0; }
+  .help code{ background: var(--paper-dim); padding: 0 3px; border-radius: 3px; }
+  input[type=text], input[type=url], textarea, select{
+    width: 100%; font: inherit; font-size: 15.5px; padding: 9px 11px;
+    border: 1px solid var(--line); border-radius: 4px; background: #FBF8F1; color: var(--ink);
+  }
+  textarea{ resize: vertical; line-height: 1.6; }
+  textarea.mono{ font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14.5px; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible,
+  button:focus-visible, summary:focus-visible, label.theme:focus-within, a:focus-visible{
+    outline: 2px solid var(--rust); outline-offset: 2px;
+  }
+  .status{ font-size: 13.5px; color: var(--hint); margin-top: 8px; }
+  .status.ok{ color: var(--moss); }
+  .status.warn{ color: var(--rust); font-weight: 600; }
+  .status a{ color: var(--rust); }
+  .row{ display:flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+  /* ---------- Temavalg ---------- */
+  .themes{ display:flex; gap: 10px; flex-wrap: wrap; }
+  label.theme{
+    display:flex; align-items:center; gap: 9px; border: 2px solid var(--line); border-radius: 6px;
+    padding: 10px 14px; min-height: 44px; cursor: pointer; background: #FBF8F1; font-size: 15px;
+  }
+  label.theme input{ margin:0; width: 18px; height: 18px; accent-color: var(--rust); }
+  label.theme .dot{ width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.25); display:inline-block; }
+  label.theme.on{ border-color: var(--rust); background: #fff; }
+
+  /* ---------- Filboks og knapper ---------- */
+  .filebox{ border: 1px dashed var(--line); border-radius: 6px; padding: 14px; background: #FBF8F1; }
+  .btn{
+    font: inherit; font-size: 14.5px; min-height: 44px; padding: 10px 16px; border-radius: 5px;
+    border: 2px solid var(--rust); background: #fff; color: var(--rust); cursor: pointer; font-weight: 600;
+  }
+  .btn:hover{ background: var(--rust); color: #fff; }
+  .btn.filled{ background: var(--rust); color: #fff; }
+  .btn.filled:hover{ background: #7d3826; border-color: #7d3826; }
+  .btn:disabled{ opacity: 0.45; cursor: default; }
+  .btn:disabled:hover{ background: #fff; color: var(--rust); }
+  input[type=file]{ display: none; }
+
+  .posterrow{ display:flex; gap: 14px; align-items: flex-start; margin-top: 12px; }
+  .posterrow img{
+    width: 160px; aspect-ratio: 16/9; object-fit: cover;
+    border: 1px solid var(--line); border-radius: 4px; background: var(--paper-dim);
+  }
+  .posterrow .meta{ font-size: 13.5px; color: var(--hint); }
+  .posterrow .meta b{ color: var(--ink); }
+
+  /* ---------- Kapitelkontrol ---------- */
+  .chapcheck{ margin: 10px 0 0; padding: 0; list-style: none; font-size: 14px; }
+  .chapcheck li{ display:flex; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+  .chapcheck .t{ font-variant-numeric: tabular-nums; color: var(--rust); font-weight: 600; min-width: 4.2em; }
+  .chapcheck li.bad{ color: var(--rust); }
+
+  /* ---------- Dublin Core ---------- */
+  details.dc{ border-top: 1px solid var(--line); padding-top: 18px; margin-top: 4px; }
+  details.dc summary{
+    cursor: pointer; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 600; color: var(--moss); min-height: 44px; display: flex; align-items: center;
+  }
+  details.dc summary::marker{ color: var(--rust); }
+  .dcfield{ margin-bottom: 16px; }
+  .dcfield label{ display:block; font-size: 14px; font-weight: 600; color: var(--moss); margin-bottom: 4px; }
+  .dcfield .help{ font-size: 13px; margin: 0 0 5px; }
+
+  /* ---------- Generér ---------- */
+  .genbar{ border-top: 1px solid var(--line); padding-top: 20px; margin-top: 10px; }
+  #btnGenerate{ font-size: 17px; font-weight: 700; padding: 14px 22px; width: 100%; }
+  .msg{
+    font-size: 14.5px; margin-top: 12px; padding: 11px 13px; border-radius: 5px;
+    background: var(--paper-dim); color: var(--ink); display: none;
+  }
+  .msg.show{ display: block; }
+  .msg.bad{ background: #F6DEDA; color: #6B2718; }
+
+  /* ---------- Forhåndsvisning ---------- */
+  .previewpane h2{
+    font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 600; color: var(--moss); margin: 0 0 8px;
+  }
+  .previewpane .frame{ border: 1px solid var(--line); border-radius: 6px; background: var(--paper-dim); overflow: hidden; height: 620px; }
+  .previewpane iframe{ width: 100%; height: 100%; border: 0; background: #fff; }
+  .previewpane .note{ font-size: 13px; color: var(--hint); margin: 8px 0 0; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Videokort · Bygger</h1>
+  <p>Et kort til en udsendelse på YouTube: plakatbillede, beskrivelse, tidsstempler man kan springe til, og arkivoplysninger — samlet i én HTML-fil. Videoen bliver på YouTube, men alt andet på kortet virker også uden internet.</p>
+</div>
+
+<div class="wrap">
+  <div class="formpane">
+
+    <!-- 1. Indlæs eksisterende fil -->
+    <div class="block">
+      <h2>Indlæs eksisterende fil (valgfri)</h2>
+      <div class="filebox">
+        <button type="button" class="btn" id="btnLoad">Vælg HTML-fil</button>
+        <input type="file" id="loadInput" accept=".html,.htm">
+        <p class="help">Vælg et videokort, du tidligere har lavet, hvis du vil rette i det. Tekst, tidsstempler, plakatbillede og metadata bliver hentet frem igen.</p>
+        <div class="status" id="loadStatus"></div>
+      </div>
+    </div>
+
+    <!-- 2. Tema -->
+    <div class="block">
+      <h2>Tema</h2>
+      <div class="themes" id="themes"></div>
+    </div>
+
+    <!-- 3. Indhold -->
+    <div class="block">
+      <h2>Indhold</h2>
+
+      <div class="field">
+        <label for="fUrl">Adresse på YouTube</label>
+        <input type="url" id="fUrl" placeholder="https://www.youtube.com/watch?v=…">
+        <p class="help">Kopiér adressen fra browserens adresselinje, eller fra Del-knappen under videoen. Alle slags YouTube-adresser virker.</p>
+        <div class="status" id="urlStatus"></div>
+        <div class="row">
+          <button type="button" class="btn" id="btnOembed" disabled>Hent titel og kanal fra YouTube</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="fKicker">Mærkat</label>
+        <input type="text" id="fKicker" placeholder="F.eks. Roskilde TV · Videokort">
+        <p class="help">Den lille linje over titlen. Lad den stå tom, hvis du ikke vil have den.</p>
+      </div>
+
+      <div class="field">
+        <label for="fTitle">Titel</label>
+        <input type="text" id="fTitle" placeholder="F.eks. Historien om Gustav Wied-figuren Tummelumsen">
+      </div>
+
+      <div class="field">
+        <label>Plakatbillede</label>
+        <div class="filebox">
+          <div class="row" style="margin-top:0;">
+            <button type="button" class="btn" id="btnThumb" disabled>Hent billedet fra YouTube</button>
+            <button type="button" class="btn" id="btnPoster">Vælg eget billede</button>
+            <button type="button" class="btn" id="btnPosterClear" disabled>Fjern billedet</button>
+          </div>
+          <input type="file" id="posterInput" accept="image/*">
+          <p class="help">Billedet vises, før man trykker på afspil, og det virker også uden internet. Uden billede tegner kortet en enkel plakat med titlen. Et skærmbillede fra udsendelsen er ofte det bedste valg. Billedet beskæres til bredformat (16:9).</p>
+          <div class="status" id="posterStatus"></div>
+          <div class="posterrow" id="posterRow" style="display:none;">
+            <img id="posterThumb" alt="">
+            <div class="meta" id="posterMeta"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="fText">Om udsendelsen</label>
+        <textarea id="fText" rows="8" placeholder="Fortæl kort, hvad udsendelsen handler om …"></textarea>
+        <p class="help">Du kan skrive: <code>**fed**</code>, <code>*kursiv*</code>, <code>## Overskrift</code>, <code>### Mindre overskrift</code>, <code>- punkt</code>, <code>1. punkt</code>, <code>&gt; citat</code>, <code>[tekst](https://…)</code>, <code>---</code> for en streg og <code>`kode`</code>.</p>
+      </div>
+
+      <div class="field">
+        <label for="fNote">Bemærkning (valgfri)</label>
+        <input type="text" id="fNote" placeholder="F.eks. Beskrivelsen er foreløbig og rettes, når udsendelsen er set igennem.">
+        <p class="help">Vises i en lille grå boks under teksten.</p>
+      </div>
+
+      <div class="field">
+        <label for="fChapters">Spring til (tidsstempler)</label>
+        <textarea id="fChapters" class="mono" rows="7" placeholder="00:00 Indledning&#10;01:30 Gustav Wied i Roskilde&#10;06:00 Livsens Ondskab og Tummelumsen"></textarea>
+        <p class="help">Én linje pr. tidsstempel: først tiden, så teksten. Både <code>1:30</code>, <code>01:30</code> og <code>1:02:15</code> virker. Har udsendelsen kapitler i beskrivelsen på YouTube, kan de kopieres direkte herind.</p>
+        <ul class="chapcheck" id="chapCheck"></ul>
+      </div>
+    </div>
+
+    <!-- 4. Knap i bunden -->
+    <div class="block">
+      <h2>Knap i bunden (valgfri)</h2>
+      <div class="field">
+        <label for="fCtaText">Knaptekst</label>
+        <input type="text" id="fCtaText" placeholder="F.eks. Flere udsendelser fra Roskilde TV">
+      </div>
+      <div class="field">
+        <label for="fCtaUrl">Webadresse</label>
+        <input type="url" id="fCtaUrl" placeholder="https://…">
+        <p class="help">Knappen vises kun, hvis begge felter er udfyldt.</p>
+      </div>
+    </div>
+
+    <!-- 5. Dublin Core -->
+    <div class="block" style="border-top:none; padding-top:0;">
+      <details class="dc" id="dcPanel">
+        <summary>Dublin Core-metadata</summary>
+        <p class="help" style="margin-bottom:16px;">Til arkivering og til Søgeside · Bygger, der læser felterne herfra. Alle felter er valgfrie, men Beskrivelse og Emne gør, at kortet kan findes i søgesiden.</p>
+        <div id="dcFields"></div>
+        <datalist id="publisherList">
+          <option value="Roskilde TV">
+          <option value="Syd for Banen - Lokalhistorisk Forening">
+          <option value="Røde Kors Roskilde">
+          <option value="Privat">
+        </datalist>
+        <button type="button" class="btn" id="btnMetaJson">Gem metadata som separat JSON-fil</button>
+      </details>
+    </div>
+
+    <!-- 6. Generér -->
+    <div class="genbar">
+      <button type="button" class="btn filled" id="btnGenerate" disabled>Generér videokort (.html)</button>
+      <div class="msg" id="msg"></div>
+    </div>
+  </div>
+
+  <div class="previewpane">
+    <h2>Forhåndsvisning</h2>
+    <div class="frame"><iframe id="preview" title="Forhåndsvisning"></iframe></div>
+    <p class="note">I forhåndsvisningen åbner afspil og tidsstempler videoen på YouTube i et nyt vindue. Lagt på en hjemmeside afspiller kortet videoen direkte på siden.</p>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   Videokort · Bygger  —  version 1
+   Bygget efter Builder-standard 1.0 (august 2026).
+   Format i outputfilen: "videokort", builderVersion 1.
+   Kan også indlæse prøvekortet (builderVersion 0).
+   ======================================================================= */
+
+/* ---------- Temaer (samme hex-værdier i hele værktøjskassen) ---------- */
+var THEMES = {
+  original: {
+    label: 'Oprindeligt',
+    accent: '#9A4630', paper: '#EDE7D8', cardBg: '#1B1A16', cardText: '#F2ECDD',
+    ink: '#211E19', moss: '#47543C', line: '#cbc2a8',
+    timesColor: '#6B6455', footerColor: '#4A463C',
+    muted: '#6B6455', footerStrong: '#4A463C',
+    bodyText: '#211E19', quoteText: '#3A362E', codeBg: '#E2DBC8',
+    darkAccent: '#E0937A'
+  },
+  rodekors: {
+    label: 'Røde Kors',
+    accent: '#E30A0B', paper: '#FFFFFF', cardBg: '#E30A0B', cardText: '#FFFFFF',
+    ink: '#1A1A1A', moss: '#5A5A5A', line: '#DCDCDC',
+    timesColor: '#5A5A5A', footerColor: '#333333',
+    muted: '#5A5A5A', footerStrong: '#333333',
+    bodyText: '#1A1A1A', quoteText: '#333333', codeBg: '#F1F1F1',
+    darkAccent: '#FF7A75'
+  },
+  bordeaux: {
+    label: 'Lokalhistorisk',
+    accent: '#9E2453', paper: '#FAF9F5', cardBg: '#9E2453', cardText: '#FAF9F5',
+    ink: '#211E19', moss: '#6B5560', line: '#E0D8D3',
+    timesColor: '#6B5560', footerColor: '#3A2630',
+    muted: '#6B5560', footerStrong: '#3A2630',
+    bodyText: '#211E19', quoteText: '#3A2630', codeBg: '#F0EAE6',
+    darkAccent: '#E88AAE'
+  }
+};
+
+/* ---------- Dublin Core: de 15 felter, fast rækkefølge ---------- */
+var DC_FIELDS = [
+  ['title',       'Titel',              'udfyldes automatisk fra titlen', ''],
+  ['creator',     'Ophav / skaber',     'den der har lavet udsendelsen, fx Roskilde TV', ''],
+  ['subject',     'Emne / nøgleord',    'adskil med semikolon; områdenavnet først', ''],
+  ['description', 'Beskrivelse',        'udfyldes automatisk fra teksten', ''],
+  ['publisher',   'Udgiver',            'foreningen eller arkivet — vælg fra listen, så stavemåden bliver ens', ''],
+  ['contributor', 'Bidragyder',         'den der har lavet videokortet og metadata', ''],
+  ['date',        'Dato',               'udsendelsens dato, helst ÅÅÅÅ-MM-DD', ''],
+  ['type',        'Type',               'DCMI-typeordforråd', 'MovingImage'],
+  ['format',      'Format',             'filens tekniske format', 'text/html; video: YouTube'],
+  ['identifier',  'Identifikator',      'arkivnummer, fx RTV-video-0002', ''],
+  ['source',      'Kilde',              'udfyldes automatisk med adressen på YouTube', ''],
+  ['language',    'Sprog',              'sprogkode, fx da', 'da'],
+  ['relation',    'Relation',           'beslægtet materiale, fx et billedalbum eller en lydfortælling', ''],
+  ['coverage',    'Dækning',            'sted og/eller periode', ''],
+  ['rights',      'Rettigheder',        'ophavsret og vilkår for brug', '']
+];
+var DC_TYPES = ['MovingImage','Sound','Image','Text','InteractiveResource','Collection','Event',''];
+
+/* ---------- Tilstand ---------- */
+var state = {
+  theme: 'original',
+  videoId: '',
+  poster: '',           // data-URL (JPEG, 16:9) eller tom
+  posterInfo: '',
+  counterCode: ''
+};
+var dcTouched = {};
+
+/* ---------- Småting ---------- */
+function $(id){ return document.getElementById(id); }
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function fmtBytes(b){
+  if(!b) return '0 B';
+  if(b < 1024) return b + ' B';
+  if(b < 1024*1024) return Math.round(b/1024) + ' KB';
+  return (b/(1024*1024)).toFixed(1).replace('.', ',') + ' MB';
+}
+
+function slug(s){
+  var t = (s || '').toLowerCase()
+    .replace(/æ/g,'ae').replace(/ø/g,'oe').replace(/å/g,'aa')
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'');
+  return t || 'videokort';
+}
+
+function fileStem(dc, title){
+  var id = String(dc.identifier || '').trim().replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+  var t = slug(title).slice(0, 48).replace(/-+$/, '');
+  return id ? id + '-' + t : t + '-videokort';
+}
+
+function dataUrlBytes(dataUrl){
+  var i = (dataUrl || '').indexOf(',');
+  return i < 0 ? 0 : Math.round((dataUrl.length - i - 1) * 0.75);
+}
+
+/* ---------- Markdown (samme delmængde som resten af værktøjskassen) ---------- */
+function inlineMd(s){
+  return s
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+
+function mdToHtml(md){
+  if(!md) return '';
+  var lines = esc(md).split('\n');
+  var html = '', inUl = false, inOl = false, para = [];
+  function flushPara(){ if(para.length){ html += '<p>' + inlineMd(para.join('<br>')) + '</p>'; para = []; } }
+  function closeLists(){
+    if(inUl){ html += '</ul>'; inUl = false; }
+    if(inOl){ html += '</ol>'; inOl = false; }
+  }
+  for(var i = 0; i < lines.length; i++){
+    var line = lines[i], m;
+    if(/^\s*$/.test(line)){ flushPara(); closeLists(); continue; }
+    if(/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)){ flushPara(); closeLists(); html += '<hr>'; continue; }
+    if((m = line.match(/^(#{1,4})\s+(.*)$/))){
+      flushPara(); closeLists();
+      var lvl = Math.min(Math.max(m[1].length + 1, 3), 5);
+      html += '<h' + lvl + '>' + inlineMd(m[2]) + '</h' + lvl + '>';
+      continue;
+    }
+    if((m = line.match(/^[-*]\s+(.*)$/))){
+      flushPara();
+      if(inOl){ html += '</ol>'; inOl = false; }
+      if(!inUl){ html += '<ul>'; inUl = true; }
+      html += '<li>' + inlineMd(m[1]) + '</li>';
+      continue;
+    }
+    if((m = line.match(/^\d+\.\s+(.*)$/))){
+      flushPara();
+      if(inUl){ html += '</ul>'; inUl = false; }
+      if(!inOl){ html += '<ol>'; inOl = true; }
+      html += '<li>' + inlineMd(m[1]) + '</li>';
+      continue;
+    }
+    if((m = line.match(/^&gt;\s?(.*)$/))){
+      flushPara(); closeLists();
+      html += '<blockquote>' + inlineMd(m[1]) + '</blockquote>';
+      continue;
+    }
+    closeLists();
+    para.push(line);
+  }
+  flushPara(); closeLists();
+  return html;
+}
+
+function stripMdToPlain(md, maxLen){
+  var t = (md || '')
+    .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '$1')
+    .replace(/[#>*_`~]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if(maxLen && t.length > maxLen) t = t.slice(0, maxLen - 1).trim() + '…';
+  return t;
+}
+
+/* ---------- YouTube ---------- */
+function parseYouTube(raw){
+  var s = String(raw || '').trim();
+  if(!s) return '';
+  if(/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
+  var m = s.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i);
+  return m ? m[1] : '';
+}
+function watchUrl(id){ return 'https://www.youtube.com/watch?v=' + id; }
+
+/* ---------- Tidsstempler ---------- */
+function fmtTime(t){
+  t = Math.max(0, Math.round(t));
+  var h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+  function two(n){ return (n < 10 ? '0' : '') + n; }
+  return h ? h + ':' + two(m) + ':' + two(s) : two(m) + ':' + two(s);
+}
+
+function parseChapters(raw){
+  var list = [], bad = [];
+  String(raw || '').split('\n').forEach(function(line){
+    var l = line.trim();
+    if(!l) return;
+    var m = l.match(/^[-–•*]?\s*[\[(]?((?:\d{1,2}:)?\d{1,2}:\d{2})[\])]?\s*[-–—:.|]?\s*(.+)$/);
+    if(!m){ bad.push(l); return; }
+    var parts = m[1].split(':').map(function(n){ return parseInt(n, 10); });
+    var t = parts.reduce(function(a, b){ return a * 60 + b; }, 0);
+    list.push({ t: t, label: m[2].trim() });
+  });
+  list.sort(function(a, b){ return a.t - b.t; });
+  return { list: list, bad: bad };
+}
+
+function chaptersToText(arr){
+  return (arr || []).map(function(c){ return fmtTime(c.t) + ' ' + c.label; }).join('\n');
+}
+
+/* ---------- Plakatbillede: beskæres til 16:9, højst 1280 pixel bredt ---------- */
+function makePoster(img){
+  var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+  var ratio = 16 / 9, sx = 0, sy = 0, sw = w, sh = h;
+  if(w / h > ratio){ sw = Math.round(h * ratio); sx = Math.round((w - sw) / 2); }
+  else { sh = Math.round(w / ratio); sy = Math.round((h - sh) / 2); }
+  var outW = Math.min(1280, sw), outH = Math.round(outW / ratio);
+  var c = document.createElement('canvas');
+  c.width = outW; c.height = outH;
+  var k = c.getContext('2d');
+  k.imageSmoothingQuality = 'high';
+  k.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+  return { url: c.toDataURL('image/jpeg', 0.82), w: outW, h: outH };
+}
+
+function loadImageFromUrl(src){
+  return new Promise(function(resolve, reject){
+    var img = new Image();
+    img.onload = function(){ resolve(img); };
+    img.onerror = function(){ reject(new Error('Billedet kunne ikke vises')); };
+    img.src = src;
+  });
+}
+
+function setPoster(url, info){
+  state.poster = url || '';
+  state.posterInfo = info || '';
+  if(state.poster){
+    $('posterThumb').src = state.poster;
+    $('posterMeta').innerHTML = info + '<br>' + fmtBytes(dataUrlBytes(state.poster)) + ' i filen';
+    $('posterRow').style.display = 'flex';
+  }else{
+    $('posterRow').style.display = 'none';
+  }
+  $('btnPosterClear').disabled = !state.poster;
+  invalidate();
+}
+
+function pickPosterFile(file){
+  var st = $('posterStatus');
+  st.textContent = 'Indlæser …'; st.className = 'status';
+  var r = new FileReader();
+  r.onerror = function(){ st.textContent = 'Filen kunne ikke læses.'; st.className = 'status warn'; };
+  r.onload = function(){
+    loadImageFromUrl(r.result).then(function(img){
+      var p = makePoster(img);
+      setPoster(p.url, '<b>' + esc(file.name) + '</b><br>' + p.w + ' × ' + p.h + ' pixel');
+      st.textContent = 'Billedet er klar.'; st.className = 'status ok';
+    }).catch(function(){
+      st.textContent = 'Filen er ikke et billede, der kan vises.'; st.className = 'status warn';
+    });
+  };
+  r.readAsDataURL(file);
+}
+
+function fetchYouTubeThumb(){
+  var id = state.videoId, st = $('posterStatus');
+  if(!id) return;
+  st.textContent = 'Henter billedet fra YouTube …'; st.className = 'status';
+  var names = ['maxresdefault', 'sddefault', 'hqdefault'];
+  var i = 0;
+  function next(){
+    if(i >= names.length){
+      var link = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
+      st.innerHTML = 'YouTube ville ikke udlevere billedet direkte. Åbn <a href="' + link +
+        '" target="_blank" rel="noopener">billedet her</a>, gem det på computeren, og brug så «Vælg eget billede».';
+      st.className = 'status warn';
+      return;
+    }
+    var name = names[i++];
+    fetch('https://i.ytimg.com/vi/' + id + '/' + name + '.jpg', { mode: 'cors' })
+      .then(function(res){ if(!res.ok) throw new Error('mangler'); return res.blob(); })
+      .then(function(blob){
+        var u = URL.createObjectURL(blob);
+        return loadImageFromUrl(u).then(function(img){
+          URL.revokeObjectURL(u);
+          if(img.naturalWidth < 200) throw new Error('for lille');
+          var p = makePoster(img);
+          setPoster(p.url, '<b>Fra YouTube</b> (' + name + ')<br>' + p.w + ' × ' + p.h + ' pixel');
+          st.textContent = 'Billedet er hentet.'; st.className = 'status ok';
+        });
+      })
+      .catch(next);
+  }
+  next();
+}
+
+function fetchOembed(){
+  var id = state.videoId, st = $('urlStatus');
+  if(!id) return;
+  st.textContent = 'Henter oplysninger fra YouTube …'; st.className = 'status';
+  fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(watchUrl(id)))
+    .then(function(res){ if(!res.ok) throw new Error(); return res.json(); })
+    .then(function(d){
+      var got = [];
+      if(d.title && !$('fTitle').value.trim()){ $('fTitle').value = d.title; got.push('titel'); }
+      if(d.author_name && !dcTouched.creator && !$('dc_creator').value.trim()){
+        $('dc_creator').value = d.author_name; got.push('kanal som ophav');
+      }
+      st.textContent = got.length
+        ? 'Hentet: ' + got.join(' og ') + '. Ret gerne til.'
+        : 'YouTube kalder den «' + (d.title || '') + '» fra kanalen ' + (d.author_name || '') + '. Dine egne felter er ikke ændret.';
+      st.className = 'status ok';
+      invalidate();
+    })
+    .catch(function(){
+      st.textContent = 'Oplysningerne kunne ikke hentes. Skriv titlen selv — resten virker som det skal.';
+      st.className = 'status warn';
+    });
+}
+
+/* =======================================================================
+   Formularen bygges
+   ======================================================================= */
+function buildThemeChooser(){
+  var box = $('themes');
+  Object.keys(THEMES).forEach(function(key){
+    var t = THEMES[key];
+    var lab = document.createElement('label');
+    lab.className = 'theme' + (key === state.theme ? ' on' : '');
+    var r = document.createElement('input');
+    r.type = 'radio'; r.name = 'theme'; r.value = key; r.checked = (key === state.theme);
+    r.addEventListener('change', function(){ setTheme(key); });
+    var dot = document.createElement('span');
+    dot.className = 'dot'; dot.style.background = t.accent;
+    var txt = document.createElement('span');
+    txt.textContent = t.label;
+    lab.appendChild(r); lab.appendChild(dot); lab.appendChild(txt);
+    box.appendChild(lab);
+  });
+}
+
+function setTheme(key){
+  state.theme = THEMES[key] ? key : 'original';
+  Array.prototype.forEach.call($('themes').children, function(lab){
+    var r = lab.querySelector('input');
+    r.checked = (r.value === state.theme);
+    lab.classList.toggle('on', r.checked);
+  });
+  invalidate();
+}
+
+function buildDcFields(){
+  var box = $('dcFields');
+  DC_FIELDS.forEach(function(f){
+    var key = f[0], label = f[1], help = f[2], def = f[3];
+    var wrap = document.createElement('div');
+    wrap.className = 'dcfield';
+    var lab = document.createElement('label');
+    lab.setAttribute('for', 'dc_' + key);
+    lab.textContent = label;
+    var hint = document.createElement('p');
+    hint.className = 'help';
+    hint.textContent = 'dc.' + key + ' — ' + help;
+    var input;
+    if(key === 'type'){
+      input = document.createElement('select');
+      DC_TYPES.forEach(function(v){
+        var o = document.createElement('option');
+        o.value = v; o.textContent = v || '(ingen)';
+        if(v === def) o.selected = true;
+        input.appendChild(o);
+      });
+    }else{
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = def || '';
+      if(key === 'publisher') input.setAttribute('list', 'publisherList');
+    }
+    input.id = 'dc_' + key;
+    input.addEventListener('input', function(){ dcTouched[key] = true; invalidate(); });
+    input.addEventListener('change', function(){ dcTouched[key] = true; invalidate(); });
+    wrap.appendChild(lab); wrap.appendChild(hint); wrap.appendChild(input);
+    box.appendChild(wrap);
+  });
+}
+
+function collectDc(){
+  var dc = {};
+  DC_FIELDS.forEach(function(f){
+    var el = $('dc_' + f[0]);
+    var v = el ? String(el.value).trim() : '';
+    if(v) dc[f[0]] = v;
+  });
+  return dc;
+}
+
+// Titel, beskrivelse og kilde spejler formularen, indtil du selv skriver i dem.
+function syncAutoDc(){
+  if(!dcTouched.title) $('dc_title').value = $('fTitle').value.trim();
+  if(!dcTouched.description) $('dc_description').value = stripMdToPlain($('fText').value, 300);
+  if(!dcTouched.source) $('dc_source').value = state.videoId ? watchUrl(state.videoId) : '';
+}
+
+function gatherState(){
+  syncAutoDc();
+  return {
+    theme: state.theme,
+    videoId: state.videoId,
+    kicker: $('fKicker').value.trim(),
+    title: $('fTitle').value.trim(),
+    text: $('fText').value,
+    note: $('fNote').value.trim(),
+    chapters: parseChapters($('fChapters').value).list,
+    ctaText: $('fCtaText').value.trim(),
+    ctaUrl: $('fCtaUrl').value.trim(),
+    poster: state.poster,
+    dc: collectDc(),
+    counterCode: state.counterCode
+  };
+}
+
+/* =======================================================================
+   Outputfilen bygges
+   ======================================================================= */
+function dcMetaTags(dc){
+  var out = [];
+  DC_FIELDS.forEach(function(f){
+    var key = f[0];
+    if(!dc[key]) return;
+    if(key === 'subject'){
+      dc[key].split(';').forEach(function(p){
+        var v = p.trim();
+        if(v) out.push('<meta name="DC.subject" content="' + esc(v) + '">');
+      });
+    }else{
+      out.push('<meta name="DC.' + key + '" content="' + esc(dc[key]) + '">');
+    }
+  });
+  return out.join('\n');
+}
+
+function dcAboutPanel(dc){
+  var rows = [];
+  DC_FIELDS.forEach(function(f){
+    var key = f[0], label = f[1];
+    if(!dc[key]) return;
+    rows.push('<dt>' + esc(label) + '<code>dc.' + key + '</code></dt><dd>' + esc(dc[key]) + '</dd>');
+  });
+  if(!rows.length) return '';
+  return '<details class="meta">\n<summary>Om denne fil</summary>\n<dl>\n' + rows.join('\n') + '\n</dl>\n</details>';
+}
+
+function wrapTitle(title, max){
+  var words = String(title).split(/\s+/), lines = [], cur = '';
+  words.forEach(function(w){
+    if((cur + ' ' + w).trim().length > max && cur){ lines.push(cur); cur = w; }
+    else cur = (cur + ' ' + w).trim();
+  });
+  if(cur) lines.push(cur);
+  if(lines.length > 3){ lines = lines.slice(0, 3); lines[2] = lines[2].replace(/\s*\S*$/, '') + ' …'; }
+  return lines;
+}
+
+function drawnPoster(st, t){
+  var lines = wrapTitle(st.title || 'Videokort', 24);
+  var size = lines.length > 2 ? 64 : 88;
+  var startY = lines.length > 1 ? 185 : 215;
+  var txt = lines.map(function(l, i){
+    return '<text x="800" y="' + Math.round(startY + i * size * 1.12) + '" font-size="' + size + '">' + esc(l) + '</text>';
+  }).join('');
+  return '<svg viewBox="0 0 1600 900" aria-hidden="true" preserveAspectRatio="xMidYMid slice">' +
+    '<rect width="1600" height="900" fill="' + t.cardBg + '"/>' +
+    '<rect width="1600" height="900" fill="#000" opacity=".28"/>' +
+    '<path fill="#fff" opacity=".10" d="M0 900V610h120v-60h70v60h90V520l60-50 60 50v90h110V560h80v50h120V470l40-90 40 90v140h100V540h90v70h140V500l70-60 70 60v110h130V570h90v40h150v290z"/>' +
+    '<g fill="' + t.cardText + '" font-family="Georgia,serif" text-anchor="middle">' +
+    (st.kicker ? '<text x="800" y="' + Math.round(startY - size - 8) + '" font-size="40" opacity=".75">' + esc(st.kicker) + '</text>' : '') +
+    txt + '</g></svg>';
+}
+
+function buildOutput(st, opts){
+  opts = opts || {};
+  var preview = !!opts.preview;
+  var t = THEMES[st.theme] || THEMES.original;
+  var dc = st.dc || {};
+  var lang = dc.language || 'da';
+  var title = st.title || 'Videokort';
+  var id = st.videoId;
+  var watch = id ? watchUrl(id) : '#';
+  var stem = fileStem(dc, title);
+  var textHtml = mdToHtml(st.text);
+  var chapters = st.chapters || [];
+
+  var og = [];
+  og.push('<meta property="og:type" content="video.other">');
+  og.push('<meta property="og:title" content="' + esc(title) + '">');
+  if(dc.description) og.push('<meta property="og:description" content="' + esc(dc.description) + '">');
+  if(id){
+    og.push('<meta property="og:image" content="https://i.ytimg.com/vi/' + id + '/hqdefault.jpg">');
+    og.push('<meta property="og:video" content="' + esc(watch) + '">');
+  }
+
+  var sourceData = {
+    format: 'videokort',
+    builderVersion: 1,
+    theme: st.theme,
+    videoId: id,
+    videoUrl: id ? watch : '',
+    kicker: st.kicker,
+    title: st.title,
+    text: st.text,
+    note: st.note,
+    chapters: chapters,
+    ctaText: st.ctaText,
+    ctaUrl: st.ctaUrl,
+    poster: st.poster ? 'i dokumentet' : 'tegnet',
+    dublinCore: dc
+  };
+  var sourceJson = JSON.stringify(sourceData, null, 2)
+    .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+
+  var head = [
+    '<!DOCTYPE html>',
+    '<html lang="' + esc(lang) + '">',
+    '<head>',
+    '<meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    '<title>' + esc(title) + (dc.publisher ? ' – ' + esc(dc.publisher) : '') + '</title>',
+    '<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">',
+    dcMetaTags(dc),
+    og.join('\n')
+  ].filter(Boolean).join('\n');
+
+  var css = `<style>
+:root{
+  --fs:19px;
+  --bg:${t.paper}; --paper:#FFFFFF; --ink:${t.ink}; --soft:${t.muted};
+  --accent:${t.accent}; --accent-ink:#FFFFFF; --line:${t.line}; --chip:${t.codeBg};
+  --quote:${t.quoteText}; --poster:${t.cardBg};
+}
+[data-theme="sepia"]{ --bg:#f1e7d0; --paper:#f8f0dc; --ink:#3b2f22; --soft:#6f5e48; --line:#dccba6; --chip:#ecdfc2; --quote:#4a3c2c; }
+[data-theme="dark"]{ --bg:#1c1a19; --paper:#262322; --ink:#ece6e1; --soft:#b4a9a2; --accent:${t.darkAccent}; --accent-ink:#1c1a19; --line:#3b3634; --chip:#302c2a; --quote:#d8cfc8; }
+*{box-sizing:border-box}
+html{font-size:var(--fs)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;line-height:1.6}
+a{color:var(--accent)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.sans{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.tools{max-width:52rem;margin:0 auto;padding:.8rem 1rem;display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;font-size:.8rem}
+.tools button{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.35rem .7rem;min-height:44px;min-width:44px}
+.tools button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+main{max-width:52rem;margin:0 auto;padding:0 1rem 3rem}
+.from{font-size:.85rem;color:var(--soft);margin:.5rem 0 .2rem}
+h1{font-size:2rem;line-height:1.2;margin:0 0 1.2rem;font-weight:normal}
+.player{position:relative;aspect-ratio:16/9;background:var(--poster);border-radius:10px;overflow:hidden}
+.player svg,.player img.poster,.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.player img.poster{object-fit:cover}
+.play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:none;border:0;color:#fff}
+.play span{background:var(--accent);opacity:.94;border-radius:50%;width:min(5.2rem,16vw);height:min(5.2rem,16vw);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px rgba(255,255,255,.3)}
+.play:hover span{transform:scale(1.05)}
+.play span svg{position:static;width:42%;height:42%;margin-left:8%}
+.fallback{font-size:.85rem;color:var(--soft);margin:.6rem 0 0}
+.fallback .lokal{display:none}
+.is-local .fallback .lokal{display:inline}
+.offline{display:none;background:var(--chip);border-left:4px solid var(--accent);padding:.8rem 1rem;margin-top:.8rem;font-size:.95rem}
+.is-offline .offline{display:block}
+.cols{display:grid;grid-template-columns:1fr;gap:2rem;margin-top:2rem}
+@media(min-width:48rem){.cols.two{grid-template-columns:1fr 17rem}}
+h2{font-size:1.25rem;font-weight:normal;margin:0 0 .6rem;color:var(--accent)}
+.om h3{font-size:1.1rem;margin:1.4rem 0 .4rem}
+.om h4,.om h5{font-size:1rem;margin:1.2rem 0 .3rem}
+.om p{margin:0 0 1rem}
+.om ul,.om ol{margin:0 0 1rem;padding-left:1.4rem}
+.om blockquote{margin:0 0 1rem;padding:.2rem 0 .2rem 1rem;border-left:4px solid var(--accent);color:var(--quote)}
+.om code{background:var(--chip);padding:0 .25rem;border-radius:3px;font-size:.9em}
+.om hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
+.note{background:var(--chip);padding:.6rem .9rem;border-radius:6px;font-size:.85rem;color:var(--soft)}
+ol.chapters{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+ol.chapters li{border-bottom:1px solid var(--line)}
+ol.chapters button{display:flex;gap:.8rem;width:100%;text-align:left;background:none;border:0;color:var(--ink);padding:.7rem .2rem;line-height:1.35;min-height:44px}
+ol.chapters button:hover{background:var(--chip)}
+.t{font-variant-numeric:tabular-nums;color:var(--accent);min-width:3.2rem;font-weight:600}
+.actions{margin:2.5rem 0 1rem;display:flex;gap:.8rem;flex-wrap:wrap}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:.7rem 1.2rem;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+.btn.ghost{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+details.meta{margin-top:2rem;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+details.meta summary{padding:.9rem 1rem;cursor:pointer;font-size:1.05rem;min-height:44px}
+.meta dl{margin:0;padding:0 1rem 1rem;display:grid;grid-template-columns:minmax(9rem,max-content) 1fr;gap:.35rem 1rem;font-size:.9rem}
+.meta dt{color:var(--soft)}
+.meta dt code{font-size:.75rem;display:block;opacity:.8}
+.meta dd{margin:0;word-break:break-word}
+@media(max-width:34rem){.meta dl{grid-template-columns:1fr}.meta dd{margin-bottom:.6rem}}
+footer{max-width:52rem;margin:0 auto;padding:1rem;font-size:.8rem;color:var(--soft)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{.tools,.play,.actions,.fallback{display:none!important}}
+</style>`;
+
+  var body = [];
+  body.push('<div class="tools sans" role="toolbar" aria-label="Visning">');
+  body.push('  <button type="button" data-fs="-1" aria-label="Mindre skrift">A−</button>');
+  body.push('  <button type="button" data-fs="1" aria-label="Større skrift">A+</button>');
+  body.push('  <button type="button" data-theme-btn="light" aria-pressed="true">Lyst</button>');
+  body.push('  <button type="button" data-theme-btn="sepia" aria-pressed="false">Sepia</button>');
+  body.push('  <button type="button" data-theme-btn="dark" aria-pressed="false">Mørkt</button>');
+  body.push('</div>');
+  body.push('<main>');
+  if(st.kicker) body.push('<p class="from sans">' + esc(st.kicker) + '</p>');
+  body.push('<h1>' + esc(title) + '</h1>');
+
+  body.push('<div class="player" id="player">');
+  body.push(st.poster
+    ? '<img class="poster" id="poster" src="' + st.poster + '" alt="">'
+    : drawnPoster(st, t));
+  body.push('<button class="play" id="playBtn" type="button" aria-label="Afspil udsendelsen">' +
+    '<span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4l15 8-15 8z"/></svg></span></button>');
+  body.push('</div>');
+  body.push('<p class="fallback sans"><span class="lokal">Kortet er åbnet fra din egen computer, så videoen afspilles på YouTube i et nyt vindue. </span>' +
+    'Virker afspilleren ikke? <a id="ytLink" href="' + esc(watch) + '" target="_blank" rel="noopener">Åbn udsendelsen på YouTube</a>.</p>');
+  body.push('<div class="offline sans" role="status">Du er ikke på internettet, så videoen kan ikke afspilles lige nu. ' +
+    'Alt andet på dette kort – beskrivelse, tidsstempler og arkivoplysninger – virker stadig.</div>');
+
+  var hasOm = !!(textHtml || st.note), hasKap = chapters.length > 0;
+  if(hasOm || hasKap){
+    body.push('<div class="cols' + (hasOm && hasKap ? ' two' : '') + '">');
+    if(hasOm){
+      body.push('<section class="om" aria-labelledby="om">');
+      body.push('<h2 id="om">Om udsendelsen</h2>');
+      if(textHtml) body.push(textHtml);
+      if(st.note) body.push('<p class="note sans">' + esc(st.note) + '</p>');
+      body.push('</section>');
+    }
+    if(hasKap){
+      body.push('<section aria-labelledby="kap">');
+      body.push('<h2 id="kap">Spring til</h2>');
+      body.push('<ol class="chapters" id="chapters">');
+      chapters.forEach(function(c){
+        body.push('<li><button type="button" data-t="' + c.t + '"><span class="t sans">' + fmtTime(c.t) +
+          '</span><span>' + esc(c.label) + '</span></button></li>');
+      });
+      body.push('</ol>');
+      body.push('</section>');
+    }
+    body.push('</div>');
+  }
+
+  body.push('<div class="actions sans">');
+  body.push('<button class="btn" id="saveBtn" type="button">Gem filen</button>');
+  body.push('<a class="btn ghost" href="' + esc(watch) + '" target="_blank" rel="noopener">Se på YouTube</a>');
+  if(st.ctaText && st.ctaUrl){
+    body.push('<a class="btn ghost" href="' + esc(st.ctaUrl) + '" target="_blank" rel="noopener">' + esc(st.ctaText) + '</a>');
+  }
+  body.push('</div>');
+
+  var ap = dcAboutPanel(dc);
+  if(ap) body.push(ap);
+  body.push('</main>');
+  body.push('<footer class="sans">Dette videokort er én fil. Gem den, og beskrivelse, tidsstempler og arkivoplysninger virker også uden internet.</footer>');
+
+  var script = `<script>
+(function(){
+  var ID = ${JSON.stringify(id)};
+  var TITLE = ${JSON.stringify(title)};
+  var FILENAME = ${JSON.stringify(stem + '.html')};
+  var root = document.documentElement;
+  // Kortet gemmes, som det så ud, da det blev åbnet — før afspiller, tema og skrift blev ændret.
+  var original = "<!DOCTYPE html>\\n" + root.outerHTML;
+
+  var player = document.getElementById("player");
+  var ytLink = document.getElementById("ytLink");
+  var canEmbed = /^https?:$/.test(location.protocol);
+  if(!canEmbed) document.body.classList.add("is-local");
+
+  function watchAt(t){ return "https://www.youtube.com/watch?v=" + ID + (t ? "&t=" + t + "s" : ""); }
+
+  function play(t){
+    if(!ID) return;
+    if(!canEmbed){ window.open(watchAt(t), "_blank", "noopener"); return; }
+    var f = document.createElement("iframe");
+    f.src = "https://www.youtube-nocookie.com/embed/" + ID + "?rel=0&autoplay=1&start=" + (t || 0);
+    f.title = TITLE;
+    f.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
+    f.setAttribute("allowfullscreen", "");
+    f.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+    player.innerHTML = "";
+    player.appendChild(f);
+  }
+
+  document.getElementById("playBtn").addEventListener("click", function(){ play(0); });
+
+  var chapters = document.getElementById("chapters");
+  if(chapters){
+    chapters.addEventListener("click", function(e){
+      var b = e.target.closest("button[data-t]");
+      if(!b) return;
+      var t = parseInt(b.getAttribute("data-t"), 10) || 0;
+      ytLink.href = watchAt(t);
+      if(!navigator.onLine) return;
+      play(t);
+      if(canEmbed) player.scrollIntoView({behavior: "smooth", block: "center"});
+    });
+  }
+
+  function net(){ document.body.classList.toggle("is-offline", !navigator.onLine); }
+  window.addEventListener("online", net); window.addEventListener("offline", net); net();
+
+  // Skrift og tema huskes i browseren
+  var size = 19;
+  try{ size = parseInt(localStorage.getItem("vk-fs"), 10) || 19; }catch(e){}
+  root.style.setProperty("--fs", size + "px");
+  document.querySelectorAll("[data-fs]").forEach(function(b){
+    b.addEventListener("click", function(){
+      size = Math.min(28, Math.max(15, size + 2 * parseInt(b.getAttribute("data-fs"), 10)));
+      root.style.setProperty("--fs", size + "px");
+      try{ localStorage.setItem("vk-fs", size); }catch(e){}
+    });
+  });
+  function setTheme(t){
+    if(t === "light") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", t);
+    document.querySelectorAll("[data-theme-btn]").forEach(function(b){
+      b.setAttribute("aria-pressed", b.getAttribute("data-theme-btn") === t ? "true" : "false");
+    });
+    try{ localStorage.setItem("vk-theme", t); }catch(e){}
+  }
+  document.querySelectorAll("[data-theme-btn]").forEach(function(b){
+    b.addEventListener("click", function(){ setTheme(b.getAttribute("data-theme-btn")); });
+  });
+  try{ var saved = localStorage.getItem("vk-theme"); if(saved) setTheme(saved); }catch(e){}
+
+  document.getElementById("saveBtn").addEventListener("click", function(){
+    var blob = new Blob([original], {type: "text/html;charset=utf-8"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = FILENAME;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1500);
+  });
+})();
+<\/script>`;
+
+  var counterBlock = '<!-- TÆLLER -->' + (st.counterCode || '') + '<!-- TÆLLER SLUT -->';
+
+  return [
+    head,
+    css,
+    '</head>',
+    '<body>',
+    body.join('\n'),
+    '<script type="application/json" id="builder-source-data">',
+    sourceJson,
+    '<\/script>',
+    preview ? '' : counterBlock,
+    script,
+    '</body>',
+    '</html>'
+  ].filter(function(x){ return x !== ''; }).join('\n');
+}
+
+/* =======================================================================
+   Forhåndsvisning og kontrol
+   ======================================================================= */
+var previewTimer = null;
+function invalidate(){
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(renderPreview, 220);
+}
+function renderPreview(){
+  $('preview').srcdoc = buildOutput(gatherState(), { preview: true });
+  $('btnGenerate').disabled = !state.videoId;
+}
+
+function onUrlInput(){
+  var raw = $('fUrl').value.trim();
+  var id = parseYouTube(raw);
+  var st = $('urlStatus');
+  var changed = id !== state.videoId;
+  state.videoId = id;
+  if(!raw){ st.textContent = ''; st.className = 'status'; }
+  else if(id){ st.textContent = 'Forstået — video-id ' + id + '.'; st.className = 'status ok'; }
+  else { st.textContent = 'Det ligner ikke en YouTube-adresse. Den skal indeholde youtube.com eller youtu.be.'; st.className = 'status warn'; }
+  $('btnOembed').disabled = !id;
+  $('btnThumb').disabled = !id;
+  if(changed) invalidate();
+}
+
+function onChaptersInput(){
+  var r = parseChapters($('fChapters').value);
+  var box = $('chapCheck');
+  var html = r.list.map(function(c){
+    return '<li><span class="t">' + fmtTime(c.t) + '</span><span>' + esc(c.label) + '</span></li>';
+  });
+  r.bad.forEach(function(b){
+    html.push('<li class="bad"><span class="t">?</span><span>Kan ikke læses: ' + esc(b) + '</span></li>');
+  });
+  box.innerHTML = html.join('');
+  invalidate();
+}
+
+/* =======================================================================
+   Indlæsning af en eksisterende fil
+   ======================================================================= */
+function htmlToMd(el){
+  // Til prøvekortet, hvor teksten stod som HTML og ikke som Markdown.
+  var out = [];
+  Array.prototype.forEach.call(el.children, function(node){
+    if(node.classList && node.classList.contains('note')) return;
+    if(/^H[1-6]$/.test(node.tagName)) return;
+    var c = node.cloneNode(true);
+    c.querySelectorAll('strong,b').forEach(function(n){ n.textContent = '**' + n.textContent + '**'; });
+    c.querySelectorAll('em,i').forEach(function(n){ n.textContent = '*' + n.textContent + '*'; });
+    var txt = c.textContent.replace(/\s+/g, ' ').trim();
+    if(txt) out.push(txt);
+  });
+  return out.join('\n\n');
+}
+
+function loadExisting(file){
+  var st = $('loadStatus');
+  st.textContent = 'Læser fil …'; st.className = 'status';
+  file.text().then(function(text){
+    var doc = new DOMParser().parseFromString(text, 'text/html');
+    var holder = doc.getElementById('builder-source-data');
+    var d = null;
+    try{ d = holder ? JSON.parse(holder.textContent) : null; }catch(e){ d = null; }
+    if(!d || d.format !== 'videokort'){
+      st.textContent = 'Filen kan ikke indlæses — den er ikke et videokort.';
+      st.className = 'status warn';
+      return;
+    }
+
+    setTheme(THEMES[d.theme] ? d.theme : 'original');
+
+    $('fUrl').value = d.videoUrl || (d.videoId ? watchUrl(d.videoId) : '');
+    onUrlInput();
+
+    var fromEl = doc.querySelector('.from');
+    $('fKicker').value = d.kicker != null ? d.kicker : (fromEl ? fromEl.textContent.trim() : '');
+    $('fTitle').value = d.title || '';
+
+    var omSec = doc.querySelector('section[aria-labelledby="om"]');
+    $('fText').value = d.text != null ? d.text : (omSec ? htmlToMd(omSec) : '');
+    var noteEl = omSec ? omSec.querySelector('.note') : null;
+    $('fNote').value = d.note != null ? d.note : (noteEl ? noteEl.textContent.trim() : '');
+
+    $('fChapters').value = chaptersToText(d.chapters);
+    onChaptersInput();
+    $('fCtaText').value = d.ctaText || '';
+    $('fCtaUrl').value = d.ctaUrl || '';
+
+    // Metadata: først fra JSON-blokken, dernæst fra DC-metatags (prøvekortet havde kun nogle i JSON).
+    var jdc = d.dublinCore || d.dc || {};
+    DC_FIELDS.forEach(function(f){
+      var key = f[0], el = $('dc_' + key);
+      var v = jdc[key];
+      if(!v){
+        var metas = doc.querySelectorAll('meta[name="DC.' + key + '"]');
+        v = Array.prototype.map.call(metas, function(m){ return (m.getAttribute('content') || '').trim(); })
+              .filter(Boolean).join('; ');
+      }
+      el.value = v || f[3] || '';
+      dcTouched[key] = !!v;
+    });
+
+    var m = text.match(/<!-- TÆLLER -->([\s\S]*?)<!-- TÆLLER SLUT -->/);
+    state.counterCode = m ? m[1] : '';
+
+    var pImg = doc.getElementById('poster');
+    if(pImg && /^data:image\//.test(pImg.getAttribute('src') || '')){
+      loadImageFromUrl(pImg.getAttribute('src')).then(function(img){
+        setPoster(pImg.getAttribute('src'), '<b>Fra den indlæste fil</b><br>' + img.naturalWidth + ' × ' + img.naturalHeight + ' pixel');
+      });
+    }else{
+      setPoster('', '');
+    }
+
+    var bits = ['Indlæst: ' + file.name];
+    if(d.builderVersion === 0) bits.push('prøvekort — metadata er hentet fra både JSON og metatags');
+    if(state.counterCode.trim()) bits.push('tællerkoden følger med over');
+    st.textContent = bits.join(' · ');
+    st.className = 'status ok';
+    invalidate();
+  }).catch(function(err){
+    st.textContent = 'Fejl ved indlæsning: ' + err.message;
+    st.className = 'status warn';
+  });
+}
+
+/* =======================================================================
+   Hændelser
+   ======================================================================= */
+['fKicker','fTitle','fText','fNote','fCtaText','fCtaUrl'].forEach(function(id){
+  $(id).addEventListener('input', invalidate);
+});
+$('fUrl').addEventListener('input', onUrlInput);
+$('fChapters').addEventListener('input', onChaptersInput);
+
+$('btnOembed').addEventListener('click', fetchOembed);
+$('btnThumb').addEventListener('click', fetchYouTubeThumb);
+$('btnPoster').addEventListener('click', function(){ $('posterInput').click(); });
+$('posterInput').addEventListener('change', function(e){ if(e.target.files[0]) pickPosterFile(e.target.files[0]); e.target.value = ''; });
+$('btnPosterClear').addEventListener('click', function(){
+  setPoster('', '');
+  $('posterStatus').textContent = 'Kortet tegner nu en enkel plakat med titlen.';
+  $('posterStatus').className = 'status';
+});
+
+$('btnLoad').addEventListener('click', function(){ $('loadInput').click(); });
+$('loadInput').addEventListener('change', function(e){ if(e.target.files[0]) loadExisting(e.target.files[0]); e.target.value = ''; });
+
+$('btnMetaJson').addEventListener('click', function(){
+  syncAutoDc();
+  var dc = collectDc();
+  var box = $('msg');
+  if(!Object.keys(dc).length){
+    box.textContent = 'Der er ingen Dublin Core-felter udfyldt endnu.';
+    box.className = 'msg show bad';
+    return;
+  }
+  var payload = { '@context': 'http://purl.org/dc/elements/1.1/', dublinCore: dc, generated: new Date().toISOString() };
+  var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = fileStem(dc, $('fTitle').value) + '-metadata.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  box.textContent = 'Metadatafilen er gemt.';
+  box.className = 'msg show';
+});
+
+$('btnGenerate').addEventListener('click', function(){
+  var box = $('msg');
+  if(!state.videoId){
+    box.textContent = 'Skriv adressen på YouTube-videoen først.';
+    box.className = 'msg show bad';
+    return;
+  }
+  try{
+    var st = gatherState();
+    var html = buildOutput(st, { preview: false });
+    var name = fileStem(st.dc, st.title) + '.html';
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+    var warn = [];
+    if(!st.dc.description) warn.push('beskrivelse');
+    if(!st.dc.subject) warn.push('emneord');
+    box.textContent = 'Filen er gemt som ' + name + ' — ' + fmtBytes(html.length) + '.' +
+      (warn.length ? ' Bemærk: uden ' + warn.join(' og ') + ' er kortet sværere at finde i søgesiden.' : '') +
+      (st.counterCode.trim() ? ' Tællerkoden fra den indlæste fil står stadig i filen.' : '');
+    box.className = 'msg show' + (warn.length ? ' bad' : '');
+  }catch(err){
+    box.textContent = 'Der gik noget galt: ' + err.message;
+    box.className = 'msg show bad';
+  }
+});
+
+/* ---------- Start ---------- */
+buildThemeChooser();
+buildDcFields();
+renderPreview();
+</script>
+</body>
+</html>

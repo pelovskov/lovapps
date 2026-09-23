@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Henvisning · Bygger</title>
+<style>
+  :root{
+    --paper:     #EDE7D8;
+    --paper-dim: #E2DBC8;
+    --ink:       #211E19;
+    --rust:      #9A4630;
+    --moss:      #47543C;
+    --hint:      #5F5A4B;
+    --line:      #cbc2a8;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  /* ---------- Topbar ---------- */
+  .topbar{ border-bottom: 1px solid var(--line); padding: 20px 24px 18px; background: var(--paper); }
+  .topbar h1{
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 26px; margin: 0 0 6px; font-weight: 600; color: var(--ink);
+  }
+  .topbar p{ margin: 0; font-size: 14.5px; color: var(--hint); max-width: 78ch; }
+
+  /* ---------- Layout ---------- */
+  .wrap{ display: grid; grid-template-columns: 1fr 380px; gap: 28px; align-items: start; padding: 24px; }
+  .formpane{ max-width: 640px; }
+  .previewpane{ position: sticky; top: 24px; }
+  @media (max-width: 860px){
+    .wrap{ grid-template-columns: 1fr; }
+    .previewpane{ position: static; }
+  }
+
+  /* ---------- Felter ---------- */
+  .block{ border-top: 1px solid var(--line); padding: 18px 0 4px; }
+  .block:first-of-type{ border-top: none; padding-top: 4px; }
+  .block > h2{
+    font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 600; color: var(--moss); margin: 0 0 12px;
+  }
+  .field{ margin-bottom: 18px; }
+  .field > label{
+    display: block; font-size: 13.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--moss); margin-bottom: 5px;
+  }
+  .help{ font-size: 13.5px; line-height: 1.55; color: var(--hint); margin: 5px 0 0; }
+  .help code{ background: var(--paper-dim); padding: 0 3px; border-radius: 3px; }
+  input[type=text], input[type=url], textarea, select{
+    width: 100%; font: inherit; font-size: 15.5px; padding: 9px 11px;
+    border: 1px solid var(--line); border-radius: 4px; background: #FBF8F1; color: var(--ink);
+  }
+  textarea{ resize: vertical; line-height: 1.6; }
+  textarea.mono{ font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14.5px; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible,
+  button:focus-visible, summary:focus-visible, label.theme:focus-within, a:focus-visible{
+    outline: 2px solid var(--rust); outline-offset: 2px;
+  }
+  .status{ font-size: 13.5px; color: var(--hint); margin-top: 8px; }
+  .status.ok{ color: var(--moss); }
+  .status.warn{ color: var(--rust); font-weight: 600; }
+  .status a{ color: var(--rust); }
+  .row{ display:flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+  /* ---------- Temavalg ---------- */
+  .themes{ display:flex; gap: 10px; flex-wrap: wrap; }
+  label.theme{
+    display:flex; align-items:center; gap: 9px; border: 2px solid var(--line); border-radius: 6px;
+    padding: 10px 14px; min-height: 44px; cursor: pointer; background: #FBF8F1; font-size: 15px;
+  }
+  label.theme input{ margin:0; width: 18px; height: 18px; accent-color: var(--rust); }
+  label.theme .dot{ width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.25); display:inline-block; }
+  label.theme.on{ border-color: var(--rust); background: #fff; }
+
+  /* ---------- Filboks og knapper ---------- */
+  .filebox{ border: 1px dashed var(--line); border-radius: 6px; padding: 14px; background: #FBF8F1; }
+  .btn{
+    font: inherit; font-size: 14.5px; min-height: 44px; padding: 10px 16px; border-radius: 5px;
+    border: 2px solid var(--rust); background: #fff; color: var(--rust); cursor: pointer; font-weight: 600;
+  }
+  .btn:hover{ background: var(--rust); color: #fff; }
+  .btn.filled{ background: var(--rust); color: #fff; }
+  .btn.filled:hover{ background: #7d3826; border-color: #7d3826; }
+  .btn:disabled{ opacity: 0.45; cursor: default; }
+  .btn:disabled:hover{ background: #fff; color: var(--rust); }
+  input[type=file]{ display: none; }
+
+  .posterrow{ display:flex; gap: 14px; align-items: flex-start; margin-top: 12px; }
+  .posterrow img{
+    width: 160px; aspect-ratio: 16/9; object-fit: cover;
+    border: 1px solid var(--line); border-radius: 4px; background: var(--paper-dim);
+  }
+  .posterrow .meta{ font-size: 13.5px; color: var(--hint); }
+  .posterrow .meta b{ color: var(--ink); }
+
+  /* ---------- Kapitelkontrol ---------- */
+  .chapcheck{ margin: 10px 0 0; padding: 0; list-style: none; font-size: 14px; }
+  .chapcheck li{ display:flex; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+  .chapcheck .t{ font-variant-numeric: tabular-nums; color: var(--rust); font-weight: 600; min-width: 4.2em; }
+  .chapcheck li.bad{ color: var(--rust); }
+
+  /* ---------- Dublin Core ---------- */
+  details.dc{ border-top: 1px solid var(--line); padding-top: 18px; margin-top: 4px; }
+  details.dc summary{
+    cursor: pointer; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 600; color: var(--moss); min-height: 44px; display: flex; align-items: center;
+  }
+  details.dc summary::marker{ color: var(--rust); }
+  .dcfield{ margin-bottom: 16px; }
+  .dcfield label{ display:block; font-size: 14px; font-weight: 600; color: var(--moss); margin-bottom: 4px; }
+  .dcfield .help{ font-size: 13px; margin: 0 0 5px; }
+
+  /* ---------- Generér ---------- */
+  .genbar{ border-top: 1px solid var(--line); padding-top: 20px; margin-top: 10px; }
+  #btnGenerate{ font-size: 17px; font-weight: 700; padding: 14px 22px; width: 100%; }
+  .msg{
+    font-size: 14.5px; margin-top: 12px; padding: 11px 13px; border-radius: 5px;
+    background: var(--paper-dim); color: var(--ink); display: none;
+  }
+  .msg.show{ display: block; }
+  .msg.bad{ background: #F6DEDA; color: #6B2718; }
+
+  /* ---------- Forhåndsvisning ---------- */
+  .previewpane h2{
+    font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 600; color: var(--moss); margin: 0 0 8px;
+  }
+  .previewpane .frame{ border: 1px solid var(--line); border-radius: 6px; background: var(--paper-dim); overflow: hidden; height: 620px; }
+  .previewpane iframe{ width: 100%; height: 100%; border: 0; background: #fff; }
+  .previewpane .note{ font-size: 13px; color: var(--hint); margin: 8px 0 0; }
+  /* ---------- Valgliste ---------- */
+  .radiolist{ display:flex; flex-direction: column; gap: 8px; }
+  .radiolist label{
+    display:flex; gap: 9px; align-items: flex-start; font-size: 15px; padding: 8px 10px;
+    border: 1px solid var(--line); border-radius: 5px; background: #FBF8F1; cursor: pointer; min-height: 44px;
+  }
+  .radiolist label.on{ border-color: var(--rust); background: #fff; }
+  .radiolist input{ margin-top: 3px; accent-color: var(--rust); width: 18px; height: 18px; }
+  .radiolist .sub{ display:block; font-size: 13px; color: var(--hint); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Henvisning · Bygger</h1>
+  <p>Et lille «skilt» der peger ud på en side på nettet, som ikke ligger i din egen samling. Læg filen i mappen sammen med dine andre filer, så kommer henvisningen med, når du bygger søgesiden — med titel, beskrivelse og emneord som alt det andet.</p>
+</div>
+
+<div class="wrap">
+  <div class="formpane">
+
+    <!-- 1. Indlæs eksisterende fil -->
+    <div class="block">
+      <h2>Indlæs eksisterende fil (valgfri)</h2>
+      <div class="filebox">
+        <button type="button" class="btn" id="btnLoad">Vælg HTML-fil</button>
+        <input type="file" id="loadInput" accept=".html,.htm">
+        <p class="help">Vælg en henvisning, du tidligere har lavet — også dem du har lavet i hånden ud fra skabelonen — hvis du vil rette i den.</p>
+        <div class="status" id="loadStatus"></div>
+      </div>
+    </div>
+
+    <!-- 2. Tema -->
+    <div class="block">
+      <h2>Tema</h2>
+      <div class="themes" id="themes"></div>
+    </div>
+
+    <!-- 3. Indhold -->
+    <div class="block">
+      <h2>Indhold</h2>
+
+      <div class="field">
+        <label for="fUrl">Adressen der henvises til</label>
+        <input type="url" id="fUrl" placeholder="https://…">
+        <p class="help">Kopiér adressen fra browserens adresselinje. Den skal begynde med <code>https://</code> eller <code>http://</code>.</p>
+        <div class="status" id="urlStatus"></div>
+        <div class="row">
+          <button type="button" class="btn" id="btnTry" disabled>Prøv adressen i et nyt vindue</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="fTitle">Titel</label>
+        <input type="text" id="fTitle" placeholder="F.eks. Historisk Samfund for Roskilde Amt">
+        <p class="help">Det navn henvisningen står med i søgesiden.</p>
+      </div>
+
+      <div class="field">
+        <label for="fDesc">Beskrivelse</label>
+        <textarea id="fDesc" rows="4" placeholder="Hvad finder man på siden? To-tre sætninger er nok."></textarea>
+        <p class="help">Vises i søgesiden og på skiltet. Almindelig tekst uden formatering.</p>
+      </div>
+
+      <div class="field">
+        <label>Når nogen åbner filen direkte</label>
+        <div class="radiolist" id="modeChoice">
+          <label class="on"><input type="radio" name="mode" value="1" checked><span>Send videre efter 1 sekund <span class="sub">Det normale valg. Man når lige at se, at man er på vej ud.</span></span></label>
+          <label><input type="radio" name="mode" value="5"><span>Send videre efter 5 sekunder <span class="sub">Så når man at læse titel og beskrivelse først.</span></span></label>
+          <label><input type="radio" name="mode" value="0"><span>Send ikke videre af sig selv <span class="sub">Viser et lille kort med titel, beskrivelse og en knap. Rart hvis filen også skal kunne bruges på en USB-stik uden internet.</span></span></label>
+        </div>
+        <p class="help">Fra søgesiden går man altid direkte til adressen — skiltet ses kun, når filen åbnes for sig selv.</p>
+      </div>
+    </div>
+
+    <!-- 4. Dublin Core -->
+    <div class="block" style="border-top:none; padding-top:0;">
+      <details class="dc" id="dcPanel">
+        <summary>Dublin Core-metadata</summary>
+        <p class="help" style="margin-bottom:16px;">Til arkivering og til Søgeside · Bygger. Titel, beskrivelse og relation udfyldes af sig selv. Udgiver og emneord gør, at henvisningen havner det rigtige sted, når der filtreres.</p>
+        <div id="dcFields"></div>
+        <datalist id="publisherList">
+          <option value="Syd for Banen - Lokalhistorisk Forening">
+          <option value="Røde Kors Roskilde">
+          <option value="Privat">
+          <option value="Roskilde TV">
+        </datalist>
+        <button type="button" class="btn" id="btnMetaJson">Gem metadata som separat JSON-fil</button>
+      </details>
+    </div>
+
+    <!-- 5. Generér -->
+    <div class="genbar">
+      <button type="button" class="btn filled" id="btnGenerate" disabled>Generér henvisning (.html)</button>
+      <div class="msg" id="msg"></div>
+      <button type="button" class="btn" id="btnNext" style="width:100%; margin-top:12px;">Lav en til — behold udgiver, emneord og rettigheder</button>
+      <p class="help">Tømmer adresse, titel og beskrivelse, så du hurtigt kan lave den næste i samme serie.</p>
+    </div>
+  </div>
+
+  <div class="previewpane">
+    <h2>Forhåndsvisning</h2>
+    <div class="frame"><iframe id="preview" title="Forhåndsvisning"></iframe></div>
+    <p class="note">Forhåndsvisningen sender ikke videre. Det gør den færdige fil.</p>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   Henvisning · Bygger  —  version 1
+   Bygget efter Builder-standard 1.0 (august 2026).
+   Format i outputfilen: "Ekstern henvisning", builderVersion 1.
+   Søgeside · Bygger genkender posten som ekstern på feltet "link".
+   Kan også indlæse de håndlavede skabelonfiler (uden builderVersion).
+   ======================================================================= */
+
+/* ---------- Temaer (samme hex-værdier i hele værktøjskassen) ---------- */
+var THEMES = {
+  original: { label: 'Oprindeligt', accent: '#9A4630', paper: '#EDE7D8', ink: '#211E19', muted: '#6B6455', line: '#cbc2a8', codeBg: '#E2DBC8' },
+  rodekors: { label: 'Røde Kors',   accent: '#E30A0B', paper: '#FFFFFF', ink: '#1A1A1A', muted: '#5A5A5A', line: '#DCDCDC', codeBg: '#F1F1F1' },
+  bordeaux: { label: 'Lokalhistorisk', accent: '#9E2453', paper: '#FAF9F5', ink: '#211E19', muted: '#6B5560', line: '#E0D8D3', codeBg: '#F0EAE6' }
+};
+
+/* ---------- Dublin Core: de 15 felter, fast rækkefølge ---------- */
+var DC_FIELDS = [
+  ['title',       'Titel',              'udfyldes automatisk fra titlen', ''],
+  ['creator',     'Ophav / skaber',     'den der står bag siden, der henvises til', ''],
+  ['subject',     'Emne / nøgleord',    'adskil med semikolon; områdenavnet først', ''],
+  ['description', 'Beskrivelse',        'udfyldes automatisk fra beskrivelsen', ''],
+  ['publisher',   'Udgiver',            'hvis samling henvisningen hører til — vælg fra listen, så stavemåden bliver ens', ''],
+  ['contributor', 'Bidragyder',         'den der har lavet henvisningen', ''],
+  ['date',        'Dato',               'helst ÅÅÅÅ-MM-DD', ''],
+  ['type',        'Type',               'Henvisning giver 🔗 i søgesiden', 'Henvisning'],
+  ['format',      'Format',             'filens tekniske format', 'text/html'],
+  ['identifier',  'Identifikator',      'arkivnummer, fx SFB-henv-0001', ''],
+  ['source',      'Kilde',              'hvor oplysningerne stammer fra', ''],
+  ['language',    'Sprog',              'sprogkode, fx da', 'da'],
+  ['relation',    'Relation',           'udfyldes automatisk med adressen der henvises til', ''],
+  ['coverage',    'Dækning',            'sted og/eller periode', ''],
+  ['rights',      'Rettigheder',        'ophavsret og vilkår for brug', '']
+];
+var DC_TYPES = ['Henvisning','Text','Image','Sound','MovingImage','InteractiveResource','Collection','Event',''];
+var KEEP_ON_NEXT = ['creator','subject','publisher','contributor','date','type','format','language','coverage','rights'];
+
+/* ---------- Tilstand ---------- */
+var state = { theme: 'bordeaux', url: '', counterCode: '' };
+var dcTouched = {};
+
+/* ---------- Småting ---------- */
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function fmtBytes(b){
+  if(b < 1024) return b + ' B';
+  if(b < 1024*1024) return Math.round(b/1024) + ' KB';
+  return (b/(1024*1024)).toFixed(1).replace('.', ',') + ' MB';
+}
+function slug(s){
+  var t = (s || '').toLowerCase()
+    .replace(/æ/g,'ae').replace(/ø/g,'oe').replace(/å/g,'aa')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return t || 'henvisning';
+}
+function fileStem(dc, title){
+  var id = String(dc.identifier || '').trim().replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+  var t = slug(title).slice(0, 48).replace(/-+$/, '');
+  return id ? id + '-' + t : 'henvisning-' + t;
+}
+function checkUrl(raw){
+  var s = String(raw || '').trim();
+  if(!s) return '';
+  if(/^www\./i.test(s)) s = 'https://' + s;
+  try{
+    var u = new URL(s);
+    if(u.protocol !== 'http:' && u.protocol !== 'https:') return '';
+    if(!u.hostname || u.hostname.indexOf('.') < 0) return '';
+    return u.href;
+  }catch(e){ return ''; }
+}
+function hostOf(url){ try{ return new URL(url).hostname.replace(/^www\./, ''); }catch(e){ return ''; } }
+
+/* =======================================================================
+   Formularen bygges
+   ======================================================================= */
+function buildThemeChooser(){
+  var box = $('themes');
+  Object.keys(THEMES).forEach(function(key){
+    var t = THEMES[key];
+    var lab = document.createElement('label');
+    lab.className = 'theme' + (key === state.theme ? ' on' : '');
+    var r = document.createElement('input');
+    r.type = 'radio'; r.name = 'theme'; r.value = key; r.checked = (key === state.theme);
+    r.addEventListener('change', function(){ setTheme(key); });
+    var dot = document.createElement('span');
+    dot.className = 'dot'; dot.style.background = t.accent;
+    var txt = document.createElement('span');
+    txt.textContent = t.label;
+    lab.appendChild(r); lab.appendChild(dot); lab.appendChild(txt);
+    box.appendChild(lab);
+  });
+}
+function setTheme(key){
+  state.theme = THEMES[key] ? key : 'bordeaux';
+  Array.prototype.forEach.call($('themes').children, function(lab){
+    var r = lab.querySelector('input');
+    r.checked = (r.value === state.theme);
+    lab.classList.toggle('on', r.checked);
+  });
+  invalidate();
+}
+
+function buildDcFields(){
+  var box = $('dcFields');
+  DC_FIELDS.forEach(function(f){
+    var key = f[0], label = f[1], help = f[2], def = f[3];
+    var wrap = document.createElement('div');
+    wrap.className = 'dcfield';
+    var lab = document.createElement('label');
+    lab.setAttribute('for', 'dc_' + key);
+    lab.textContent = label;
+    var hint = document.createElement('p');
+    hint.className = 'help';
+    hint.textContent = 'dc.' + key + ' — ' + help;
+    var input;
+    if(key === 'type'){
+      input = document.createElement('select');
+      DC_TYPES.forEach(function(v){
+        var o = document.createElement('option');
+        o.value = v; o.textContent = v || '(ingen)';
+        if(v === def) o.selected = true;
+        input.appendChild(o);
+      });
+    }else{
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = def || '';
+      if(key === 'publisher') input.setAttribute('list', 'publisherList');
+    }
+    input.id = 'dc_' + key;
+    input.addEventListener('input', function(){ dcTouched[key] = true; invalidate(); });
+    input.addEventListener('change', function(){ dcTouched[key] = true; invalidate(); });
+    wrap.appendChild(lab); wrap.appendChild(hint); wrap.appendChild(input);
+    box.appendChild(wrap);
+  });
+}
+
+function setRadio(groupId, value){
+  Array.prototype.forEach.call($(groupId).querySelectorAll('label'), function(lab){
+    var r = lab.querySelector('input');
+    r.checked = (r.value === value);
+    lab.classList.toggle('on', r.checked);
+  });
+}
+function wireRadioGroup(id){
+  var box = $(id);
+  Array.prototype.forEach.call(box.querySelectorAll('label'), function(lab){
+    lab.querySelector('input').addEventListener('change', function(){
+      Array.prototype.forEach.call(box.querySelectorAll('label'), function(l){ l.classList.remove('on'); });
+      lab.classList.add('on');
+      invalidate();
+    });
+  });
+}
+
+function collectDc(){
+  var dc = {};
+  DC_FIELDS.forEach(function(f){
+    var el = $('dc_' + f[0]);
+    var v = el ? String(el.value).trim() : '';
+    if(v) dc[f[0]] = v;
+  });
+  return dc;
+}
+
+// Titel, beskrivelse og relation spejler formularen, indtil du selv skriver i dem.
+function syncAutoDc(){
+  if(!dcTouched.title) $('dc_title').value = $('fTitle').value.trim();
+  if(!dcTouched.description) $('dc_description').value = $('fDesc').value.replace(/\s+/g, ' ').trim();
+  if(!dcTouched.relation) $('dc_relation').value = state.url;
+}
+
+function gatherState(){
+  syncAutoDc();
+  var m = document.querySelector('#modeChoice input:checked');
+  return {
+    theme: state.theme,
+    url: state.url,
+    title: $('fTitle').value.trim(),
+    description: $('fDesc').value.trim(),
+    delay: m ? parseInt(m.value, 10) : 1,
+    dc: collectDc(),
+    counterCode: state.counterCode
+  };
+}
+
+/* =======================================================================
+   Outputfilen bygges
+   ======================================================================= */
+function dcMetaTags(dc){
+  var out = [];
+  DC_FIELDS.forEach(function(f){
+    var key = f[0];
+    if(!dc[key]) return;
+    if(key === 'subject'){
+      dc[key].split(';').forEach(function(p){
+        var v = p.trim();
+        if(v) out.push('<meta name="DC.subject" content="' + esc(v) + '">');
+      });
+    }else{
+      out.push('<meta name="DC.' + key + '" content="' + esc(dc[key]) + '">');
+    }
+  });
+  return out.join('\n');
+}
+
+function buildOutput(st, opts){
+  opts = opts || {};
+  var preview = !!opts.preview;
+  var t = THEMES[st.theme] || THEMES.bordeaux;
+  var dc = st.dc || {};
+  var url = st.url || 'https://';
+  var title = st.title || 'Henvisning';
+  var host = hostOf(url);
+  var redirect = st.delay > 0;
+
+  var sourceData = {
+    format: 'Ekstern henvisning',
+    builderVersion: 1,
+    link: st.url,
+    theme: st.theme,
+    title: st.title,
+    description: st.description,
+    delay: st.delay,
+    dublinCore: dc
+  };
+  var sourceJson = JSON.stringify(sourceData, null, 2)
+    .replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026');
+
+  var head = [
+    '<!DOCTYPE html>',
+    '<html lang="' + esc(dc.language || 'da') + '">',
+    '<head>',
+    '<meta charset="UTF-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    '<!-- Ekstern henvisning, lavet med Henvisning · Bygger.',
+    '     Filen peger ud på en side, der ikke ligger i samlingen.',
+    '     Adressen står i "link" i metadatablokken nederst. -->',
+    '<title>' + esc(title) + '</title>',
+    (redirect && !preview) ? '<meta http-equiv="refresh" content="' + st.delay + '; url=' + esc(url) + '">' : '',
+    '<link rel="schema.DC" href="http://purl.org/dc/elements/1.1/">',
+    dcMetaTags(dc),
+    '<meta property="og:type" content="website">',
+    '<meta property="og:title" content="' + esc(title) + '">',
+    st.description ? '<meta property="og:description" content="' + esc(st.description) + '">' : ''
+  ].filter(Boolean).join('\n');
+
+  var css = [
+'<style>',
+':root{ --accent:' + t.accent + '; --paper:' + t.paper + '; --ink:' + t.ink + '; --muted:' + t.muted + '; --line:' + t.line + '; --chip:' + t.codeBg + '; }',
+'*{box-sizing:border-box}',
+'html,body{margin:0;padding:0}',
+'body{background:var(--paper);color:var(--ink);font-family:Georgia,"Times New Roman",serif;font-size:1.2rem;line-height:1.6;',
+'  display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem}',
+'a{color:var(--accent)}',
+'a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}',
+'main{max-width:36rem;width:100%}',
+'.kicker{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:.9rem;color:var(--muted);margin:0 0 .4rem}',
+'h1{font-size:1.9rem;line-height:1.25;font-weight:normal;margin:0 0 .8rem}',
+'.desc{margin:0 0 1.6rem}',
+'.go{display:inline-flex;align-items:center;min-height:48px;padding:.75rem 1.4rem;border-radius:999px;background:var(--accent);color:#fff;',
+'  text-decoration:none;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.05rem;font-weight:600}',
+'.host{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:.95rem;color:var(--muted);margin:.8rem 0 0;word-break:break-all}',
+'.hint{margin-top:2rem;padding-top:1rem;border-top:1px solid var(--line);font-size:.95rem;color:var(--muted)}',
+'</style>'
+  ].join('\n');
+
+  var body = ['<main>'];
+  body.push('<p class="kicker">' + (redirect ? 'Du sendes videre til' : 'Henvisning til en anden hjemmeside') + '</p>');
+  body.push('<h1>' + esc(title) + '</h1>');
+  if(st.description) body.push('<p class="desc">' + esc(st.description) + '</p>');
+  body.push('<p><a class="go" href="' + esc(url) + '">' + (redirect ? 'Gå videre nu' : 'Gå til siden') + '</a></p>');
+  if(host) body.push('<p class="host">' + esc(host) + '</p>');
+  body.push('<p class="hint">Denne fil er kun et lille skilt — selve indholdet ligger på en anden hjemmeside og kræver internet.</p>');
+  body.push('</main>');
+
+  var counterBlock = '<!-- TÆLLER -->' + (st.counterCode || '') + '<!-- TÆLLER SLUT -->';
+
+  return [
+    head, css, '</head>', '<body>', body.join('\n'),
+    '<script type="application/json" id="builder-source-data">',
+    sourceJson,
+    '<\/script>',
+    preview ? '' : counterBlock,
+    '</body>', '</html>'
+  ].filter(function(x){ return x !== ''; }).join('\n');
+}
+
+/* =======================================================================
+   Forhåndsvisning og kontrol
+   ======================================================================= */
+var previewTimer = null;
+function invalidate(){
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(renderPreview, 200);
+}
+function renderPreview(){
+  $('preview').srcdoc = buildOutput(gatherState(), { preview: true });
+  $('btnGenerate').disabled = !(state.url && $('fTitle').value.trim());
+}
+
+function onUrlInput(){
+  var raw = $('fUrl').value.trim();
+  state.url = checkUrl(raw);
+  var st = $('urlStatus');
+  if(!raw){ st.textContent = ''; st.className = 'status'; }
+  else if(state.url){ st.textContent = 'Forstået — peger på ' + hostOf(state.url) + '.'; st.className = 'status ok'; }
+  else { st.textContent = 'Det ligner ikke en webadresse. Den skal begynde med https:// og indeholde et domæne, fx https://roskilde.dk'; st.className = 'status warn'; }
+  $('btnTry').disabled = !state.url;
+  invalidate();
+}
+
+/* =======================================================================
+   Indlæsning af en eksisterende fil
+   ======================================================================= */
+function loadExisting(file){
+  var st = $('loadStatus');
+  st.textContent = 'Læser fil …'; st.className = 'status';
+  file.text().then(function(text){
+    var doc = new DOMParser().parseFromString(text, 'text/html');
+    var holder = doc.getElementById('builder-source-data');
+    var d = null;
+    try{ d = holder ? JSON.parse(holder.textContent) : null; }catch(e){ d = null; }
+    if(!d || !d.link){
+      st.textContent = 'Filen kan ikke indlæses — den er ikke en henvisning.';
+      st.className = 'status warn';
+      return;
+    }
+    var jdc = d.dublinCore || d.dc || {};
+    setTheme(THEMES[d.theme] ? d.theme : 'bordeaux');
+    $('fUrl').value = d.link;
+    onUrlInput();
+    $('fTitle').value = d.title || jdc.title || '';
+    $('fDesc').value = d.description || jdc.description || '';
+    setRadio('modeChoice', String(d.delay != null ? d.delay : 1));
+
+    DC_FIELDS.forEach(function(f){
+      var key = f[0], el = $('dc_' + key);
+      var v = jdc[key] || '';
+      if(key === 'type' && v && DC_TYPES.indexOf(v) < 0){
+        var o = document.createElement('option'); o.value = v; o.textContent = v; el.appendChild(o);
+      }
+      el.value = v || f[3] || '';
+      // Titel og beskrivelse får lov at følge formularen, når de er ens med den.
+      dcTouched[key] = !!v && !(key === 'title' && v === $('fTitle').value.trim())
+                           && !(key === 'description' && v === $('fDesc').value.trim());
+    });
+
+    var m = text.match(/<!-- TÆLLER -->([\s\S]*?)<!-- TÆLLER SLUT -->/);
+    state.counterCode = m ? m[1] : '';
+
+    var bits = ['Indlæst: ' + file.name];
+    if(!d.builderVersion) bits.push('håndlavet skabelonfil');
+    if(/Ophav \(hvis kendt\)/.test(jdc.creator || '')) bits.push('Ophav står stadig som skabelonens pladsholder — ret den i metadata');
+    if(state.counterCode.trim()) bits.push('tællerkoden følger med over');
+    st.textContent = bits.join(' · ');
+    st.className = 'status ok';
+    invalidate();
+  }).catch(function(err){
+    st.textContent = 'Fejl ved indlæsning: ' + err.message;
+    st.className = 'status warn';
+  });
+}
+
+/* =======================================================================
+   Hændelser
+   ======================================================================= */
+$('fUrl').addEventListener('input', onUrlInput);
+$('fTitle').addEventListener('input', invalidate);
+$('fDesc').addEventListener('input', invalidate);
+$('btnTry').addEventListener('click', function(){ if(state.url) window.open(state.url, '_blank', 'noopener'); });
+
+$('btnLoad').addEventListener('click', function(){ $('loadInput').click(); });
+$('loadInput').addEventListener('change', function(e){ if(e.target.files[0]) loadExisting(e.target.files[0]); e.target.value = ''; });
+
+function download(text, name, type){
+  var blob = new Blob([text], { type: type });
+  var url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+
+$('btnMetaJson').addEventListener('click', function(){
+  syncAutoDc();
+  var dc = collectDc(), box = $('msg');
+  if(!Object.keys(dc).length){
+    box.textContent = 'Der er ingen Dublin Core-felter udfyldt endnu.';
+    box.className = 'msg show bad';
+    return;
+  }
+  var payload = { '@context': 'http://purl.org/dc/elements/1.1/', dublinCore: dc, generated: new Date().toISOString() };
+  download(JSON.stringify(payload, null, 2), fileStem(dc, $('fTitle').value) + '-metadata.json', 'application/json');
+  box.textContent = 'Metadatafilen er gemt.';
+  box.className = 'msg show';
+});
+
+$('btnGenerate').addEventListener('click', function(){
+  var box = $('msg');
+  var st = gatherState();
+  if(!st.url || !st.title){
+    box.textContent = 'Skriv både adressen og en titel først.';
+    box.className = 'msg show bad';
+    return;
+  }
+  var html = buildOutput(st, { preview: false });
+  var name = fileStem(st.dc, st.title) + '.html';
+  download(html, name, 'text/html;charset=utf-8');
+  var warn = [];
+  if(!st.dc.description) warn.push('beskrivelse');
+  if(!st.dc.subject) warn.push('emneord');
+  if(!st.dc.publisher) warn.push('udgiver');
+  box.textContent = 'Filen er gemt som ' + name + ' — ' + fmtBytes(html.length) + '. Læg den i mappen og kør Søgeside · Bygger igen.' +
+    (warn.length ? ' Bemærk: uden ' + warn.join(', ') + ' er henvisningen sværere at finde og filtrere i søgesiden.' : '');
+  box.className = 'msg show' + (warn.length ? ' bad' : '');
+});
+
+$('btnNext').addEventListener('click', function(){
+  $('fUrl').value = ''; $('fTitle').value = ''; $('fDesc').value = '';
+  DC_FIELDS.forEach(function(f){
+    var key = f[0];
+    if(KEEP_ON_NEXT.indexOf(key) >= 0) return;
+    $('dc_' + key).value = f[3] || '';
+    dcTouched[key] = false;
+  });
+  state.counterCode = '';
+  $('loadStatus').textContent = '';
+  $('msg').className = 'msg';
+  onUrlInput();
+  $('fUrl').focus();
+});
+
+/* ---------- Start ---------- */
+buildThemeChooser();
+buildDcFields();
+wireRadioGroup('modeChoice');
+renderPreview();
+</script>
+</body>
+</html>
