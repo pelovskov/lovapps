@@ -277,11 +277,11 @@
 
   <div class="block">
     <h2>Billeder</h2>
-    <p class="hint" style="margin: -4px 0 12px;">Billederne skaleres til højst 1100 pixel på den længste led og gemmes som JPEG. Dine originalfiler bliver kun læst, aldrig ændret. Kommer billederne fra <strong>Google Takeout</strong>, kan du markere både billedfilerne og deres <code>.json</code>-filer på én gang — også albummets egen <code>metadata.json</code>. Så hentes beskrivelser, optagetidspunkt og albumoplysninger automatisk.</p>
+    <p class="hint" style="margin: -4px 0 12px;">Billederne skaleres til højst 1100 pixel på den længste led og gemmes som JPEG. Dine originalfiler bliver kun læst, aldrig ændret. Kommer billederne fra <strong>Google Takeout</strong>, kan du markere både billedfilerne og deres <code>.json</code>-filer på én gang — også albummets egen <code>metadata.json</code>. Kommer de fra <strong>Fotosafari</strong>, markerer du billederne og deres <code>.txt</code>-filer på samme måde. Så hentes beskrivelser, fotograf og optagetidspunkt automatisk.</p>
     <div class="toolbar">
       <button class="btn" id="btnAddImages">Tilføj billeder</button>
       <button class="btn secondary" id="btnSortDate" style="display:none;">Sortér efter optagelsesdato</button>
-      <input type="file" id="fileInput" accept="image/*,.json" multiple>
+      <input type="file" id="fileInput" accept="image/*,.json,.txt" multiple>
       <span class="count-pill" id="countPill">0 billeder</span>
     </div>
     <div class="imggrid" id="grid"></div>
@@ -1034,6 +1034,7 @@ fileInput.addEventListener('change', function(e){
 
   var files = allFiles.filter(function(f){ return f.type && f.type.indexOf('image/') === 0; });
   var jsonFiles = allFiles.filter(function(f){ return /\.json$/i.test(f.name); });
+  var txtFiles = allFiles.filter(function(f){ return /\.txt$/i.test(f.name); });
 
   /* Pladserne oprettes med det samme, så rækkefølgen bevares uanset
      hvilken rækkefølge billederne bliver færdigbehandlet i */
@@ -1075,6 +1076,10 @@ fileInput.addEventListener('change', function(e){
 
   if(jsonFiles.length > 0){
     applyTakeoutMetadata(jsonFiles, slots);
+  }
+
+  if(txtFiles.length > 0){
+    applyFotosafariMetadata(txtFiles, slots);
   }
 
   fileInput.value = '';
@@ -1173,6 +1178,72 @@ function applyTakeoutMetadata(jsonFiles, slots){
     showStatus(msgParts.length
       ? (msgParts.join(' · ') + '.')
       : 'Der var ingen genkendelige Google Takeout-oplysninger i de valgte json-filer.');
+
+    render();
+  });
+}
+
+/* ---------- Fotosafari-metadata (.txt-filer) ---------- */
+
+/* Fotosafari lægger en tekstfil ved siden af hvert billede. Den hedder
+   det samme som billedet bortset fra endelsen, og linjerne står i fast
+   rækkefølge: fotograf, beskrivelse, breddegrad, længdegrad, gruppe
+   og eventuelt en kode. Albummet bruger fotograf og beskrivelse. */
+
+function stripExtension(name){
+  return String(name || '').replace(/\.[^.\/\\]+$/, '');
+}
+
+function readTextFile(file){
+  return new Promise(function(resolve){
+    var reader = new FileReader();
+    reader.onload = function(ev){ resolve({ name: file.name, text: String(ev.target.result || '') }); };
+    reader.onerror = function(){ resolve({ name: file.name, text: '' }); };
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+function parseFotosafariText(text){
+  var lines = text.replace(/\r\n?/g, '\n').split('\n');
+  return {
+    photographer: (lines[0] || '').trim(),
+    description:  (lines[1] || '').trim(),
+    lat:          (lines[2] || '').trim(),
+    lon:          (lines[3] || '').trim(),
+    group:        (lines[4] || '').trim()
+  };
+}
+
+function applyFotosafariMetadata(txtFiles, slots){
+  Promise.all(txtFiles.map(readTextFile)).then(function(results){
+    var sidecars = {};
+    results.forEach(function(r){
+      if(!r.text) return;
+      sidecars[stripExtension(r.name).toLowerCase()] = parseFotosafariText(r.text);
+    });
+
+    var matched = 0;
+    var photographers = [];
+
+    slots.forEach(function(entry){
+      var key = entry.origName ? stripExtension(entry.origName).toLowerCase() : '';
+      var sc = key ? sidecars[key] : null;
+      if(!sc) return;
+      matched++;
+      if(sc.description && !entry.description) entry.description = sc.description;
+      if(sc.photographer && photographers.indexOf(sc.photographer) === -1){
+        photographers.push(sc.photographer);
+      }
+    });
+
+    if(photographers.length){
+      var creatorEl = document.getElementById('dcCreator');
+      if(creatorEl && !creatorEl.value.trim()) creatorEl.value = photographers.join('; ');
+    }
+
+    showStatus(matched > 0
+      ? (matched + ' billedbeskrivelse' + (matched === 1 ? '' : 'r') + ' hentet fra tekstfilerne.')
+      : 'Ingen af tekstfilerne passede til navnet på et af billederne.');
 
     render();
   });
