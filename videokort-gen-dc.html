@@ -309,6 +309,17 @@ var THEMES = {
     muted: '#6B5560', footerStrong: '#3A2630',
     bodyText: '#211E19', quoteText: '#3A2630', codeBg: '#F0EAE6',
     darkAccent: '#E88AAE'
+  },
+  roskildetv: {
+    label: 'Roskilde TV',
+    accent: '#B03035', paper: '#FFFFFF', cardBg: '#141414', cardText: '#FFFFFF',
+    ink: '#141414', moss: '#555555', line: '#E2E2E2',
+    timesColor: '#555555', footerColor: '#333333',
+    muted: '#555555', footerStrong: '#333333',
+    bodyText: '#141414', quoteText: '#333333', codeBg: '#F3F3F3',
+    darkAccent: '#F0A04B',
+    // Prikkerne fra logoet: lyseblå, blå, lilla, rød, orange, gul
+    dots: ['#4DB0E8', '#3576BA', '#8E2D62', '#B03035', '#E8803A', '#EFAF45']
   }
 };
 
@@ -603,7 +614,10 @@ function buildThemeChooser(){
     r.type = 'radio'; r.name = 'theme'; r.value = key; r.checked = (key === state.theme);
     r.addEventListener('change', function(){ setTheme(key); });
     var dot = document.createElement('span');
-    dot.className = 'dot'; dot.style.background = t.accent;
+    dot.className = 'dot';
+    dot.style.background = t.dots
+      ? 'conic-gradient(' + t.dots.map(function(c, i){ return c + ' ' + Math.round(i*100/t.dots.length) + '% ' + Math.round((i+1)*100/t.dots.length) + '%'; }).join(', ') + ')'
+      : t.accent;
     var txt = document.createElement('span');
     txt.textContent = t.label;
     lab.appendChild(r); lab.appendChild(dot); lab.appendChild(txt);
@@ -733,6 +747,19 @@ function wrapTitle(title, max){
   return lines;
 }
 
+// En bue af prikker der vokser mod højre, som i Roskilde TV's logo.
+// Den sidste, gule prik bærer domkirkens to spir.
+function dotArc(colors){
+  var pos = [[150,815,26],[300,745,36],[480,700,46],[690,680,56],[930,695,68],[1250,735,108]];
+  var out = colors.map(function(c, i){
+    var p = pos[i] || pos[pos.length-1];
+    return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + p[2] + '" fill="' + c + '"/>';
+  }).join('');
+  var x = 1250, y = 735;
+  out += '<path fill="#fff" d="M' + (x-32) + ' ' + (y+108) + 'V' + (y+30) + 'l14-10 5-110 5 110 8 6 8-6 5-110 5 110 14 10V' + (y+108) + 'z"/>';
+  return out;
+}
+
 function drawnPoster(st, t){
   var lines = wrapTitle(st.title || 'Videokort', 24);
   var size = lines.length > 2 ? 64 : 88;
@@ -743,7 +770,8 @@ function drawnPoster(st, t){
   return '<svg viewBox="0 0 1600 900" aria-hidden="true" preserveAspectRatio="xMidYMid slice">' +
     '<rect width="1600" height="900" fill="' + t.cardBg + '"/>' +
     '<rect width="1600" height="900" fill="#000" opacity=".28"/>' +
-    '<path fill="#fff" opacity=".10" d="M0 900V610h120v-60h70v60h90V520l60-50 60 50v90h110V560h80v50h120V470l40-90 40 90v140h100V540h90v70h140V500l70-60 70 60v110h130V570h90v40h150v290z"/>' +
+    (t.dots ? dotArc(t.dots) :
+    '<path fill="#fff" opacity=".10" d="M0 900V610h120v-60h70v60h90V520l60-50 60 50v90h110V560h80v50h120V470l40-90 40 90v140h100V540h90v70h140V500l70-60 70 60v110h130V570h90v40h150v290z"/>') +
     '<g fill="' + t.cardText + '" font-family="Georgia,serif" text-anchor="middle">' +
     (st.kicker ? '<text x="800" y="' + Math.round(startY - size - 8) + '" font-size="40" opacity=".75">' + esc(st.kicker) + '</text>' : '') +
     txt + '</g></svg>';
@@ -823,6 +851,11 @@ button{font:inherit;cursor:pointer}
 .tools button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 main{max-width:52rem;margin:0 auto;padding:0 1rem 3rem}
 .from{font-size:.85rem;color:var(--soft);margin:.5rem 0 .2rem}
+.dots{display:flex;align-items:flex-end;gap:.3rem;margin:.4rem 0 0}
+.dots i{display:block;border-radius:50%;width:.55rem;height:.55rem}
+.dots i:nth-child(2){width:.62rem;height:.62rem}.dots i:nth-child(3){width:.7rem;height:.7rem}
+.dots i:nth-child(4){width:.78rem;height:.78rem}.dots i:nth-child(5){width:.86rem;height:.86rem}
+.dots i:nth-child(6){width:.95rem;height:.95rem}
 h1{font-size:2rem;line-height:1.2;margin:0 0 1.2rem;font-weight:normal}
 .player{position:relative;aspect-ratio:16/9;background:var(--poster);border-radius:10px;overflow:hidden}
 .player svg,.player img.poster,.player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
@@ -876,6 +909,10 @@ footer{max-width:52rem;margin:0 auto;padding:1rem;font-size:.8rem;color:var(--so
   body.push('  <button type="button" data-theme-btn="dark" aria-pressed="false">Mørkt</button>');
   body.push('</div>');
   body.push('<main>');
+  if(t.dots){
+    body.push('<div class="dots" aria-hidden="true">' + t.dots.map(function(c){
+      return '<i style="background:' + c + '"></i>'; }).join('') + '</div>');
+  }
   if(st.kicker) body.push('<p class="from sans">' + esc(st.kicker) + '</p>');
   body.push('<h1>' + esc(title) + '</h1>');
 
