@@ -64,7 +64,7 @@
 
   .theme-picker{ display:flex; gap:12px; flex-wrap:wrap; }
   .theme-option{
-    flex:1; min-width:140px; position:relative; border:2px solid var(--line); border-radius:8px;
+    flex:1; min-width:132px; position:relative; border:2px solid var(--line); border-radius:8px;
     padding:12px 12px 11px; cursor:pointer; background:#fff;
     transition: border-color .15s ease, box-shadow .15s ease;
   }
@@ -149,6 +149,16 @@
           <input type="radio" name="theme" value="lokalhistorisk2">
           <div class="swatches"><span class="swatch" style="background:#9E2453"></span><span class="swatch" style="background:#FAF9F5"></span></div>
           <div class="tname">Lokalhistorisk</div>
+        </label>
+        <label class="theme-option" data-theme="roedekors" style="--theme-accent:#E30A0B">
+          <input type="radio" name="theme" value="roedekors">
+          <div class="swatches"><span class="swatch" style="background:#E30A0B"></span><span class="swatch" style="background:#FFFFFF"></span></div>
+          <div class="tname">Røde Kors</div>
+        </label>
+        <label class="theme-option" data-theme="roskildetv" style="--theme-accent:#B03035">
+          <input type="radio" name="theme" value="roskildetv">
+          <div class="swatches"><span class="swatch" style="background:#B03035"></span><span class="swatch" style="background:conic-gradient(#4DB0E8 0% 17%, #3576BA 17% 33%, #8E2D62 33% 50%, #B03035 50% 67%, #E8803A 67% 83%, #EFAF45 83% 100%)"></span></div>
+          <div class="tname">Roskilde TV</div>
         </label>
       </div>
     </div>
@@ -375,9 +385,6 @@
           <label for="dcPublisher">Udgiver / område <span class="hint">dc.publisher — vælg område, så filen kan filtreres i søgeindekset</span></label>
           <select id="dcPublisher">
             <option value="">(ikke valgt)</option>
-            <option value="Privat">Privat</option>
-            <option value="Syd for Banen - Lokalhistorisk Forening">Syd for Banen - Lokalhistorisk Forening</option>
-            <option value="Røde Kors Roskilde">Røde Kors Roskilde</option>
           </select>
         </div>
         <div class="field">
@@ -472,12 +479,41 @@ const DC_LABELS = {
   relation:'Relation', coverage:'Dækning', rights:'Rettigheder'
 };
 
-// Områdepræfikser til dc.identifier, jf. Builder-standarden.
-const AREA_PREFIX = {
-  'Privat':'PRIV',
-  'Syd for Banen - Lokalhistorisk Forening':'SFB',
-  'Røde Kors Roskilde':'RKR'
-};
+// Udgivere / områder til dc.publisher og deres præfiks til dc.identifier.
+// Kommer der en ny udgiver til, tilføjes den blot som en linje her —
+// så kommer den automatisk med i rullelisten.
+const PUBLISHERS = [
+  { name:'Historisk Samfund for Roskilde Amt',      prefix:'HSR'  },
+  { name:'Privat',                                  prefix:'PRIV' },
+  { name:'Roskilde TV',                             prefix:'RTV'  },
+  { name:'Røde Kors',                               prefix:'RKR'  },
+  { name:'Syd for Banen - Lokalhistorisk Forening', prefix:'SFB'  }
+];
+
+// Ældre navne, som stadig genkendes i indlæste filer.
+const LEGACY_PUBLISHERS = { 'Røde Kors Roskilde':'RKR' };
+
+const AREA_PREFIX = Object.assign({}, LEGACY_PUBLISHERS);
+PUBLISHERS.forEach(p => { AREA_PREFIX[p.name] = p.prefix; });
+
+(function fillPublisherSelect(){
+  const sel = document.getElementById('dcPublisher');
+  PUBLISHERS.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.name; o.textContent = p.name;
+    sel.appendChild(o);
+  });
+})();
+
+// Indlæses en fil med en udgiver, der ikke står på listen (fx et ældre navn),
+// sættes den ind som ekstra valg, så værdien ikke går tabt ved gem.
+function ensurePublisherOption(v){
+  const sel = document.getElementById('dcPublisher');
+  if (!v || Array.from(sel.options).some(o => o.value === v)) return;
+  const o = document.createElement('option');
+  o.value = v; o.textContent = v + ' (fra ældre fil)';
+  sel.appendChild(o);
+}
 
 // Faste serier. Vælges en af dem, står den som andet emneord efter området.
 const SERIES = ['Gader og veje', 'Steder, institutioner og mennesker'];
@@ -511,6 +547,22 @@ const THEMES = {
     muted:'#6B5560', line:'#E4DADE', quote:'#5C3B48',
     dPaper:'#1A1116', dSurface:'#241820', dInk:'#F7EFF2', dBody:'#E9DDE2',
     dMuted:'#B9A4AD', dLine:'#3D2C34', dQuote:'#C7AEB8'
+  },
+  roedekors: {
+    label:'Røde Kors',
+    accent:'#E30A0B', accentDark:'#B80809', onAccent:'#FFFFFF',
+    paper:'#F5F5F5', surface:'#FFFFFF', ink:'#1A1A1A', body:'#2B2B2B',
+    muted:'#5A5A5A', line:'#E2E2E2', quote:'#333333',
+    dPaper:'#161616', dSurface:'#1F1F1F', dInk:'#F2F2F2', dBody:'#E0E0E0',
+    dMuted:'#AAAAAA', dLine:'#383838', dQuote:'#C4C4C4'
+  },
+  roskildetv: {
+    label:'Roskilde TV',
+    accent:'#B03035', accentDark:'#8A2429', onAccent:'#FFFFFF',
+    paper:'#F4F4F4', surface:'#FFFFFF', ink:'#141414', body:'#222222',
+    muted:'#555555', line:'#E2E2E2', quote:'#333333',
+    dPaper:'#141414', dSurface:'#1E1E1E', dInk:'#F2F2F2', dBody:'#DEDEDE',
+    dMuted:'#A8A8A8', dLine:'#363636', dQuote:'#C2C2C2'
   }
 };
 
@@ -1255,7 +1307,7 @@ function fillDcFields(dc){
     const el = $(dcInputId(key));
     if (!el) return;
     let v = (dc && dc[key]) ? dc[key] : '';
-    if (key === 'publisher') v = normalizePublisher(v);
+    if (key === 'publisher'){ v = normalizePublisher(v); ensurePublisherOption(v); }
     if (!v){
       if (key === 'format') v = 'text/html';
       else if (key === 'language') v = 'da';
