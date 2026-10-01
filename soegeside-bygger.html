@@ -293,7 +293,11 @@ a.row:focus-visible{outline:3px solid var(--accent)}
 .col-main .d{font-size:1.05rem;color:var(--ink);margin-top:.4rem;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .col-type{flex:0 0 auto;font-size:.95rem;color:var(--muted);align-self:center;white-space:nowrap}
-.empty{padding:2rem 0;color:var(--muted)}
+.empty{padding:2rem 0 .6rem;color:var(--muted);margin:0}
+.forslag{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;margin:0 0 2rem}
+.forslag button{font-family:inherit;font-size:1.1rem;background:#fff;color:var(--accent);
+  border:2px solid var(--accent);border-radius:8px;min-height:48px;padding:.3rem 1rem;cursor:pointer}
+.forslag button:hover{background:var(--accent);color:#fff}
 footer{max-width:1100px;margin:0 auto;padding:.6rem 1.25rem 3rem;color:var(--muted);font-size:.95rem;line-height:1.7}
 @media(max-width:640px){
   .col-type{display:none}
@@ -327,6 +331,7 @@ footer{max-width:1100px;margin:0 auto;padding:.6rem 1.25rem 3rem;color:var(--mut
 <select id="omraadeFilter" aria-label="Filtrér på område"><option value="">Alle områder</option></select>
 <select id="typeFilter" aria-label="Filtrér på type"><option value="">Alle typer</option></select>
 <select id="sortBy" aria-label="Sortér">
+<option value="relevans">Bedste træf først</option>
 <option value="title">Titel A–Å</option>
 <option value="date-new">Dato, nyeste først</option>
 <option value="date-old">Dato, ældste først</option>
@@ -364,6 +369,121 @@ const ICONS = {Sound:"🎧",Image:"🖼️",Text:"📖",Collection:"🗂️",Int
 
 function yearOf(s){var m=(s||"").match(/\\d{4}/); return m?m[0]:"0000";}
 
+/* =====================================================================
+   Søgningen
+   - Hvert ord søges for sig, i vilkårlig rækkefølge. "…" søger en hel frase.
+   - Store/små bogstaver, aa/å, ae/æ, oe/ø, accenter og tegn betyder ikke noget.
+   - Træf i titlen tæller mest, så beskrivelsen mindst.
+   - Giver søgningen intet, foreslås det nærmeste ord fra arkivet ("Mente du …?").
+   ===================================================================== */
+const FELTER = [["title",10],["subject",5],["creator",3],["publisher",3],["coverage",3],["description",1]];
+
+function norm(s){
+  return (s||"").toLowerCase()
+    .replace(/å/g,"aa").replace(/æ/g,"ae").replace(/ø/g,"oe")
+    .normalize("NFD").replace(/[\\u0300-\\u036f]/g,"")
+    .replace(/[^a-z0-9]+/g," ").trim();
+}
+
+DATA.forEach(r=>{
+  r._n = {};
+  FELTER.forEach(([f])=>{ r._n[f] = " " + norm(r[f]) + " "; });
+  r._hay = FELTER.map(([f])=>r._n[f]).join(" ");
+});
+
+/* Søgefeltet → liste af {n: vasket, raa: som skrevet}. */
+function soegeord(q){
+  const ud = [], re = /"([^"]+)"|(\\S+)/g;
+  let m;
+  while((m = re.exec(q))){
+    const n = norm(m[1] || m[2]);
+    if(n) ud.push({n: n, raa: m[1] ? '"' + m[1] + '"' : m[2]});
+  }
+  return ud;
+}
+
+/* Point for en post. 0 = mindst ét ord mangler. */
+function point(r, ord){
+  let sum = 0;
+  for(const w of ord){
+    if(r._hay.indexOf(w) === -1) return 0;
+    let bedst = 0;
+    for(const [f, vaegt] of FELTER){
+      const t = r._n[f];
+      if(t.indexOf(w) === -1) continue;
+      let p = vaegt;
+      if(t.indexOf(" " + w + " ") !== -1) p *= 2;          // hele ordet
+      else if(t.indexOf(" " + w) !== -1) p *= 1.5;         // ordets begyndelse
+      if(p > bedst) bedst = p;
+    }
+    sum += bedst;
+  }
+  return sum;
+}
+
+/* ---- "Mente du …?" ---- */
+let ORDLISTE = null;
+function ordliste(){
+  if(ORDLISTE) return ORDLISTE;
+  ORDLISTE = new Map();
+  DATA.forEach(r=>{
+    FELTER.forEach(([f])=>{
+      String(r[f]||"").toLowerCase().split(/[^\\p{L}\\p{N}]+/u).forEach(t=>{
+        const n = norm(t);
+        if(n.length < 4 || n.indexOf(" ") !== -1) return;
+        const e = ORDLISTE.get(n);
+        if(e) e.antal++; else ORDLISTE.set(n, {vis: t, antal: 1});
+      });
+    });
+  });
+  return ORDLISTE;
+}
+
+/* Antal rettelser mellem to ord (også ombyttede nabobogstaver). Stopper ved maks. */
+function afstand(a, b, maks){
+  if(Math.abs(a.length - b.length) > maks) return maks + 1;
+  let pp = null, p = [];
+  for(let j = 0; j <= b.length; j++) p[j] = j;
+  for(let i = 1; i <= a.length; i++){
+    const c = [i]; let min = i;
+    for(let j = 1; j <= b.length; j++){
+      let v = Math.min(p[j] + 1, c[j-1] + 1, p[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+      if(pp && i > 1 && j > 1 && a[i-1] === b[j-2] && a[i-2] === b[j-1]) v = Math.min(v, pp[j-2] + 1);
+      c[j] = v; if(v < min) min = v;
+    }
+    if(min > maks) return maks + 1;
+    pp = p; p = c;
+  }
+  return p[b.length];
+}
+
+/* Korte ord skal staves rigtigt; mellemlange må have én fejl, lange to. */
+function tilladteFejl(n){ return n.length < 4 ? 0 : (n.length < 8 ? 1 : 2); }
+
+function foreslaa(ord, kandidater){
+  const liste = ordliste();
+  let rettet = false;
+  const nye = ord.map(o=>{
+    if(kandidater.some(r=>r._hay.indexOf(o.n) !== -1)) return {n: o.n, vis: o.raa};
+    const maks = tilladteFejl(o.n);
+    if(!maks || o.n.indexOf(" ") !== -1) return {n: o.n, vis: o.raa};
+    let bedst = null, bedstD = maks + 1, bedstA = 0;
+    liste.forEach((e, n)=>{
+      const d = afstand(o.n, n, maks);
+      if(d <= maks && (d < bedstD || (d === bedstD && e.antal > bedstA))){
+        bedst = {n: n, vis: e.vis}; bedstD = d; bedstA = e.antal;
+      }
+    });
+    if(bedst){ rettet = true; return bedst; }
+    return {n: o.n, vis: o.raa};
+  });
+  if(!rettet) return null;
+  const nyOrd = nye.map(x=>x.n);
+  if(!kandidater.some(r=>point(r, nyOrd) > 0)) return null;
+  return nye.map(x=>x.vis).join(" ");
+}
+
+
 const typeSel = document.getElementById("typeFilter");
 const seen = new Set();
 DATA.forEach(r=>{ if(r.type) seen.add(r.type); });
@@ -388,22 +508,31 @@ if(udenOmraade){
 }
 
 function render(){
-  const q = document.getElementById("q").value.trim().toLowerCase();
+  const qFelt = document.getElementById("q");
+  const ordListe = soegeord(qFelt.value);
+  const ord = ordListe.map(o=>o.n);
   const type = typeSel.value;
   const omr = omrSel.value;
   const sortBy = document.getElementById("sortBy").value;
 
-  let rows = DATA.filter(r=>{
+  const filtrerede = DATA.filter(r=>{
     if(type && r.type!==type) return false;
     if(omr === "__uden__"){ if(r.publisher) return false; }
     else if(omr && r.publisher!==omr) return false;
-    if(!q) return true;
-    const hay = (r.title+" "+r.creator+" "+r.subject+" "+r.publisher+" "+
-                 r.coverage+" "+r.description).toLowerCase();
-    return hay.indexOf(q)!==-1;
+    return true;
   });
 
+  let rows = filtrerede;
+  if(ord.length){
+    rows.forEach(r=>{ r._p = point(r, ord); });
+    rows = rows.filter(r=>r._p > 0);
+  }
+
   rows = rows.slice().sort((a,b)=>{
+    if(sortBy==="relevans"){
+      if(ord.length){ const d = b._p - a._p; if(d) return d; }
+      return a.title.localeCompare(b.title,"da");
+    }
     if(sortBy==="title") return a.title.localeCompare(b.title,"da");
     if(sortBy==="type") return (a.type||"").localeCompare(b.type||"","da");
     if(sortBy==="omraade"){
@@ -421,8 +550,27 @@ function render(){
 
   if(rows.length===0){
     const p=document.createElement("p");
-    p.className="empty"; p.textContent="Ingen poster matcher søgningen.";
-    list.appendChild(p); return;
+    p.className="empty";
+    p.textContent = DATA.length ? "Ingen poster matcher søgningen." : "Der er ingen poster i mappen.";
+    list.appendChild(p);
+    if(!ord.length) return;
+
+    const boks=document.createElement("div");
+    boks.className="forslag";
+    const forslag = foreslaa(ordListe, filtrerede);
+    if(forslag){
+      const t=document.createElement("span"); t.textContent="Mente du:";
+      const k=document.createElement("button"); k.type="button"; k.textContent=forslag;
+      k.addEventListener("click", ()=>{ qFelt.value = forslag; render(); qFelt.focus(); });
+      boks.appendChild(t); boks.appendChild(k);
+    } else if((type || omr) && DATA.some(r=>point(r, ord) > 0)){
+      const t=document.createElement("span"); t.textContent="Der er træf uden for de valgte filtre.";
+      const k=document.createElement("button"); k.type="button"; k.textContent="Søg i alt";
+      k.addEventListener("click", ()=>{ typeSel.value=""; omrSel.value=""; render(); qFelt.focus(); });
+      boks.appendChild(t); boks.appendChild(k);
+    }
+    if(boks.childNodes.length) list.appendChild(boks);
+    return;
   }
 
   rows.forEach((r,i)=>{
